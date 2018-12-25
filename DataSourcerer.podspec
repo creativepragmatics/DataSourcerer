@@ -9,7 +9,7 @@
 Pod::Spec.new do |s|
   s.name             = 'DataSourcerer'
   s.version          = '0.1.0'
-  s.summary          = 'A short description of DataSourcerer.'
+  s.summary          = 'The missing link between API Calls (any data provider actually) and your UITableView (any view actually).'
 
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -18,25 +18,22 @@ Pod::Spec.new do |s|
 #   * Finally, don't worry about the indent, CocoaPods strips it!
 
   s.description      = <<-DESC
-TODO: Add long description of the pod here.
+The missing link between API Calls (any data provider actually) and your UITableView (any view actually).
                        DESC
 
   s.homepage         = 'https://github.com/creativepragmatics/DataSourcerer'
-  # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'Manuel Maly' => 'manuel@creativepragmatics.com' }
+  s.author           = { 'Manuel Maly @ Creative Pragmatics' => 'manuel@creativepragmatics.com' }
   s.source           = { :git => 'https://github.com/creativepragmatics/DataSourcerer.git', :tag => s.version.to_s }
-  # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
+  s.social_media_url = 'https://twitter.com/manuelmaly'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '9.0'
 
   s.source_files = 'DataSourcerer/Classes/**/*'
-  
-  # s.resource_bundles = {
-  #   'DataSourcerer' => ['DataSourcerer/Assets/*.png']
-  # }
+  s.swift_version = '4.2'
 
-  # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
+  s.subspec 'Core' do |ss|
+    ss.source_files = 'ReactiveListDatasource/Classes/Core/**/*'
+  end
+  
 end
