@@ -1,0 +1,6 @@
+framework module Pods_DataSourcerer_Tests {
+  umbrella header "Pods-DataSourcerer_Tests-umbrella.h"
+
+  export *
+  module * { export * }
+}

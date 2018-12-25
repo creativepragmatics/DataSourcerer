@@ -1,6 +1,6 @@
 # DataSourcerer
 
-[![CI Status](https://img.shields.io/travis/questobot/DataSourcerer.svg?style=flat)](https://travis-ci.org/questobot/DataSourcerer)
+[![CI Status](https://img.shields.io/travis/creativepragmatics/DataSourcerer.svg?style=flat)](https://travis-ci.org/creativepragmatics/DataSourcerer)
 [![Version](https://img.shields.io/cocoapods/v/DataSourcerer.svg?style=flat)](https://cocoapods.org/pods/DataSourcerer)
 [![License](https://img.shields.io/cocoapods/l/DataSourcerer.svg?style=flat)](https://cocoapods.org/pods/DataSourcerer)
 [![Platform](https://img.shields.io/cocoapods/p/DataSourcerer.svg?style=flat)](https://cocoapods.org/pods/DataSourcerer)
@@ -22,7 +22,7 @@ pod 'DataSourcerer'
 
 ## Author
 
-questobot, manuel.maly@gmail.com
+Manuel Maly, manuel@creativepragmatics.com
 
 ## License
 

@@ -2,8 +2,8 @@
 //  AppDelegate.swift
 //  DataSourcerer
 //
-//  Created by questobot on 12/25/2018.
-//  Copyright (c) 2018 questobot. All rights reserved.
+//  Created by Creative Pragmatics GmbH on 12/25/2018.
+//  Copyright (c) 2018 Creative Pragmatics GmbH. All rights reserved.
 //
 
 import UIKit

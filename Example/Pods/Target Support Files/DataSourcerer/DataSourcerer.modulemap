@@ -1,0 +1,6 @@
+framework module DataSourcerer {
+  umbrella header "DataSourcerer-umbrella.h"
+
+  export *
+  module * { export * }
+}
