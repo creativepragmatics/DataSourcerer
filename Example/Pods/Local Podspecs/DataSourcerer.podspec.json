@@ -1,22 +1,30 @@
 {
   "name": "DataSourcerer",
   "version": "0.1.0",
-  "summary": "A short description of DataSourcerer.",
-  "description": "TODO: Add long description of the pod here.",
+  "summary": "The missing link between API Calls (any data provider actually) and your UITableView (any view actually).",
+  "description": "The missing link between API Calls (any data provider actually) and your UITableView (any view actually).",
   "homepage": "https://github.com/creativepragmatics/DataSourcerer",
   "license": {
     "type": "MIT",
     "file": "LICENSE"
   },
   "authors": {
-    "Manuel Maly": "manuel@creativepragmatics.com"
+    "Manuel Maly @ Creative Pragmatics": "manuel@creativepragmatics.com"
   },
   "source": {
     "git": "https://github.com/creativepragmatics/DataSourcerer.git",
     "tag": "0.1.0"
   },
+  "social_media_url": "https://twitter.com/manuelmaly",
   "platforms": {
-    "ios": "8.0"
+    "ios": "9.0"
   },
-  "source_files": "DataSourcerer/Classes/**/*"
+  "source_files": "DataSourcerer/Classes/**/*",
+  "swift_version": "4.2",
+  "subspecs": [
+    {
+      "name": "Core",
+      "source_files": "ReactiveListDatasource/Classes/Core/**/*"
+    }
+  ]
 }

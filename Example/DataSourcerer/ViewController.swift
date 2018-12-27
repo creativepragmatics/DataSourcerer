@@ -1,11 +1,3 @@
-//
-//  ViewController.swift
-//  DataSourcerer
-//
-//  Created by Creative Pragmatics GmbH on 12/25/2018.
-//  Copyright (c) 2018 Creative Pragmatics GmbH. All rights reserved.
-//
-
 import UIKit
 
 class ViewController: UIViewController {
@@ -21,4 +13,3 @@ class ViewController: UIViewController {
     }
 
 }
-
