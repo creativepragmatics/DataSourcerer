@@ -13,7 +13,7 @@ class ObservableSpec: QuickSpec {
 
                 var observedValues: [Int] = []
 
-                let _ = observable.observe { value in
+                _ = observable.observe { value in
                     observedValues.append(value)
                 }
 
@@ -56,6 +56,7 @@ class ObservableSpec: QuickSpec {
 
 internal final class MutableReference<Value: AnyObject> {
     var value: Value?
+
     init(_ value: Value?) {
         self.value = value
     }
@@ -63,6 +64,7 @@ internal final class MutableReference<Value: AnyObject> {
 
 internal final class WeakReference<Value: AnyObject> {
     weak var value: Value?
+
     init(_ value: Value?) {
         self.value = value
     }

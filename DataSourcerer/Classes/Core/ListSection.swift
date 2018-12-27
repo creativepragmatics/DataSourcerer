@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol ListSection: Equatable {
-    
+
     // Required to display configuration or system messages or errors
     // (will probably contain only one descriptive cell)
     init()

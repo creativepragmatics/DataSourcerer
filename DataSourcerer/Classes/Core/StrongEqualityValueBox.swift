@@ -12,13 +12,13 @@ import Foundation
 public struct EquatableBox<Value: Any>: Equatable {
     public let value: Value
     let equalityId: String
-    
+
     public init(_ value: Value) {
         self.value = value
         self.equalityId = UUID().uuidString
     }
-    
-    public static func ==(lhs: EquatableBox, rhs: EquatableBox) -> Bool {
+
+    public static func == (lhs: EquatableBox, rhs: EquatableBox) -> Bool {
         return lhs.equalityId == rhs.equalityId
     }
 }

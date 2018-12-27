@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol Parameters : Equatable {
-    
+
     /// Returns true if candidate can be used as a
     /// cache version of self, or vice versa.
     /// Consider the case that the authenticated user has changed,
@@ -13,11 +13,12 @@ public protocol Parameters : Equatable {
 
 public struct VoidParameters : Parameters {
     public func isCacheCompatible(_ candidate: VoidParameters) -> Bool { return true }
-    static let initial =  VoidParameters()
+
+    static let initial = VoidParameters()
 }
 
 extension Sequence where Element : Parameters {
-    
+
     var areParametersCacheCompatible: Bool {
         var first: Element?
         for candidate in self {
@@ -31,7 +32,7 @@ extension Sequence where Element : Parameters {
                 first = candidate
             }
         }
-        
+
         return true
     }
 }

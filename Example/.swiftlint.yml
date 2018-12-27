@@ -81,9 +81,13 @@ file_length:
 type_name:
   min_length: 4 # only warning
   max_length: # warning and error
-    warning: 40
+    warning: 44
     error: 50
-  excluded: iPhone # excluded via string
+  excluded: 
+    - iPhone
+    - P
+    - E
+    - LI
   allowed_symbols: "_"
 generic_type_name:
   allowed_symbols: "_"
@@ -101,4 +105,9 @@ identifier_name:
     - bag
     - box
   allowed_symbols: "_"
+nesting:
+  type_level: 2
+cyclomatic_complexity:
+  warning: 12
+  error: 20
 reporter: "xcode" # reporter type (xcode, json, csv, checkstyle, junit, html, emoji, sonarqube, markdown)

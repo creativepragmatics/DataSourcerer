@@ -2,38 +2,37 @@ import Foundation
 
 public protocol LoadImpulseEmitterProtocol {
     associatedtype P: Parameters
-    typealias LoadImpulsesOverTime = (LoadImpulse<P>) -> ()
-    
+    typealias LoadImpulsesOverTime = (LoadImpulse<P>) -> Void
+
     func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable
     func emit(_ loadImpulse: LoadImpulse<P>)
 }
 
 public extension LoadImpulseEmitterProtocol {
-    public var any: AnyLoadImpulseEmitter<P> {
+    var any: AnyLoadImpulseEmitter<P> {
         return AnyLoadImpulseEmitter(self)
     }
 }
 
 public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol {
     public typealias P = P_
-    
+
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
-    private let _emit: (LoadImpulse<P>) -> ()
-    
+    private let _emit: (LoadImpulse<P>) -> Void
+
     init<Emitter: LoadImpulseEmitterProtocol>(_ emitter: Emitter) where Emitter.P == P {
         self._emit = emitter.emit
         self._observe = emitter.observe
     }
-    
+
     public func emit(_ loadImpulse: LoadImpulse<P_>) {
         _emit(loadImpulse)
     }
-    
+
     public func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable {
         return _observe(loadImpulsesOverTime)
     }
 }
-
 
 public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, Observable {
     public typealias P = P_
@@ -42,39 +41,39 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     private let impulseOnFirstObservation: LoadImpulse<P>?
     private let innerObservable = DefaultObservable<LI>()
     private var isObserved = SynchronizedProperty(false)
-    
+
     public init(emitOnFirstObservation impulseOnFirstObservation: LoadImpulse<P>?) {
         self.impulseOnFirstObservation = impulseOnFirstObservation
     }
-    
+
     public func observe(_ observe: @escaping LoadImpulsesOverTime) -> Disposable {
-        
+
         defer {
             let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
             if isFirstObservation, let impulseOnFirstObservation = self.impulseOnFirstObservation {
                 emit(impulseOnFirstObservation)
             }
         }
-        
+
         let innerDisposable = innerObservable.observe(observe)
         let selfDisposable: Disposable = InstanceRetainingDisposable(self)
         return CompositeDisposable([innerDisposable, selfDisposable])
     }
-    
+
     public func emit(_ loadImpulse: LoadImpulse<P>) {
         innerObservable.emit(loadImpulse)
     }
-    
+
     public func removeObserver(with key: Int) {
         innerObservable.removeObserver(with: key)
     }
-    
+
 }
 
 public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, Observable {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
-    
+
     private let lastLoadImpulse: LoadImpulse<P>?
     private let innerEmitter: DefaultLoadImpulseEmitter<P>
     private let disposeBag = DisposeBag()
@@ -90,17 +89,20 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
             resetTimer()
         }
     }
-    
-    public init(emitOnFirstObservation impulseOnFirstObservation: LoadImpulse<P>?, timerMode: TimerMode = .none, timerEmitQueue: DispatchQueue? = nil) {
-        
+
+    public init(emitOnFirstObservation impulseOnFirstObservation: LoadImpulse<P>?,
+                timerMode: TimerMode = .none,
+                timerEmitQueue: DispatchQueue? = nil) {
+
         self.lastLoadImpulse = impulseOnFirstObservation
         self.timerMode = timerMode
         self.innerEmitter = DefaultLoadImpulseEmitter<P>(emitOnFirstObservation: impulseOnFirstObservation)
-        self.timerEmitQueue = timerEmitQueue ?? DispatchQueue(label: "datasourcerer.recurringloadimpulseemitter.timer", attributes: [])
+        self.timerEmitQueue = timerEmitQueue ??
+            DispatchQueue(label: "datasourcerer.recurringloadimpulseemitter.timer", attributes: [])
     }
-    
+
     private func resetTimer() {
-        
+
         timer.modify { [weak self] timer in
             timer?.cancel()
             guard let self = self else { return }
@@ -120,39 +122,39 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
             }
         }
     }
-    
+
     public func observe(_ observe: @escaping LoadImpulsesOverTime) -> Disposable {
-        
+
         defer {
             let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
             if isFirstObservation {
                 innerEmitter.observe { [weak self] loadImpulse in
                     self?.emit(loadImpulse)
                     self?.resetTimer()
-                    }.disposed(by: disposeBag)
+                }.disposed(by: disposeBag)
             }
         }
-        
+
         let innerDisposable = innerEmitter.observe(observe)
         let selfDisposable: Disposable = InstanceRetainingDisposable(self)
         return CompositeDisposable([innerDisposable, selfDisposable])
     }
-    
+
     public func emit(_ loadImpulse: LoadImpulse<P>) {
         innerEmitter.emit(loadImpulse)
     }
-    
+
     public func removeObserver(with key: Int) {
         innerEmitter.removeObserver(with: key)
     }
-    
+
     deinit {
         disposeBag.dispose()
     }
-    
+
     public enum TimerMode {
         case none
         case timeInterval(DispatchTimeInterval)
     }
-    
+
 }
