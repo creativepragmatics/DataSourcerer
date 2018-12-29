@@ -15,7 +15,7 @@ import Foundation
 /// next state with a value is sent (same with errors).
 /// This struct helps with this by caching the last value and/or
 /// error,.
-public struct LastResultRetainingDatasource
+open class LastResultRetainingDatasource
 <Value_: Any, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
     public typealias Value = Value_
     public typealias P = P_
@@ -26,60 +26,69 @@ public struct LastResultRetainingDatasource
 
     public let loadsSynchronously = true
     private let innerDatasource: SubDatasource
-    private let observableCore = DatasourceObservableCore<Value, P, E>()
+    private let stateObservable = StateObservable<Value, P, E>()
     private let disposeBag = DisposeBag()
+    private var isObserved = SynchronizedProperty<Bool>(false)
+    private let lastResult = SynchronizedProperty<LastResult?>(nil)
 
     public init(innerDatasource: SubDatasource) {
         self.innerDatasource = innerDatasource
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
-        defer { startObservingInnerDatasource() }
+
+        defer {
+            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
+            if isFirstObservation {
+                startObserving()
+            }
+        }
 
         // Send .notReady right now, because loadsSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
-        return observableCore.observe(statesOverTime)
+        let innerDisposable = stateObservable.observe(statesOverTime)
+        return CompositeDisposable(innerDisposable, objectToRetain: self)
     }
 
-    private func startObservingInnerDatasource() {
+    private func startObserving() {
 
-        var lastState: DatasourceState?
-        var lastResult: LastResult?
-        innerDatasource.observe { [weak observableCore] state in
-            defer { type(of: self).registerStateAsLastResult(state, lastResult: &lastResult) }
+        innerDatasource.observe { [weak self] state in
+            guard let self = self else { return }
 
-            let nextState = type(of: self).nextState(innerState: state, lastResult: lastResult)
-            observableCore?.emit(nextState)
+            defer {
+                // Set lastResult if a matching value or error is contained
+                // in state.
+                switch state.provisioningState {
+                case .loading, .notReady:
+                    break
+                case .result:
+                    guard let loadImpulse = state.loadImpulse else {
+                        break
+                    }
+
+                    if self.value(innerState: state, loadImpulse: loadImpulse) != nil {
+                        self.lastResult.value = .value(state)
+                    } else if self.error(innerState: state, loadImpulse: loadImpulse) != nil {
+                        self.lastResult.value = .error(state)
+                    }
+                }
+            }
+
+            let nextState = self.nextState(innerState: state)
+            self.stateObservable.emit(nextState)
         }.disposed(by: disposeBag)
     }
 
-    private static func registerStateAsLastResult(_ state: DatasourceState, lastResult: inout LastResult?) {
-        switch state.provisioningState {
-        case .loading, .notReady:
-            break
-        case .result:
-            guard let loadImpulse = state.loadImpulse else {
-                break
-            }
-
-            if value(innerState: state, lastResult: nil, loadImpulse: loadImpulse) != nil {
-                lastResult = .value(state)
-            } else if error(innerState: state, lastResult: nil, loadImpulse: loadImpulse) != nil {
-                lastResult = .error(state)
-            }
-        }
-    }
-
-    private static func nextState(innerState: DatasourceState, lastResult: LastResult?) -> DatasourceState {
+    private func nextState(innerState: DatasourceState) -> DatasourceState {
         switch innerState.provisioningState {
         case .notReady:
             return DatasourceState.notReady
         case .loading:
             guard let loadImpulse = innerState.loadImpulse else { return .notReady }
 
-            let value = self.value(innerState: innerState, lastResult: lastResult, loadImpulse: loadImpulse)
-            let error = self.error(innerState: innerState, lastResult: lastResult, loadImpulse: loadImpulse)
+            let value = self.value(innerState: innerState, loadImpulse: loadImpulse)
+            let error = self.error(innerState: innerState, loadImpulse: loadImpulse)
             return DatasourceState.loading(loadImpulse: loadImpulse,
                                            fallbackValue: value,
                                            fallbackError: error)
@@ -87,9 +96,7 @@ public struct LastResultRetainingDatasource
             guard let loadImpulse = innerState.loadImpulse else { return .notReady }
 
             if let error = innerState.cacheCompatibleError(for: loadImpulse) {
-                let value = self.value(innerState: innerState,
-                                       lastResult: lastResult,
-                                       loadImpulse: loadImpulse)
+                let value = self.value(innerState: innerState, loadImpulse: loadImpulse)
                 return DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValue: value)
             } else if let valueBox = innerState.cacheCompatibleValue(for: loadImpulse) {
                 // We have a definitive success result, with no error, so we erase all previous errors
@@ -108,14 +115,13 @@ public struct LastResultRetainingDatasource
 
     /// Returns either the current state's value, or the fallbackValueState's.
     /// If neither is set, returns nil.
-    private static func value(innerState: DatasourceState,
-                              lastResult: LastResult?,
-                              loadImpulse: LoadImpulse<P>) -> Value? {
+    private func value(innerState: DatasourceState,
+                       loadImpulse: LoadImpulse<P>) -> Value? {
 
         if let innerStateValueBox = innerState.cacheCompatibleValue(for: loadImpulse) {
             return innerStateValueBox.value
         } else if let fallbackValueStateValueBox =
-            lastResult?.valueState?.cacheCompatibleValue(for: loadImpulse) {
+            lastResult.value?.valueState?.cacheCompatibleValue(for: loadImpulse) {
             return fallbackValueStateValueBox.value
         } else {
             return nil
@@ -124,13 +130,12 @@ public struct LastResultRetainingDatasource
 
     /// Returns either the current state's error, or the fallbackErrorState's.
     /// If neither is set, returns nil.
-    private static func error(innerState: DatasourceState,
-                              lastResult: LastResult?,
-                              loadImpulse: LoadImpulse<P>) -> E? {
+    private func error(innerState: DatasourceState,
+                       loadImpulse: LoadImpulse<P>) -> E? {
 
         if let innerStateError = innerState.cacheCompatibleError(for: loadImpulse) {
             return innerStateError
-        } else if let fallbackError = lastResult?.errorState?.cacheCompatibleError(for: loadImpulse) {
+        } else if let fallbackError = lastResult.value?.errorState?.cacheCompatibleError(for: loadImpulse) {
             return fallbackError
         } else {
             return nil
@@ -143,15 +148,15 @@ public struct LastResultRetainingDatasource
 
         var valueState: DatasourceState? {
             switch self {
-            case let .value(value): return value
-            case .error: return nil
+            case let .value(value) where value.value != nil: return value
+            default: return nil
             }
         }
 
         var errorState: DatasourceState? {
             switch self {
-            case .value: return nil
-            case let .error(error): return error
+            case let .error(error) where error.error != nil: return error
+            default: return nil
             }
         }
     }

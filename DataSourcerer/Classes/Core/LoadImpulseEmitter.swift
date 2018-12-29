@@ -136,8 +136,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
         }
 
         let innerDisposable = innerEmitter.observe(observe)
-        let selfDisposable: Disposable = InstanceRetainingDisposable(self)
-        return CompositeDisposable([innerDisposable, selfDisposable])
+        return CompositeDisposable(innerDisposable, objectToRetain: self)
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P>) {

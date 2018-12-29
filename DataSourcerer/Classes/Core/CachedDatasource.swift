@@ -20,7 +20,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 
     public let loadsSynchronously = true
 
-    private let observableCore = DatasourceObservableCore<Value, P, E>()
+    private let stateObservable = StateObservable<Value, P, E>()
     private let disposeBag = DisposeBag()
 
     private var currentStateComponents = SynchronizedProperty(StateComponents.initial)
@@ -55,7 +55,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
         // Send .notReady right now, because loadsSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
-        return observableCore.observe(statesOverTime)
+        return stateObservable.observe(statesOverTime)
     }
 
     private func setAndEmitNext(latestPrimaryState: DatasourceState? = nil,
@@ -87,8 +87,10 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
             shouldSkipLoad(for: loadImpulse) == false else { return }
 
         let combinedState = self.combinedState(primary: primary, cache: cached, loadImpulse: loadImpulse)
-        currentState.value = combinedState
-        observableCore.emit(combinedState)
+        let stateChanged = currentState.set(combinedState, if: { $0 != combinedState })
+        if stateChanged {
+            stateObservable.emit(combinedState)
+        }
     }
 
     open func combinedState(primary: DatasourceState,
@@ -106,7 +108,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                                      fallbackValue: cacheValueBox.value,
                                      fallbackError: cache.error)
             } else {
-                // Neither remote success nor cachely cached value
+                // Neither remote success nor cached value
                 switch primary.provisioningState {
                 case .notReady, .result: return State.notReady
                 // Add primary as fallback so any errors are added

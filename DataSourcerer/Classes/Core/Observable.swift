@@ -43,6 +43,13 @@ public final class CompositeDisposable: Disposable {
 
 }
 
+public extension CompositeDisposable {
+
+    convenience init(_ disposableA: Disposable, objectToRetain: AnyObject) {
+        self.init([disposableA, InstanceRetainingDisposable(objectToRetain)])
+    }
+}
+
 public final class ObserverDisposable: Disposable {
 
     var key: Int
@@ -95,7 +102,9 @@ open class DefaultObservable<T>: Observable {
 
     open func emit(_ value: T) {
 
-        observers.value.values.forEach({ $0(value) })
+        observers.value.values.forEach({ valuesOverTime in
+            valuesOverTime(value)
+        })
     }
 
     open func removeObserver(with key: Int) {

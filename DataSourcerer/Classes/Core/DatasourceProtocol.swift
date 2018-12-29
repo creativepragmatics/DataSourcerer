@@ -109,5 +109,5 @@ public protocol CachedDatasourceError: DatasourceError {
     init(cacheLoadError type: DatasourceErrorMessage)
 }
 
-public typealias DatasourceObservableCore<Value, P: Parameters, E: DatasourceError> =
+public typealias StateObservable<Value, P: Parameters, E: DatasourceError> =
     DefaultObservable<State<Value, P, E>>

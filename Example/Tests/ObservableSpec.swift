@@ -22,6 +22,39 @@ class ObservableSpec: QuickSpec {
 
                 expect(observedValues) == [1,2]
             }
+            it("should not duplicate values with multiple observers subscribed") {
+
+                let observable = DefaultObservable<Int>()
+
+                var observedValues: [Int] = []
+
+                _ = observable.observe { value in
+                    observedValues.append(value)
+                }
+                _ = observable.observe({ _ in })
+
+                observable.emit(1)
+                observable.emit(2)
+
+                expect(observedValues) == [1,2]
+            }
+            it("should stop sending values to an observer after disposal") {
+
+                let observable = DefaultObservable<Int>()
+
+                var observedValues: [Int] = []
+
+                let disposable = observable.observe { value in
+                    observedValues.append(value)
+                }
+
+                observable.emit(1)
+                observable.emit(2)
+                disposable.dispose()
+                observable.emit(3)
+
+                expect(observedValues) == [1,2]
+            }
             it("should release observer after disposal") {
 
                 weak var testStr: NSMutableString?
@@ -45,7 +78,10 @@ class ObservableSpec: QuickSpec {
 
                 disposable.dispose()
 
-                observable.emit("3") // force sync access to observers so next assert works synchronously
+                // Force sync access to observers so next assert works synchronously.
+                // Alternatively, a wait or waitUntil could be used, but this is
+                // less complex.
+                observable.emit("3")
 
                 expect(testStr).to(beNil())
             }

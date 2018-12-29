@@ -48,8 +48,7 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: Observable {
         }
 
         let innerDisposable = innerObservable.observe(observe)
-        let selfDisposable: Disposable = InstanceRetainingDisposable(self)
-        return CompositeDisposable([innerDisposable, selfDisposable])
+        return CompositeDisposable(innerDisposable, objectToRetain: self)
     }
 
     public func removeObserver(with key: Int) {
