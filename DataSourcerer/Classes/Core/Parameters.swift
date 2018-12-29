@@ -1,5 +1,13 @@
 import Foundation
 
+/// Datasource parameters, used in `LoadImpulse`. The most
+/// likely use case is to provide data for an API or cache
+/// request. It should contain ALL data required for such a
+/// request (including authorization tokens, headers,
+/// pagination page number, etc).
+/// However, Public APIs or locally loaded data might not
+/// require any parameters at all - in that case, `VoidParameters`
+/// might come in handy.
 public protocol Parameters : Equatable {
 
     /// Returns true if candidate can be used as a
@@ -22,28 +30,10 @@ public protocol Parameters : Equatable {
     func isCacheCompatible(_ candidate: Self) -> Bool
 }
 
+/// Empty parameters for use cases without any parametrization
+/// needs.
 public struct VoidParameters : Parameters {
     public func isCacheCompatible(_ candidate: VoidParameters) -> Bool { return true }
 
     static let initial = VoidParameters()
-}
-
-extension Sequence where Element : Parameters {
-
-    var areParametersCacheCompatible: Bool {
-        var first: Element?
-        for candidate in self {
-            if let foundFirst = first {
-                if foundFirst.isCacheCompatible(candidate) {
-                    continue
-                } else {
-                    return false
-                }
-            } else {
-                first = candidate
-            }
-        }
-
-        return true
-    }
 }
