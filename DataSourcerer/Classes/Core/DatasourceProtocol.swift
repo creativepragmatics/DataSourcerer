@@ -17,7 +17,7 @@ import Foundation
 /// function, datasources require the first load impulse.
 ///
 /// Should either synchronously return a value upon subscription,
-/// or return `false` for `loadsSynchronously`.
+/// or return `false` for `sendsFirstStateSynchronously`.
 public protocol DatasourceProtocol: LastValueRetainingObservable where ObservedValue == DatasourceState {
     associatedtype Value: Any
     associatedtype P: Parameters
@@ -27,7 +27,7 @@ public protocol DatasourceProtocol: LastValueRetainingObservable where ObservedV
 
     /// Must return `true` if the datasource sends a `state`
     /// immediately on subscription.
-    var loadsSynchronously: Bool { get }
+    var sendsFirstStateSynchronously: Bool { get }
 
     /// Emits loading impulses that prompt the datasource to do
     /// work. The datasource must subscribe to the loadImpulseEmitter,
@@ -52,7 +52,7 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public typealias E = E_
 
     public let lastValue: SynchronizedProperty<State<Value, P, E>?>
-    public let loadsSynchronously: Bool
+    public let sendsFirstStateSynchronously: Bool
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     private let _observe: (@escaping StatesOverTime) -> Disposable
@@ -60,7 +60,7 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 
     init<D: DatasourceProtocol>(_ datasource: D) where D.DatasourceState == DatasourceState {
         self.lastValue = datasource.lastValue
-        self.loadsSynchronously = datasource.loadsSynchronously
+        self.sendsFirstStateSynchronously = datasource.sendsFirstStateSynchronously
         self.loadImpulseEmitter = datasource.loadImpulseEmitter
         self._observe = datasource.observe
         self._removeObserver = datasource.removeObserver

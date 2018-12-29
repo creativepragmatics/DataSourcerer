@@ -45,9 +45,11 @@ public struct AnyLastValueRetainingObservable<T_>: LastValueRetainingObservable 
 
 public protocol Disposable: AnyObject {
     func dispose()
+
+    var isDisposed: Bool { get }
 }
 
-extension Disposable {
+public extension Disposable {
     func disposed(by bag: DisposeBag) {
         bag.add(self)
     }
@@ -56,6 +58,10 @@ extension Disposable {
 public final class InstanceRetainingDisposable: Disposable {
 
     private var instance: AnyObject?
+    private var _isDisposed: Bool = false
+    public var isDisposed: Bool {
+        return _isDisposed
+    }
 
     init(_ instance: AnyObject) {
         self.instance = instance
@@ -63,21 +69,52 @@ public final class InstanceRetainingDisposable: Disposable {
 
     public func dispose() {
         instance = nil // remove retain on instance
+        _isDisposed = true
     }
 
 }
 
-public final class CompositeDisposable: Disposable {
+public class CompositeDisposable: Disposable {
 
-    private var disposables: [Disposable]
+    private let disposables = SynchronizedMutableProperty<[Disposable]>([])
+
+    public var isDisposed: Bool {
+        if disposables.value.contains(where: { $0.isDisposed == false }) {
+            return false
+        } else {
+            return true
+        }
+    }
+
+    init() {}
 
     init(_ disposables: [Disposable]) {
-        self.disposables = disposables
+        self.disposables.value = disposables
+    }
+
+    public func add(_ disposable: Disposable) {
+        disposables.modify({ $0 += [disposable] })
     }
 
     public func dispose() {
-        disposables.forEach({ $0.dispose() })
-        disposables = [] // remove retain on disposables
+        disposables.value
+            .filter({ $0.isDisposed == false })
+            .forEach({ $0.dispose() })
+        disposables.value = []
+    }
+
+}
+
+public final class VoidDisposable: Disposable {
+
+    private var _isDisposed: Bool = false
+    public var isDisposed: Bool {
+        return _isDisposed
+    }
+
+    public init() {}
+    public func dispose() {
+        _isDisposed = true
     }
 
 }
@@ -93,6 +130,10 @@ public final class ObserverDisposable: Disposable {
 
     var key: Int
     var observable: UntypedObservable?
+    private var _isDisposed: Bool = false
+    public var isDisposed: Bool {
+        return _isDisposed
+    }
 
     public init(observable: UntypedObservable, key: Int) {
         self.observable = observable
@@ -102,19 +143,14 @@ public final class ObserverDisposable: Disposable {
     public func dispose() {
         self.observable?.removeObserver(with: key)
         self.observable = nil // remove retain on instance
+        _isDisposed = true
     }
 }
 
-public final class DisposeBag {
+public class DisposeBag: CompositeDisposable {
 
-    private let disposables = SynchronizedMutableProperty<[Disposable]>([])
-
-    public func add(_ disposable: Disposable) {
-        disposables.modify({ $0 += [disposable] })
-    }
-
-    public func dispose() {
-        disposables.value.forEach { $0.dispose() }
+    public override init() {
+        super.init()
     }
 
     deinit {
@@ -130,6 +166,8 @@ open class DefaultObservable<T_>: LastValueRetainingObservable {
     public lazy var lastValue = SynchronizedProperty<ObservedValue?>(self.mutableLastValue)
 
     private let observers = SynchronizedMutableProperty([Int: ValuesOverTime]())
+
+    public init() {}
 
     open func observe(_ observe: @escaping ValuesOverTime) -> Disposable {
 

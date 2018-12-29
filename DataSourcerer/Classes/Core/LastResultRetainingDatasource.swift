@@ -26,7 +26,7 @@ open class LastResultRetainingDatasource
     public var lastValue: SynchronizedProperty<DatasourceState?> {
         return innerObservable.lastValue
     }
-    public let loadsSynchronously = true
+    public let sendsFirstStateSynchronously = true
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
         return innerDatasource.loadImpulseEmitter
     }
@@ -50,7 +50,7 @@ open class LastResultRetainingDatasource
             }
         }
 
-        // Send .notReady right now, because loadsSynchronously == true
+        // Send .notReady right now, because sendsFirstStateSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
         let innerDisposable = innerObservable.observe(statesOverTime)
@@ -107,7 +107,9 @@ open class LastResultRetainingDatasource
 
             if let error = innerState.cacheCompatibleError(for: loadImpulse) {
                 let valueBox = self.value(innerState: innerState, loadImpulse: loadImpulse)
-                return DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValueBox: valueBox)
+                return DatasourceState.error(error: error,
+                                             loadImpulse: loadImpulse,
+                                             fallbackValueBox: valueBox)
             } else if let valueBox = innerState.cacheCompatibleValue(for: loadImpulse) {
                 // We have a definitive success result, with no error, so we erase all previous errors
                 return DatasourceState.value(valueBox: valueBox,

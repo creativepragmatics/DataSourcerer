@@ -43,21 +43,17 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
-    private let impulseOnFirstObservation: LoadImpulse<P>?
+    private let initialImpulse: LoadImpulse<P>?
     private let innerObservable = DefaultObservable<LI>()
-    private var isObserved = SynchronizedMutableProperty(false)
 
-    public init(emitOnFirstObservation impulseOnFirstObservation: LoadImpulse<P>?) {
-        self.impulseOnFirstObservation = impulseOnFirstObservation
+    public init(initialImpulse: LoadImpulse<P>?) {
+        self.initialImpulse = initialImpulse
     }
 
     public func observe(_ observe: @escaping LoadImpulsesOverTime) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation, let impulseOnFirstObservation = self.impulseOnFirstObservation {
-                emit(impulseOnFirstObservation)
-            }
+        if let initialImpulse = initialImpulse {
+            observe(initialImpulse)
         }
 
         let innerDisposable = innerObservable.observe(observe)
@@ -95,13 +91,13 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
         }
     }
 
-    public init(emitOnFirstObservation impulseOnFirstObservation: LoadImpulse<P>?,
+    public init(initialImpulse: LoadImpulse<P>?,
                 timerMode: TimerMode = .none,
                 timerEmitQueue: DispatchQueue? = nil) {
 
-        self.lastLoadImpulse = impulseOnFirstObservation
+        self.lastLoadImpulse = initialImpulse
         self.timerMode = timerMode
-        self.innerEmitter = DefaultLoadImpulseEmitter<P>(emitOnFirstObservation: impulseOnFirstObservation)
+        self.innerEmitter = DefaultLoadImpulseEmitter<P>(initialImpulse: initialImpulse)
         self.timerEmitQueue = timerEmitQueue ??
             DispatchQueue(label: "datasourcerer.recurringloadimpulseemitter.timer", attributes: [])
     }

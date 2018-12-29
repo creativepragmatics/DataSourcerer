@@ -70,6 +70,7 @@
 		6985430721C89135D5B4CBE13357EC31 /* DSL.m in Sources */ = {isa = PBXBuildFile; fileRef = 919C76F6A19763DC1D71678EF64A59A4 /* DSL.m */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
 		6B124A4D8EB28A918E0C87F2E75D94F8 /* MatcherProtocols.swift in Sources */ = {isa = PBXBuildFile; fileRef = 838725A5D79D138A96E9A58370482809 /* MatcherProtocols.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
 		6B2DF45B9BFABD4BF3DDC503F073FB71 /* BeAKindOf.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20A8B40205571E02C72ACF7A95310FF8 /* BeAKindOf.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
+		6FC5BFA121D79490003DD629 /* Datasource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC5BFA021D79490003DD629 /* Datasource.swift */; };
 		6FE504E9ED5B37C05CFC2A530019AE5D /* BeGreaterThan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A5838F39CF1CD0947ADBC113E92C42B /* BeGreaterThan.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
 		7055FC40964F98DF842CAA4ED3A9F61E /* DefaultSingleSectionListViewDatasourceCore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FBE049B14E247330C57877014B644D9 /* DefaultSingleSectionListViewDatasourceCore.swift */; };
 		74605907C211553B00F09768BEF12834 /* EndWith.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05F4548F6297127FEB1361A4709BA2D2 /* EndWith.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
@@ -251,6 +252,7 @@
 		6CE371FF8E57628AFC88F93D13333CB4 /* DSL.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = DSL.swift; path = Sources/Nimble/DSL.swift; sourceTree = "<group>"; };
 		6D585C14C0DF2AE82CDBE119DCF00F90 /* QuickConfiguration.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; name = QuickConfiguration.h; path = Sources/QuickObjectiveC/Configuration/QuickConfiguration.h; sourceTree = "<group>"; };
 		6E0D6115A68A4F64238A02ABF693993D /* Behavior.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Behavior.swift; path = Sources/Quick/Behavior.swift; sourceTree = "<group>"; };
+		6FC5BFA021D79490003DD629 /* Datasource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Datasource.swift; sourceTree = "<group>"; };
 		7032E0B4C6FCCBCF89A7F99A4FF87798 /* Callsite.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Callsite.swift; path = Sources/Quick/Callsite.swift; sourceTree = "<group>"; };
 		73D88B2D44B8CFB64E9B47ECE23D0566 /* NMBObjCMatcher.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NMBObjCMatcher.swift; path = Sources/Nimble/Adapters/NMBObjCMatcher.swift; sourceTree = "<group>"; };
 		7449C3BA7998BC497ADC17845C2B0D05 /* Filter.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Filter.swift; path = Sources/Quick/Filter.swift; sourceTree = "<group>"; };
@@ -487,6 +489,7 @@
 			isa = PBXGroup;
 			children = (
 				7A642777FE4BE3A0CBAC31A5F29D03B6 /* CachedDatasource.swift */,
+				6FC5BFA021D79490003DD629 /* Datasource.swift */,
 				AC631AB67D65086E531CA8BCCC701696 /* DatasourceEndedLoading.swift */,
 				FBFA2D13C5FE9A7C3D1B10A43F736B32 /* DatasourceProtocol.swift */,
 				0F47739B3E0F132E3958CD767873F4DC /* DefaultListViewDatasourceCore.swift */,
@@ -990,6 +993,7 @@
 			files = (
 				3FCF529D06C247BF75F03A6F2A7F8D5B /* CachedDatasource.swift in Sources */,
 				AA5207706CE79A36752DD2A05102B439 /* DatasourceEndedLoading.swift in Sources */,
+				6FC5BFA121D79490003DD629 /* Datasource.swift in Sources */,
 				E8441CDE2496B80D40ED014DA3A7138B /* DatasourceProtocol.swift in Sources */,
 				43A8DCBD83252E88C9BBDA4263039823 /* DataSourcerer-dummy.m in Sources */,
 				0AA211542AB29DCC80299B549B5BE7EE /* DefaultListViewDatasourceCore.swift in Sources */,

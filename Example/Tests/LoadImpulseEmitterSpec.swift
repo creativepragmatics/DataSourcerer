@@ -10,7 +10,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
             it("should send initial load impulse to an observer") {
 
                 let initialImpulse = LoadImpulse(parameters: "1")
-                let emitter = DefaultLoadImpulseEmitter<String>(emitOnFirstObservation: initialImpulse)
+                let emitter = DefaultLoadImpulseEmitter<String>(initialImpulse: initialImpulse)
 
                 var observedImpulses: [LoadImpulse<String>] = []
 
@@ -22,7 +22,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
             }
             it("should send multiple load impulses to an observer") {
 
-                let emitter = DefaultLoadImpulseEmitter<String>(emitOnFirstObservation: nil)
+                let emitter = DefaultLoadImpulseEmitter<String>(initialImpulse: nil)
 
                 var observedImpulses: [LoadImpulse<String>] = []
 
@@ -37,7 +37,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
             }
             it("should not duplicate load impulses with multiple observers subscribed") {
 
-                let emitter = DefaultLoadImpulseEmitter<String>(emitOnFirstObservation: nil)
+                let emitter = DefaultLoadImpulseEmitter<String>(initialImpulse: nil)
 
                 var observedImpulses: [LoadImpulse<String>] = []
 
@@ -54,7 +54,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
             it("should release observer after disposal") {
 
                 weak var testStr: NSMutableString?
-                let emitter = DefaultLoadImpulseEmitter<String>(emitOnFirstObservation: nil)
+                let emitter = DefaultLoadImpulseEmitter<String>(initialImpulse: nil)
 
                 let testScope: () -> Disposable = {
                     let innerStr = NSMutableString(string: "")

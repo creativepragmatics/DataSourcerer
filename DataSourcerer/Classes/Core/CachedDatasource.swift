@@ -15,7 +15,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public var lastValue: SynchronizedProperty<DatasourceState?> {
         return innerObservable.lastValue
     }
-    public let loadsSynchronously = true
+    public let sendsFirstStateSynchronously = true
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     private let primaryDatasource: SubDatasource
@@ -54,7 +54,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 .disposed(by: disposeBag)
         }
 
-        // Send .notReady right now, because loadsSynchronously == true
+        // Send .notReady right now, because sendsFirstStateSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
         return innerObservable.observe(statesOverTime)
@@ -129,11 +129,11 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 }
             }
         case .result:
-            if primary.hasLoadedSuccessfully {
-                persister?.persist(primary)
-            }
-
             if let primaryValueBox = primary.cacheCompatibleValue(for: loadImpulse) {
+                if primary.hasLoadedSuccessfully {
+                    persister?.persist(primary)
+                }
+
                 if let error = primary.error {
                     return State.error(error: error,
                                        loadImpulse: loadImpulse,
@@ -154,10 +154,20 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                                        fallbackValueBox: nil)
                 }
             } else {
-                // Remote state might not match current parameters - return .notReady
-                // so all cached data is purged. This can happen if e.g. an authenticated API
-                // request has been made, but the user has logged out in the meantime. The result
-                // must be discarded or the next logged in user might see the previous user's data.
+
+                // Primary state's loadImpulse's parameters are not cache compatible
+                // with the current loadImpulse's parameters. This means that the current
+                // primary state must not be shown to the user.
+                // This can happen if e.g. an authenticated API request has been made,
+                // but the user has logged out in the meantime.
+                // Therefore, .notReady is returned, for which views will likely show a
+                // loading indicator.
+                //
+                // Meta: The primary datasource cannot be trusted to send a .loading state
+                // for every load impulse it receives. The reliance on the loadImpulseEmitter
+                // to provide the current parameters is vital to ensure the provided state is
+                // cache-compatible at all times. Else, the view might display
+                // old/invalid/unauthorized data.
                 return State.notReady
             }
         }

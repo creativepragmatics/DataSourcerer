@@ -22,7 +22,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
         let persister = TestStatePersister<String, String, TestDatasourceError>()
         persister.persist(persistedState)
 
-        let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(emitOnFirstObservation: persistedState.loadImpulse)
+        let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(initialImpulse: persistedState.loadImpulse)
         return PlainCacheDatasource<String, String, TestDatasourceError>(
             persister: persister.any,
             loadImpulseEmitter: loadImpulseEmitter.any,
