@@ -1,23 +1,42 @@
 import Foundation
 
 /// Provides or transforms a stream of States.
-/// Should only start work after `observe(_)` is first called.
-/// Must either synchronously return a value upon subscription to `state`,
+///
+/// Must only start work after `observe(_)` is first called AND
+/// `loadImpulseEmitter` has sent the first impulse.
+///
+/// Analogy to ReactiveSwift: Datasources are like SignalProducers,
+/// which are "cold" (no work performed) until they are started.
+/// Instead of a start() function, datasources require the first
+/// load impulse. One major difference to SignalProducers is that
+/// datasources don't restart if `observe(_)` is called again.
+///
+/// Analogy to RxSwift/ReactiveX: Datasources are like cold Observables
+/// (e.g. "Just") that only start work
+/// (no work performed) until it is started. Instead of a start()
+/// function, datasources require the first load impulse.
+///
+/// Should either synchronously return a value upon subscription,
 /// or return `false` for `loadsSynchronously`.
-public protocol DatasourceProtocol {
+public protocol DatasourceProtocol: LastValueRetainingObservable where ObservedValue == DatasourceState {
     associatedtype Value: Any
     associatedtype P: Parameters
     associatedtype E: DatasourceError
     typealias DatasourceState = State<Value, P, E>
-    typealias StatesOverTime = (DatasourceState) -> Void
-
-    /// Register an observer for the states produces by the
-    /// datasource.
-    func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable
+    typealias StatesOverTime = ValuesOverTime
 
     /// Must return `true` if the datasource sends a `state`
     /// immediately on subscription.
     var loadsSynchronously: Bool { get }
+
+    /// Emits loading impulses that prompt the datasource to do
+    /// work. The datasource must subscribe to the loadImpulseEmitter,
+    /// at least to listen for the first impulse to start work.
+    ///
+    /// From a technical point of view, this property requirement is
+    /// superfluous, but it helps the easier nesting of datasources
+    /// and end-user (=developer) convenience.
+    var loadImpulseEmitter: AnyLoadImpulseEmitter<P> { get }
 }
 
 public extension DatasourceProtocol {
@@ -32,16 +51,27 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public typealias P = P_
     public typealias E = E_
 
-    private let _observe: (@escaping StatesOverTime) -> Disposable
+    public let lastValue: SynchronizedProperty<State<Value, P, E>?>
     public let loadsSynchronously: Bool
+    public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
+
+    private let _observe: (@escaping StatesOverTime) -> Disposable
+    private let _removeObserver: (Int) -> Void
 
     init<D: DatasourceProtocol>(_ datasource: D) where D.DatasourceState == DatasourceState {
-        self._observe = datasource.observe
+        self.lastValue = datasource.lastValue
         self.loadsSynchronously = datasource.loadsSynchronously
+        self.loadImpulseEmitter = datasource.loadImpulseEmitter
+        self._observe = datasource.observe
+        self._removeObserver = datasource.removeObserver
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
         return _observe(statesOverTime)
+    }
+
+    public func removeObserver(with key: Int) {
+        _removeObserver(key)
     }
 
 }
@@ -109,5 +139,5 @@ public protocol CachedDatasourceError: DatasourceError {
     init(cacheLoadError type: DatasourceErrorMessage)
 }
 
-public typealias StateObservable<Value, P: Parameters, E: DatasourceError> =
+public typealias InnerStateObservable<Value, P: Parameters, E: DatasourceError> =
     DefaultObservable<State<Value, P, E>>

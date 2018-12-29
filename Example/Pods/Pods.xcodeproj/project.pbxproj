@@ -133,7 +133,7 @@
 		E8441CDE2496B80D40ED014DA3A7138B /* DatasourceProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBFA2D13C5FE9A7C3D1B10A43F736B32 /* DatasourceProtocol.swift */; };
 		E85EAC40F42C10F327BE0BCF39C2DF3B /* ThrowError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42302E8A580049B3A3ADABF7A9E833EE /* ThrowError.swift */; settings = {COMPILER_FLAGS = "-DPRODUCT_NAME=Nimble/Nimble"; }; };
 		E984CB87ABF0DD970BD4B856DEA35E1A /* CwlPreconditionTesting.h in Headers */ = {isa = PBXBuildFile; fileRef = 084A38C3178660C0D1F1A7E094B270E2 /* CwlPreconditionTesting.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		ECD1A7E097871B647C4D321C0FE05F8E /* PlainLocalDatasource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813245E810E377B7988FAA6DD30140D0 /* PlainLocalDatasource.swift */; };
+		ECD1A7E097871B647C4D321C0FE05F8E /* PlainCacheDatasource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 813245E810E377B7988FAA6DD30140D0 /* PlainCacheDatasource.swift */; };
 		EEEB72F63624D54D0CDD0A8F11C9427F /* ListItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5F3B4E3E9B11C085AFF5282C557BD0 /* ListItem.swift */; };
 		F088EE1AE386EEF27AC934DE13F455BB /* CwlCatchException.h in Headers */ = {isa = PBXBuildFile; fileRef = 90000E7AD21E321D619F4DA97455C775 /* CwlCatchException.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		F2A6D404A27D009EDC4B516E4B6B8586 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0053906DC63793F7F0D6BAA7879F1832 /* Foundation.framework */; };
@@ -261,7 +261,7 @@
 		7DB0BFCEE3F768EA6B4AB80BBD7DBDCA /* LastResultRetainingDatasource.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = LastResultRetainingDatasource.swift; path = DataSourcerer/Classes/Core/LastResultRetainingDatasource.swift; sourceTree = "<group>"; };
 		7FD6B952A02D32730308361BFBBC0B11 /* StrongEqualityValueBox.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StrongEqualityValueBox.swift; path = DataSourcerer/Classes/Core/StrongEqualityValueBox.swift; sourceTree = "<group>"; };
 		7FF6BB693D72599397AC7BC4FA407B15 /* Pods-DataSourcerer_Tests-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-DataSourcerer_Tests-umbrella.h"; sourceTree = "<group>"; };
-		813245E810E377B7988FAA6DD30140D0 /* PlainLocalDatasource.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PlainLocalDatasource.swift; path = DataSourcerer/Classes/Core/PlainLocalDatasource.swift; sourceTree = "<group>"; };
+		813245E810E377B7988FAA6DD30140D0 /* PlainCacheDatasource.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PlainCacheDatasource.swift; path = DataSourcerer/Classes/Core/PlainCacheDatasource.swift; sourceTree = "<group>"; };
 		8211E455DF7734DF12B138A63D0D69AF /* Quick.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = Quick.xcconfig; sourceTree = "<group>"; };
 		838725A5D79D138A96E9A58370482809 /* MatcherProtocols.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = MatcherProtocols.swift; path = Sources/Nimble/Matchers/MatcherProtocols.swift; sourceTree = "<group>"; };
 		861AB99E4A23D27DF26DFBFE33D789C9 /* Errors.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = Errors.swift; path = Sources/Nimble/Utils/Errors.swift; sourceTree = "<group>"; };
@@ -498,7 +498,7 @@
 				53CF342BA88FDA27121C35C3C5C93A1E /* LoadImpulseEmitter.swift */,
 				ECB2620D92C4A9E57D55D63CF119981A /* Observable.swift */,
 				A2D506362ABE4655D73845B63A0BD0B3 /* Parameters.swift */,
-				813245E810E377B7988FAA6DD30140D0 /* PlainLocalDatasource.swift */,
+				813245E810E377B7988FAA6DD30140D0 /* PlainCacheDatasource.swift */,
 				D251F61834F39B9C2DAA8B4E8FDA9162 /* State.swift */,
 				E80D299A63C14F7BC5E8D085F4E00862 /* State+ListItems.swift */,
 				325C7895ED9198CA5B58B601893F4D81 /* StatePersister.swift */,
@@ -1001,7 +1001,7 @@
 				8AC8E7B0E2FE313D864DA7AD5F2F3A3C /* LoadImpulseEmitter.swift in Sources */,
 				7E5AC38C29A22989CEF716CC4B2CD621 /* Observable.swift in Sources */,
 				1CDDE3AC1F0EC7DEC535F4C05E61407D /* Parameters.swift in Sources */,
-				ECD1A7E097871B647C4D321C0FE05F8E /* PlainLocalDatasource.swift in Sources */,
+				ECD1A7E097871B647C4D321C0FE05F8E /* PlainCacheDatasource.swift in Sources */,
 				8D728C992EFD8EA3B5D7ED8A70AB110A /* State+ListItems.swift in Sources */,
 				A35732D3E362CA29AFB9BB3BD28FB5D7 /* State.swift in Sources */,
 				2A5804B79B1D7D4AF175FC31A2B23DD6 /* StatePersister.swift in Sources */,

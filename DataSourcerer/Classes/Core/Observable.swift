@@ -1,7 +1,46 @@
 import Foundation
 
-public protocol Observable {
+public protocol UntypedObservable {
     func removeObserver(with: Int)
+}
+
+public protocol TypedObservable: UntypedObservable {
+    associatedtype ObservedValue
+    typealias ValuesOverTime = (ObservedValue) -> Void
+
+    func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable
+}
+
+public protocol LastValueRetainingObservable: TypedObservable {
+    var lastValue: SynchronizedProperty<ObservedValue?> { get }
+}
+
+public extension LastValueRetainingObservable {
+    var any: AnyLastValueRetainingObservable<ObservedValue> {
+        return AnyLastValueRetainingObservable(self)
+    }
+}
+
+public struct AnyLastValueRetainingObservable<T_>: LastValueRetainingObservable {
+    public typealias ObservedValue = T_
+
+    public let lastValue: SynchronizedProperty<ObservedValue?>
+    private var _observe: (@escaping ValuesOverTime) -> Disposable
+    private var _removeObserver: (Int) -> Void
+
+    init<O: LastValueRetainingObservable>(_ observable: O) where O.ObservedValue == ObservedValue {
+        self.lastValue = observable.lastValue
+        self._observe = observable.observe
+        self._removeObserver = observable.removeObserver
+    }
+
+    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
+        return _observe(valuesOverTime)
+    }
+
+    public func removeObserver(with key: Int) {
+        _removeObserver(key)
+    }
 }
 
 public protocol Disposable: AnyObject {
@@ -53,9 +92,9 @@ public extension CompositeDisposable {
 public final class ObserverDisposable: Disposable {
 
     var key: Int
-    var observable: Observable?
+    var observable: UntypedObservable?
 
-    public init(observable: Observable, key: Int) {
+    public init(observable: UntypedObservable, key: Int) {
         self.observable = observable
         self.key = key
     }
@@ -68,11 +107,7 @@ public final class ObserverDisposable: Disposable {
 
 public final class DisposeBag {
 
-    var disposables: SynchronizedProperty<[Disposable]>
-
-    init() {
-        self.disposables = SynchronizedProperty([])
-    }
+    private let disposables = SynchronizedMutableProperty<[Disposable]>([])
 
     public func add(_ disposable: Disposable) {
         disposables.modify({ $0 += [disposable] })
@@ -87,11 +122,14 @@ public final class DisposeBag {
     }
 }
 
-open class DefaultObservable<T>: Observable {
+open class DefaultObservable<T_>: LastValueRetainingObservable {
+    public typealias ObservedValue = T_
+    public typealias ValuesOverTime = (ObservedValue) -> Void
 
-    public typealias ValuesOverTime = (T) -> Void
+    private let mutableLastValue = SynchronizedMutableProperty<ObservedValue?>(nil)
+    public lazy var lastValue = SynchronizedProperty<ObservedValue?>(self.mutableLastValue)
 
-    private var observers = SynchronizedProperty([Int: ValuesOverTime]())
+    private let observers = SynchronizedMutableProperty([Int: ValuesOverTime]())
 
     open func observe(_ observe: @escaping ValuesOverTime) -> Disposable {
 
@@ -100,8 +138,9 @@ open class DefaultObservable<T>: Observable {
         return ObserverDisposable(observable: self, key: uniqueKey)
     }
 
-    open func emit(_ value: T) {
+    open func emit(_ value: ObservedValue) {
 
+        mutableLastValue.value = value
         observers.value.values.forEach({ valuesOverTime in
             valuesOverTime(value)
         })

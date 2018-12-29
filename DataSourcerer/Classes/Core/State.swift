@@ -24,28 +24,28 @@ public extension State {
     /// An error has been encountered in a datasource (e.g. while loading).
     /// A value can still be defined (e.g. API call failed, but a cache value is
     /// available).
-    static func error(error: E, loadImpulse: LoadImpulse<P>, fallbackValue: Value?) -> State {
+    static func error(error: E, loadImpulse: LoadImpulse<P>, fallbackValueBox: EquatableBox<Value>?) -> State {
         return State(provisioningState: .result,
                      loadImpulse: loadImpulse,
-                     value: fallbackValue.map({ EquatableBox($0) }),
+                     value: fallbackValueBox,
                      error: error)
     }
 
     /// A value has been created in a datasource. An error can still be defined
     /// (e.g. a cached value has been found, but )
-    static func value(value: Value, loadImpulse: LoadImpulse<P>, fallbackError: E?) -> State {
+    static func value(valueBox: EquatableBox<Value>, loadImpulse: LoadImpulse<P>, fallbackError: E?) -> State {
         return State(provisioningState: .result,
                      loadImpulse: loadImpulse,
-                     value: EquatableBox(value),
+                     value: valueBox,
                      error: fallbackError)
     }
 
     /// The emitting datasource is loading, and has a fallbackValue (e.g. from a cache), or
     /// a fallback error, or both.
-    static func loading(loadImpulse: LoadImpulse<P>, fallbackValue: Value?, fallbackError: E?) -> State {
+    static func loading(loadImpulse: LoadImpulse<P>, fallbackValueBox: EquatableBox<Value>?, fallbackError: E?) -> State {
         return State(provisioningState: .loading,
                      loadImpulse: loadImpulse,
-                     value: fallbackValue.map({ EquatableBox($0) }),
+                     value: fallbackValueBox,
                      error: fallbackError)
     }
 

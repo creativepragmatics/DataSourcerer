@@ -1,23 +1,22 @@
 import Foundation
 
-open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: Observable {
-    public typealias EndedLoadingEventsOverTime = () -> Void
+open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: TypedObservable {
+    public typealias ObservedValue = Datasource.P
+    public typealias EndedLoadingEventsOverTime = (Datasource.P) -> Void
 
     private let datasource: Datasource
-    private let loadImpulseEmitter: AnyLoadImpulseEmitter<Datasource.P>
     private let disposeBag = DisposeBag()
-    private var isLoading = SynchronizedProperty<Bool>(false)
-    private var isObserved = SynchronizedProperty<Bool>(false)
-    private let innerObservable = DefaultObservable<Void>()
+    private var isLoading = SynchronizedMutableProperty<Bool>(false)
+    private var isObserved = SynchronizedMutableProperty<Bool>(false)
+    private let innerObservable = DefaultObservable<Datasource.P>()
 
-    init(datasource: Datasource, loadImpulseEmitter: AnyLoadImpulseEmitter<Datasource.P>) {
+    init(datasource: Datasource) {
         self.datasource = datasource
-        self.loadImpulseEmitter = loadImpulseEmitter
     }
 
     private func startObserving() {
 
-        loadImpulseEmitter
+        datasource.loadImpulseEmitter
             .observe { [weak self] _ in
                 self?.isLoading.value = true
             }
@@ -25,12 +24,14 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: Observable {
 
         datasource
             .observe { [weak self] state in
-                guard let self = self, self.isLoading.value == false else { return }
+                guard let self = self,
+                    self.isLoading.value == false,
+                    let parameters = state.loadImpulse?.parameters else { return }
 
                 switch state.provisioningState {
                 case .result:
                     self.isLoading.value = false
-                    self.innerObservable.emit(())
+                    self.innerObservable.emit(parameters)
                 case .notReady, .loading:
                     break
                 }
@@ -38,7 +39,7 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: Observable {
             .disposed(by: disposeBag)
     }
 
-    public func observe(_ observe: @escaping EndedLoadingEventsOverTime) -> Disposable {
+    public func observe(_ valuesOverTime: @escaping EndedLoadingEventsOverTime) -> Disposable {
 
         defer {
             let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
@@ -47,7 +48,7 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: Observable {
             }
         }
 
-        let innerDisposable = innerObservable.observe(observe)
+        let innerDisposable = innerObservable.observe(valuesOverTime)
         return CompositeDisposable(innerDisposable, objectToRetain: self)
     }
 
@@ -59,12 +60,9 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: Observable {
 
 public extension DatasourceProtocol {
 
-    func observeEndedLoading(
-        loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
-        _ endedLoadingEventsOverTime: @escaping DatasourceEndedLoading<Self>.EndedLoadingEventsOverTime)
-        -> Disposable {
-        return DatasourceEndedLoading(datasource: self,
-                                      loadImpulseEmitter: loadImpulseEmitter)
+    func observeEndedLoading(_ endedLoadingEventsOverTime:
+        @escaping DatasourceEndedLoading<Self>.EndedLoadingEventsOverTime) -> Disposable {
+        return DatasourceEndedLoading(datasource: self)
             .observe(endedLoadingEventsOverTime)
     }
 }

@@ -1,10 +1,9 @@
 import Foundation
 
-public protocol LoadImpulseEmitterProtocol {
+public protocol LoadImpulseEmitterProtocol: TypedObservable where ObservedValue == LoadImpulse<P> {
     associatedtype P: Parameters
-    typealias LoadImpulsesOverTime = (LoadImpulse<P>) -> Void
+    typealias LoadImpulsesOverTime = ValuesOverTime
 
-    func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable
     func emit(_ loadImpulse: LoadImpulse<P>)
 }
 
@@ -18,11 +17,13 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     public typealias P = P_
 
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
+    private let _removeObserver: (Int) -> Void
     private let _emit: (LoadImpulse<P>) -> Void
 
     init<Emitter: LoadImpulseEmitterProtocol>(_ emitter: Emitter) where Emitter.P == P {
         self._emit = emitter.emit
         self._observe = emitter.observe
+        self._removeObserver = emitter.removeObserver
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P_>) {
@@ -32,15 +33,19 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     public func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable {
         return _observe(loadImpulsesOverTime)
     }
+
+    public func removeObserver(with key: Int) {
+        _removeObserver(key)
+    }
 }
 
-public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, Observable {
+public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, UntypedObservable {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
     private let impulseOnFirstObservation: LoadImpulse<P>?
     private let innerObservable = DefaultObservable<LI>()
-    private var isObserved = SynchronizedProperty(false)
+    private var isObserved = SynchronizedMutableProperty(false)
 
     public init(emitOnFirstObservation impulseOnFirstObservation: LoadImpulse<P>?) {
         self.impulseOnFirstObservation = impulseOnFirstObservation
@@ -70,15 +75,15 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
 
 }
 
-public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, Observable {
+public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, UntypedObservable {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
     private let lastLoadImpulse: LoadImpulse<P>?
     private let innerEmitter: DefaultLoadImpulseEmitter<P>
     private let disposeBag = DisposeBag()
-    private var timer = SynchronizedProperty<DispatchSourceTimer?>(nil)
-    private var isObserved = SynchronizedProperty(false)
+    private var timer = SynchronizedMutableProperty<DispatchSourceTimer?>(nil)
+    private var isObserved = SynchronizedMutableProperty(false)
     private let timerExecuter = SynchronizedExecuter()
     private let timerEmitQueue: DispatchQueue
     public var timerMode: TimerMode {

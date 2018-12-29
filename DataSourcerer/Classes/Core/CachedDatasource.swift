@@ -5,29 +5,27 @@ import Foundation
 /// State coming from the primary datasource is treated as preferential over state from
 /// the cache datasource. You can think of the cache datasource as cache.
 open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
+
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-
     public typealias SubDatasource = AnyDatasource<Value, P, E>
-    public typealias LoadImpulseEmitterConcrete = AnyLoadImpulseEmitter<P>
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
+
+    public var lastValue: SynchronizedProperty<DatasourceState?> {
+        return innerObservable.lastValue
+    }
+    public let loadsSynchronously = true
+    public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     private let primaryDatasource: SubDatasource
     private let cacheDatasource: SubDatasource
-    private let loadImpulseEmitter: LoadImpulseEmitterConcrete
     private let persister: StatePersisterConcrete?
-
-    public let loadsSynchronously = true
-
-    private let stateObservable = StateObservable<Value, P, E>()
+    private let innerObservable = InnerStateObservable<Value, P, E>()
     private let disposeBag = DisposeBag()
+    private var currentStateComponents = SynchronizedMutableProperty(StateComponents.initial)
 
-    private var currentStateComponents = SynchronizedProperty(StateComponents.initial)
-
-    private var currentState = SynchronizedProperty(DatasourceState.notReady)
-
-    public init(loadImpulseEmitter: LoadImpulseEmitterConcrete,
+    public init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
                 primaryDatasource: SubDatasource,
                 cacheDatasource: SubDatasource,
                 persister: StatePersisterConcrete?) {
@@ -35,6 +33,10 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
         self.primaryDatasource = primaryDatasource
         self.cacheDatasource = cacheDatasource
         self.persister = persister
+    }
+
+    public func removeObserver(with key: Int) {
+        innerObservable.removeObserver(with: key)
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
@@ -55,7 +57,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
         // Send .notReady right now, because loadsSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
-        return stateObservable.observe(statesOverTime)
+        return innerObservable.observe(statesOverTime)
     }
 
     private func setAndEmitNext(latestPrimaryState: DatasourceState? = nil,
@@ -87,9 +89,18 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
             shouldSkipLoad(for: loadImpulse) == false else { return }
 
         let combinedState = self.combinedState(primary: primary, cache: cached, loadImpulse: loadImpulse)
-        let stateChanged = currentState.set(combinedState, if: { $0 != combinedState })
+
+        let stateChanged: Bool = {
+            let lastState = lastValue.value
+            if let lastState = lastState, lastState != combinedState {
+                return true
+            } else {
+                return lastState == nil
+            }
+        }()
+
         if stateChanged {
-            stateObservable.emit(combinedState)
+            innerObservable.emit(combinedState)
         }
     }
 
@@ -101,11 +112,11 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
         case .notReady, .loading:
             if let primaryValueBox = primary.cacheCompatibleValue(for: loadImpulse) {
                 return State.loading(loadImpulse: loadImpulse,
-                                     fallbackValue: primaryValueBox.value,
+                                     fallbackValueBox: primaryValueBox,
                                      fallbackError: primary.error)
             } else if let cacheValueBox = cache.cacheCompatibleValue(for: loadImpulse) {
                 return State.loading(loadImpulse: loadImpulse,
-                                     fallbackValue: cacheValueBox.value,
+                                     fallbackValueBox: cacheValueBox,
                                      fallbackError: cache.error)
             } else {
                 // Neither remote success nor cached value
@@ -113,7 +124,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 case .notReady, .result: return State.notReady
                 // Add primary as fallback so any errors are added
                 case .loading: return State.loading(loadImpulse: loadImpulse,
-                                                    fallbackValue: nil,
+                                                    fallbackValueBox: nil,
                                                     fallbackError: primary.error)
                 }
             }
@@ -126,9 +137,9 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 if let error = primary.error {
                     return State.error(error: error,
                                        loadImpulse: loadImpulse,
-                                       fallbackValue: primaryValueBox.value)
+                                       fallbackValueBox: primaryValueBox)
                 } else {
-                    return State.value(value: primaryValueBox.value,
+                    return State.value(valueBox: primaryValueBox,
                                        loadImpulse: loadImpulse,
                                        fallbackError: nil)
                 }
@@ -136,11 +147,11 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 if let cachedValueBox = cache.cacheCompatibleValue(for: loadImpulse) {
                     return State.error(error: error,
                                        loadImpulse: loadImpulse,
-                                       fallbackValue: cachedValueBox.value)
+                                       fallbackValueBox: cachedValueBox)
                 } else {
                     return State.error(error: error,
                                        loadImpulse: loadImpulse,
-                                       fallbackValue: nil)
+                                       fallbackValueBox: nil)
                 }
             } else {
                 // Remote state might not match current parameters - return .notReady
@@ -153,7 +164,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     }
 
     open func shouldSkipLoad(for loadImpulse: LoadImpulse<P>) -> Bool {
-        return loadImpulse.skipIfResultAvailable && currentState.value.hasLoadedSuccessfully
+        return loadImpulse.skipIfResultAvailable && (lastValue.value?.hasLoadedSuccessfully ?? false)
     }
 
     public struct StateComponents {

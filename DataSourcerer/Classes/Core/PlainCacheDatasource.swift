@@ -5,18 +5,21 @@ public struct PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceError> 
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias LoadImpulseEmitterConcrete = AnyLoadImpulseEmitter<P>
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
 
     public let loadsSynchronously = true
-    private let persister: StatePersisterConcrete
-    public var loadImpulseEmitter: LoadImpulseEmitterConcrete
-    private let cacheLoadError: E
-    private let stateObservable = StateObservable<Value, P, E>()
+    public let persister: StatePersisterConcrete
+    public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
+    public let cacheLoadError: E
+    public var lastValue: SynchronizedProperty<DatasourceState?> {
+        return innerObservable.lastValue
+    }
+
+    private let innerObservable = InnerStateObservable<Value, P, E>()
     private let disposeBag = DisposeBag()
 
     public init(persister: StatePersisterConcrete,
-                loadImpulseEmitter: LoadImpulseEmitterConcrete,
+                loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
                 cacheLoadError: E) {
 
         self.persister = persister
@@ -32,21 +35,25 @@ public struct PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceError> 
         let cacheLoadError = self.cacheLoadError // avoid capturing self in closure
 
         defer {
-            loadImpulseEmitter.observe { [weak stateObservable] loadImpulse in
+            loadImpulseEmitter.observe { [weak innerObservable] loadImpulse in
                 let state: DatasourceState = {
                     guard let cached = persister.load(loadImpulse.parameters) else {
                         return DatasourceState.error(error: cacheLoadError,
                                                      loadImpulse: loadImpulse,
-                                                     fallbackValue: nil)
+                                                     fallbackValueBox: nil)
                     }
 
                     return cached
                 }()
-                stateObservable?.emit(state)
+                innerObservable?.emit(state)
             }.disposed(by: disposeBag)
         }
 
-        return stateObservable.observe(statesOverTime)
+        return innerObservable.observe(statesOverTime)
+    }
+
+    public func removeObserver(with key: Int) {
+        innerObservable.removeObserver(with: key)
     }
 
 }

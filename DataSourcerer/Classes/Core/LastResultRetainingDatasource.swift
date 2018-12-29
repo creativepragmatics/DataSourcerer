@@ -17,19 +17,25 @@ import Foundation
 /// error,.
 open class LastResultRetainingDatasource
 <Value_: Any, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
+
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-
     public typealias SubDatasource = AnyDatasource<Value, P, E>
-    public typealias LoadImpulseEmitterConcrete = AnyLoadImpulseEmitter<P>
 
+    public var lastValue: SynchronizedProperty<DatasourceState?> {
+        return innerObservable.lastValue
+    }
     public let loadsSynchronously = true
+    public var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
+        return innerDatasource.loadImpulseEmitter
+    }
+
     private let innerDatasource: SubDatasource
-    private let stateObservable = StateObservable<Value, P, E>()
+    private let innerObservable = InnerStateObservable<Value, P, E>()
+    private let lastResult = SynchronizedMutableProperty<LastResult?>(nil)
+    private var isObserved = SynchronizedMutableProperty<Bool>(false)
     private let disposeBag = DisposeBag()
-    private var isObserved = SynchronizedProperty<Bool>(false)
-    private let lastResult = SynchronizedProperty<LastResult?>(nil)
 
     public init(innerDatasource: SubDatasource) {
         self.innerDatasource = innerDatasource
@@ -47,8 +53,12 @@ open class LastResultRetainingDatasource
         // Send .notReady right now, because loadsSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
-        let innerDisposable = stateObservable.observe(statesOverTime)
+        let innerDisposable = innerObservable.observe(statesOverTime)
         return CompositeDisposable(innerDisposable, objectToRetain: self)
+    }
+
+    public func removeObserver(with key: Int) {
+        innerObservable.removeObserver(with: key)
     }
 
     private func startObserving() {
@@ -76,7 +86,7 @@ open class LastResultRetainingDatasource
             }
 
             let nextState = self.nextState(innerState: state)
-            self.stateObservable.emit(nextState)
+            self.innerObservable.emit(nextState)
         }.disposed(by: disposeBag)
     }
 
@@ -87,20 +97,20 @@ open class LastResultRetainingDatasource
         case .loading:
             guard let loadImpulse = innerState.loadImpulse else { return .notReady }
 
-            let value = self.value(innerState: innerState, loadImpulse: loadImpulse)
+            let valueBox = self.value(innerState: innerState, loadImpulse: loadImpulse)
             let error = self.error(innerState: innerState, loadImpulse: loadImpulse)
             return DatasourceState.loading(loadImpulse: loadImpulse,
-                                           fallbackValue: value,
+                                           fallbackValueBox: valueBox,
                                            fallbackError: error)
         case .result:
             guard let loadImpulse = innerState.loadImpulse else { return .notReady }
 
             if let error = innerState.cacheCompatibleError(for: loadImpulse) {
-                let value = self.value(innerState: innerState, loadImpulse: loadImpulse)
-                return DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValue: value)
+                let valueBox = self.value(innerState: innerState, loadImpulse: loadImpulse)
+                return DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValueBox: valueBox)
             } else if let valueBox = innerState.cacheCompatibleValue(for: loadImpulse) {
                 // We have a definitive success result, with no error, so we erase all previous errors
-                return DatasourceState.value(value: valueBox.value,
+                return DatasourceState.value(valueBox: valueBox,
                                              loadImpulse: loadImpulse,
                                              fallbackError: nil)
             } else {
@@ -116,13 +126,13 @@ open class LastResultRetainingDatasource
     /// Returns either the current state's value, or the fallbackValueState's.
     /// If neither is set, returns nil.
     private func value(innerState: DatasourceState,
-                       loadImpulse: LoadImpulse<P>) -> Value? {
+                       loadImpulse: LoadImpulse<P>) -> EquatableBox<Value>? {
 
         if let innerStateValueBox = innerState.cacheCompatibleValue(for: loadImpulse) {
-            return innerStateValueBox.value
+            return innerStateValueBox
         } else if let fallbackValueStateValueBox =
             lastResult.value?.valueState?.cacheCompatibleValue(for: loadImpulse) {
-            return fallbackValueStateValueBox.value
+            return fallbackValueStateValueBox
         } else {
             return nil
         }
@@ -142,7 +152,7 @@ open class LastResultRetainingDatasource
         }
     }
 
-    private enum LastResult {
+    public enum LastResult {
         case value(DatasourceState)
         case error(DatasourceState)
 

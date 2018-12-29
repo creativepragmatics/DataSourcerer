@@ -87,6 +87,7 @@ type_name:
     - P
     - E
     - LI
+    - T
   allowed_symbols: "_"
 generic_type_name:
   allowed_symbols: "_"

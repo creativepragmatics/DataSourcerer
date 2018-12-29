@@ -4,7 +4,7 @@ import Foundation
 /// synchronous getter.
 ///
 /// Some discussion: https://twitter.com/manuelmaly/status/1077885584939630593?s=20
-public final class SynchronizedProperty<T> {
+public final class SynchronizedMutableProperty<T> {
     public typealias DidSet = Bool
 
     public let executer: SynchronizedExecuter
@@ -60,7 +60,28 @@ public final class SynchronizedProperty<T> {
 
 }
 
-public extension SynchronizedProperty where T: Equatable {
+public extension SynchronizedMutableProperty {
+
+    var readonly: SynchronizedProperty<T> {
+        return SynchronizedProperty(self)
+    }
+}
+
+public final class SynchronizedProperty<T> {
+
+    private let mutableProperty: SynchronizedMutableProperty<T>
+
+    public var value: T {
+        return mutableProperty.value
+    }
+
+    public init(_ mutableProperty: SynchronizedMutableProperty<T>) {
+        self.mutableProperty = mutableProperty
+    }
+
+}
+
+public extension SynchronizedMutableProperty where T: Equatable {
 
     /// Only sets value if `candidate` equals the current value.
     /// Returns true if value is set. Pure convenience.
