@@ -33,7 +33,35 @@ The missing link between API Calls (any data provider actually) and your UITable
   s.swift_version = '4.2'
 
   s.subspec 'Core' do |ss|
-    ss.source_files = 'ReactiveListDatasource/Classes/Core/**/*'
+    ss.source_files = 'DataSourcerer/Classes/Core/**/*'
+  end
+
+  s.subspec 'List' do |ss|
+    ss.source_files = 'DataSourcerer/Classes/List/**/*'
+    ss.dependency 'DataSourcerer/Core'
+  end
+
+  s.subspec 'List-UIKit' do |ss|
+    ss.source_files = 'DataSourcerer/Classes/List-UIKit/**/*'
+    ss.dependency 'DataSourcerer/List'
+  end
+    
+  s.subspec 'TableView' do |ss|
+    ss.source_files = 'DataSourcerer/Classes/TableView/**/*'
+    ss.dependency 'DataSourcerer/List-UIKit'
+    ss.dependency 'Dwifft', '~> 0.9'
+  end
+
+  s.subspec 'CollectionView' do |ss|
+    ss.source_files = 'DataSourcerer/Classes/CollectionView/**/*'
+    ss.dependency 'DataSourcerer/List-UIKit'
+    ss.dependency 'Dwifft', '~> 0.9'
+  end
+
+  s.subspec 'Persister-Cache' do |ss|
+    ss.source_files = 'DataSourcerer/Classes/Persister-Cache/**/*'
+    ss.dependency 'DataSourcerer/Core'
+    ss.dependency 'Cache', '~> 5.2.0'
   end
   
 end

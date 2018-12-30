@@ -9,10 +9,10 @@ open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError
 
     public let sendsFirstStateSynchronously = true
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-    public var lastValue: SynchronizedProperty<DatasourceState?> {
-        return innerDatasource.lastValue
+    public var currentValue: SynchronizedProperty<DatasourceState> {
+        return innerDatasource.currentValue
     }
-    private let innerDatasource: Datasource<Value, P, E>
+    private let innerDatasource: ClosureDatasource<Value, P, E>
 
     private let disposeBag = DisposeBag()
 
@@ -20,12 +20,12 @@ open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError
         innerObservable.removeObserver(with: key)
     }
 
-    private let innerObservable = InnerStateObservable<Value, P, E>()
+    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
 
     init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>, states: [State<Value, P, E>], error: E) {
         self.loadImpulseEmitter = loadImpulseEmitter
 
-        self.innerDatasource = Datasource.init(loadImpulseEmitter: loadImpulseEmitter, { (loadImpulse, send) in
+        self.innerDatasource = ClosureDatasource.init(loadImpulseEmitter: loadImpulseEmitter, { (loadImpulse, send) in
             let state = states.first(where: { $0.loadImpulse == loadImpulse })
                 ?? DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValueBox: nil)
             send(state)

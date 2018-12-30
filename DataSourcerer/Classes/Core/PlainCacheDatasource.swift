@@ -1,6 +1,6 @@
 import Foundation
 
-public struct PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceError> : DatasourceProtocol {
+public final class PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceError> : DatasourceProtocol {
 
     public typealias Value = Value_
     public typealias P = P_
@@ -11,11 +11,11 @@ public struct PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceError> 
     public let persister: StatePersisterConcrete
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
     public let cacheLoadError: E
-    public var lastValue: SynchronizedProperty<DatasourceState?> {
-        return innerObservable.lastValue
+    public var currentValue: SynchronizedProperty<DatasourceState> {
+        return innerObservable.currentValue
     }
 
-    private let innerObservable = InnerStateObservable<Value, P, E>()
+    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
     private let disposeBag = DisposeBag()
 
     public init(persister: StatePersisterConcrete,
@@ -49,7 +49,8 @@ public struct PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceError> 
             }.disposed(by: disposeBag)
         }
 
-        return innerObservable.observe(statesOverTime)
+        let disposable = innerObservable.observe(statesOverTime)
+        return CompositeDisposable(disposable, objectToRetain: self)
     }
 
     public func removeObserver(with key: Int) {

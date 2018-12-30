@@ -9,7 +9,7 @@ class ObservableSpec: QuickSpec {
         describe("DefaultObservable") {
             it("should send values to an observer") {
 
-                let observable = DefaultObservable<Int>()
+                let observable = DefaultObservable<Int>(1)
 
                 var observedValues: [Int] = []
 
@@ -24,7 +24,7 @@ class ObservableSpec: QuickSpec {
             }
             it("should not duplicate values with multiple observers subscribed") {
 
-                let observable = DefaultObservable<Int>()
+                let observable = DefaultObservable<Int>(1)
 
                 var observedValues: [Int] = []
 
@@ -40,7 +40,7 @@ class ObservableSpec: QuickSpec {
             }
             it("should stop sending values to an observer after disposal") {
 
-                let observable = DefaultObservable<Int>()
+                let observable = DefaultObservable<Int>(1)
 
                 var observedValues: [Int] = []
 
@@ -58,7 +58,7 @@ class ObservableSpec: QuickSpec {
             it("should release observer after disposal") {
 
                 weak var testStr: NSMutableString?
-                let observable = DefaultObservable<String>()
+                let observable = DefaultObservable<String>("")
 
                 let testScope: () -> Disposable = {
                     let innerStr = NSMutableString(string: "")

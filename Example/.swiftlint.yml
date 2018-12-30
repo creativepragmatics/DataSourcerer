@@ -104,6 +104,7 @@ identifier_name:
     - rhs
     - bag
     - box
+    - nib
   allowed_symbols: "_"
 nesting:
   type_level: 2

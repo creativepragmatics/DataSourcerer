@@ -23,8 +23,8 @@ open class LastResultRetainingDatasource
     public typealias E = E_
     public typealias SubDatasource = AnyDatasource<Value, P, E>
 
-    public var lastValue: SynchronizedProperty<DatasourceState?> {
-        return innerObservable.lastValue
+    public var currentValue: SynchronizedProperty<DatasourceState> {
+        return innerObservable.currentValue
     }
     public let sendsFirstStateSynchronously = true
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
@@ -32,7 +32,7 @@ open class LastResultRetainingDatasource
     }
 
     private let innerDatasource: SubDatasource
-    private let innerObservable = InnerStateObservable<Value, P, E>()
+    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
     private let lastResult = SynchronizedMutableProperty<LastResult?>(nil)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
     private let disposeBag = DisposeBag()

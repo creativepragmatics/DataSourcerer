@@ -12,8 +12,8 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public typealias SubDatasource = AnyDatasource<Value, P, E>
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
 
-    public var lastValue: SynchronizedProperty<DatasourceState?> {
-        return innerObservable.lastValue
+    public var currentValue: SynchronizedProperty<DatasourceState> {
+        return innerObservable.currentValue
     }
     public let sendsFirstStateSynchronously = true
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
@@ -21,7 +21,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     private let primaryDatasource: SubDatasource
     private let cacheDatasource: SubDatasource
     private let persister: StatePersisterConcrete?
-    private let innerObservable = InnerStateObservable<Value, P, E>()
+    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
     private let disposeBag = DisposeBag()
     private var currentStateComponents = SynchronizedMutableProperty(StateComponents.initial)
 
@@ -57,7 +57,8 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
         // Send .notReady right now, because sendsFirstStateSynchronously == true
         statesOverTime(DatasourceState.notReady)
 
-        return innerObservable.observe(statesOverTime)
+        let disposable = innerObservable.observe(statesOverTime)
+        return CompositeDisposable(disposable, objectToRetain: self)
     }
 
     private func setAndEmitNext(latestPrimaryState: DatasourceState? = nil,
@@ -90,16 +91,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 
         let combinedState = self.combinedState(primary: primary, cache: cached, loadImpulse: loadImpulse)
 
-        let stateChanged: Bool = {
-            let lastState = lastValue.value
-            if let lastState = lastState, lastState != combinedState {
-                return true
-            } else {
-                return lastState == nil
-            }
-        }()
-
-        if stateChanged {
+        if currentValue.value != combinedState {
             innerObservable.emit(combinedState)
         }
     }
@@ -174,7 +166,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     }
 
     open func shouldSkipLoad(for loadImpulse: LoadImpulse<P>) -> Bool {
-        return loadImpulse.skipIfResultAvailable && (lastValue.value?.hasLoadedSuccessfully ?? false)
+        return loadImpulse.skipIfResultAvailable && currentValue.value.hasLoadedSuccessfully
     }
 
     public struct StateComponents {

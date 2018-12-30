@@ -44,7 +44,7 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     public typealias LI = LoadImpulse<P>
 
     private let initialImpulse: LoadImpulse<P>?
-    private let innerObservable = DefaultObservable<LI>()
+    private let innerObservable = DefaultObservable<LI?>(nil)
 
     public init(initialImpulse: LoadImpulse<P>?) {
         self.initialImpulse = initialImpulse
@@ -56,7 +56,11 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
             observe(initialImpulse)
         }
 
-        let innerDisposable = innerObservable.observe(observe)
+        let innerDisposable = innerObservable.observe { loadImpulse in
+            if let loadImpulse = loadImpulse {
+                observe(loadImpulse)
+            }
+        }
         let selfDisposable: Disposable = InstanceRetainingDisposable(self)
         return CompositeDisposable([innerDisposable, selfDisposable])
     }

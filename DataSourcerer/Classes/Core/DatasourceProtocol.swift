@@ -18,7 +18,7 @@ import Foundation
 ///
 /// Should either synchronously return a value upon subscription,
 /// or return `false` for `sendsFirstStateSynchronously`.
-public protocol DatasourceProtocol: LastValueRetainingObservable where ObservedValue == DatasourceState {
+public protocol DatasourceProtocol: ValueRetainingObservable where ObservedValue == DatasourceState {
     associatedtype Value: Any
     associatedtype P: Parameters
     associatedtype E: DatasourceError
@@ -51,7 +51,7 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public typealias P = P_
     public typealias E = E_
 
-    public let lastValue: SynchronizedProperty<State<Value, P, E>?>
+    public let currentValue: SynchronizedProperty<State<Value, P, E>>
     public let sendsFirstStateSynchronously: Bool
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
@@ -59,7 +59,7 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     private let _removeObserver: (Int) -> Void
 
     init<D: DatasourceProtocol>(_ datasource: D) where D.DatasourceState == DatasourceState {
-        self.lastValue = datasource.lastValue
+        self.currentValue = datasource.currentValue
         self.sendsFirstStateSynchronously = datasource.sendsFirstStateSynchronously
         self.loadImpulseEmitter = datasource.loadImpulseEmitter
         self._observe = datasource.observe

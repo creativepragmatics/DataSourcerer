@@ -1,14 +1,14 @@
 import Foundation
 
 open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: TypedObservable {
-    public typealias ObservedValue = Datasource.P
-    public typealias EndedLoadingEventsOverTime = (Datasource.P) -> Void
+    public typealias ObservedValue = Void
+    public typealias EndedLoadingEventsOverTime = (()) -> Void
 
     private let datasource: Datasource
     private let disposeBag = DisposeBag()
     private var isLoading = SynchronizedMutableProperty<Bool>(false)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
-    private let innerObservable = DefaultObservable<Datasource.P>()
+    private let innerObservable = DefaultObservable<Void>(())
 
     init(datasource: Datasource) {
         self.datasource = datasource
@@ -26,12 +26,12 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: TypedObservab
             .observe { [weak self] state in
                 guard let self = self,
                     self.isLoading.value == false,
-                    let parameters = state.loadImpulse?.parameters else { return }
+                    state.loadImpulse?.parameters != nil else { return }
 
                 switch state.provisioningState {
                 case .result:
                     self.isLoading.value = false
-                    self.innerObservable.emit(parameters)
+                    self.innerObservable.emit(())
                 case .notReady, .loading:
                     break
                 }
