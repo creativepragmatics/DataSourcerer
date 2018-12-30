@@ -56,7 +56,7 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
             observe(initialImpulse)
         }
 
-        let innerDisposable = innerObservable.observe { loadImpulse in
+        let innerDisposable = innerObservable.observeWithoutCurrentValue { loadImpulse in
             if let loadImpulse = loadImpulse {
                 observe(loadImpulse)
             }

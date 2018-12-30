@@ -6,7 +6,7 @@ import Quick
 class ObservableSpec: QuickSpec {
 
     override func spec() {
-        describe("DefaultObservable") {
+        describe("DefaultStatefulObservable") {
             it("should send values to an observer") {
 
                 let observable = DefaultStatefulObservable<Int>(1)
@@ -75,10 +75,10 @@ class ObservableSpec: QuickSpec {
 
                 disposable.dispose()
 
-                // Force sync access to observers so next assert works synchronously.
-                // Alternatively, a wait or waitUntil could be used, but this is
+                // Force synchronous access to disposable observers so assert works synchronously.
+                // Alternatively, a wait or waitUntil assert could be used, but this is
                 // less complex.
-                observable.emit("3")
+                expect(disposable.isDisposed) == true
 
                 expect(testStr).to(beNil())
             }
@@ -100,5 +100,9 @@ internal final class WeakReference<Value: AnyObject> {
 
     init(_ value: Value?) {
         self.value = value
+    }
+
+    var isNil: Bool {
+        return value == nil
     }
 }

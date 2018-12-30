@@ -31,7 +31,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
     }
 
     override func spec() {
-        describe("PlainCacheDatasourceSpec") {
+        describe("PlainCacheDatasource") {
             it("should send stored value synchronously if initial load impulse is set") {
 
                 let datasource = self.testDatasource(persistedState: self.testStringState)
@@ -71,10 +71,10 @@ class PlainCacheDatasourceSpec: QuickSpec {
 
                 disposable.dispose()
 
-                // Force sync access to observers so next assert works synchronously.
-                // Alternatively, a wait or waitUntil could be used, but this is
+                // Force synchronous access to disposable observers so assert works synchronously.
+                // Alternatively, a wait or waitUntil assert could be used, but this is
                 // less complex.
-                datasource.loadImpulseEmitter.emit(LoadImpulse(parameters: "1"))
+                expect(disposable.isDisposed) == true
 
                 expect(testStr).to(beNil())
             }

@@ -111,7 +111,7 @@ public final class ObservingProperty<T_>: Property {
         return _value.value
     }
 
-    init(_ observable: AnyValueRetainingObservable<T>, queue: DispatchQueue? = nil) {
+    init(_ observable: AnyStatefulObservable<T>, queue: DispatchQueue? = nil) {
         self._value = SynchronizedMutableProperty(observable.currentValue.value, queue: queue)
 
         self.disposable = observable.observe { [weak self] value in

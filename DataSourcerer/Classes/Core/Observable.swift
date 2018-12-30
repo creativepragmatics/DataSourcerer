@@ -18,12 +18,12 @@ public protocol StatefulObservable: TypedObservable {
 }
 
 public extension StatefulObservable {
-    var any: AnyValueRetainingObservable<ObservedValue> {
-        return AnyValueRetainingObservable(self)
+    var any: AnyStatefulObservable<ObservedValue> {
+        return AnyStatefulObservable(self)
     }
 }
 
-public struct AnyValueRetainingObservable<T_>: StatefulObservable {
+public struct AnyStatefulObservable<T_>: StatefulObservable {
     public typealias ObservedValue = T_
 
     public let currentValue: SynchronizedProperty<ObservedValue>
@@ -45,7 +45,7 @@ public struct AnyValueRetainingObservable<T_>: StatefulObservable {
     }
 }
 
-/// Operates only on main thread. Make sure to call init() on
+/// Sends values only on main thread. Make sure to call init() on
 /// the main thread.
 public final class UIObservable<T_>: StatefulObservable {
 
@@ -61,7 +61,7 @@ public final class UIObservable<T_>: StatefulObservable {
         return innerObservable.currentValue
     }
 
-    public init(_ wrappedObservable: AnyValueRetainingObservable<T>) {
+    public init(_ wrappedObservable: AnyStatefulObservable<T>) {
         assert(Thread.isMainThread, "UIValueRetainingObservable.init must be called on main thread.")
 
         innerObservable = DefaultStatefulObservable(wrappedObservable.currentValue.value)
@@ -98,13 +98,22 @@ open class DefaultStatefulObservable<T_>: StatefulObservable {
         mutableLastValue = SynchronizedMutableProperty<ObservedValue>(firstValue)
     }
 
-    open func observe(_ observe: @escaping ValuesOverTime) -> Disposable {
+    open func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
         // Send current value
-        observe(currentValue.value)
+        valuesOverTime(currentValue.value)
+
+        return observeWithoutCurrentValue(valuesOverTime)
+    }
+
+    /// In some cases, the first value is not desired.
+    /// We want the sending of the first value upen observation
+    /// to be the standard behavior in observe(_), so this
+    /// separate method is needed.
+    open func observeWithoutCurrentValue(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
         let uniqueKey = Int(arc4random_uniform(10_000))
-        observers.modify({ $0[uniqueKey] = observe })
+        observers.modify({ $0[uniqueKey] = valuesOverTime })
 
         // Keeps a reference to self until disposed:
         return ActionDisposable {
