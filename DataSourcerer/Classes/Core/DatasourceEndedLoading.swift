@@ -8,7 +8,7 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: TypedObservab
     private let disposeBag = DisposeBag()
     private var isLoading = SynchronizedMutableProperty<Bool>(false)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
-    private let innerObservable = DefaultObservable<Void>(())
+    private let innerObservable = DefaultStatefulObservable<Void>(())
 
     init(datasource: Datasource) {
         self.datasource = datasource

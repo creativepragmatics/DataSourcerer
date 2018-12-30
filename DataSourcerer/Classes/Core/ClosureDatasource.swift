@@ -10,7 +10,6 @@ open class ClosureDatasource
     public typealias GenerateState = (LoadImpulse<P>, SendState) -> Disposable
     public typealias SendState = (State<Value, P, E>) -> Void
 
-    public let sendsFirstStateSynchronously = true
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
@@ -41,9 +40,6 @@ open class ClosureDatasource
                 startObserving()
             }
         }
-
-        // Send .notReady right now, because sendsFirstStateSynchronously == true
-        statesOverTime(DatasourceState.notReady)
 
         let innerDisposable = innerObservable.observe(statesOverTime)
         return CompositeDisposable(innerDisposable, objectToRetain: self)

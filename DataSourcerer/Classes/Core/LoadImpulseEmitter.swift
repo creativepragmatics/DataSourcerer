@@ -44,7 +44,7 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     public typealias LI = LoadImpulse<P>
 
     private let initialImpulse: LoadImpulse<P>?
-    private let innerObservable = DefaultObservable<LI?>(nil)
+    private let innerObservable = DefaultStatefulObservable<LI?>(nil)
 
     public init(initialImpulse: LoadImpulse<P>?) {
         self.initialImpulse = initialImpulse

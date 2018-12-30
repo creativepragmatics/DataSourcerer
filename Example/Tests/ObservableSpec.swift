@@ -9,7 +9,7 @@ class ObservableSpec: QuickSpec {
         describe("DefaultObservable") {
             it("should send values to an observer") {
 
-                let observable = DefaultObservable<Int>(1)
+                let observable = DefaultStatefulObservable<Int>(1)
 
                 var observedValues: [Int] = []
 
@@ -17,14 +17,13 @@ class ObservableSpec: QuickSpec {
                     observedValues.append(value)
                 }
 
-                observable.emit(1)
                 observable.emit(2)
 
                 expect(observedValues) == [1,2]
             }
             it("should not duplicate values with multiple observers subscribed") {
 
-                let observable = DefaultObservable<Int>(1)
+                let observable = DefaultStatefulObservable<Int>(1)
 
                 var observedValues: [Int] = []
 
@@ -33,14 +32,13 @@ class ObservableSpec: QuickSpec {
                 }
                 _ = observable.observe({ _ in })
 
-                observable.emit(1)
                 observable.emit(2)
 
                 expect(observedValues) == [1,2]
             }
             it("should stop sending values to an observer after disposal") {
 
-                let observable = DefaultObservable<Int>(1)
+                let observable = DefaultStatefulObservable<Int>(1)
 
                 var observedValues: [Int] = []
 
@@ -48,7 +46,6 @@ class ObservableSpec: QuickSpec {
                     observedValues.append(value)
                 }
 
-                observable.emit(1)
                 observable.emit(2)
                 disposable.dispose()
                 observable.emit(3)
@@ -58,7 +55,7 @@ class ObservableSpec: QuickSpec {
             it("should release observer after disposal") {
 
                 weak var testStr: NSMutableString?
-                let observable = DefaultObservable<String>("")
+                let observable = DefaultStatefulObservable<String>("")
 
                 let testScope: () -> Disposable = {
                     let innerStr = NSMutableString(string: "")

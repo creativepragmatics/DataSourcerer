@@ -7,7 +7,6 @@ public final class PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceEr
     public typealias E = E_
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
 
-    public let sendsFirstStateSynchronously = true
     public let persister: StatePersisterConcrete
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
     public let cacheLoadError: E
@@ -28,8 +27,6 @@ public final class PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceEr
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
-        // Send .notReady right now, because sendsFirstStateSynchronously == true
-        statesOverTime(DatasourceState.notReady)
 
         let persister = self.persister // avoid refer self in closure
         let cacheLoadError = self.cacheLoadError // avoid capturing self in closure

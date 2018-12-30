@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol DatasourceStateMapperProtocol: ValueRetainingObservable {
+public protocol DatasourceStateMapperProtocol: StatefulObservable {
     associatedtype MappedValue
     associatedtype Datasource: DatasourceProtocol
     typealias StateToMappedValue = (Datasource.DatasourceState) -> MappedValue
@@ -9,7 +9,7 @@ public protocol DatasourceStateMapperProtocol: ValueRetainingObservable {
 }
 
 public final class DefaultDatasourceStateMapper<MappedValue, Datasource: DatasourceProtocol>
-: ValueRetainingObservable {
+: StatefulObservable {
     public typealias ObservedValue = MappedValue
     public typealias Value = Datasource.Value
     public typealias StateToMappedValue = (Datasource.DatasourceState) -> MappedValue
@@ -29,7 +29,7 @@ public final class DefaultDatasourceStateMapper<MappedValue, Datasource: Datasou
         }
     }
 
-    public let innerObservable: DefaultObservable<MappedValue>
+    public let innerObservable: DefaultStatefulObservable<MappedValue>
     public let datasource: Datasource
 
     public init(datasource: Datasource, stateToMappedValue: @escaping StateToMappedValue) {
@@ -37,7 +37,7 @@ public final class DefaultDatasourceStateMapper<MappedValue, Datasource: Datasou
         self._stateToMappedValue = SynchronizedMutableProperty(stateToMappedValue)
 
         let initialItems = stateToMappedValue(datasource.currentValue.value)
-        innerObservable = DefaultObservable(initialItems)
+        innerObservable = DefaultStatefulObservable(initialItems)
     }
 
     public func observe(_ valuesOverTime: @escaping (MappedValue) -> Void) -> Disposable {

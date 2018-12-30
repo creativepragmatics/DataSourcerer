@@ -14,11 +14,12 @@ public extension Disposable {
 
 public final class InstanceRetainingDisposable: Disposable {
 
-    private var instance: AnyObject?
-    private var _isDisposed: Bool = false
     public var isDisposed: Bool {
-        return _isDisposed
+        return _isDisposed.value
     }
+
+    private var instance: AnyObject?
+    private let _isDisposed = SynchronizedMutableProperty(false)
 
     init(_ instance: AnyObject) {
         self.instance = instance
@@ -26,12 +27,12 @@ public final class InstanceRetainingDisposable: Disposable {
 
     public func dispose() {
         instance = nil // remove retain on instance
-        _isDisposed = true
+        _isDisposed.value = true
     }
 
 }
 
-public class CompositeDisposable: Disposable {
+public final class CompositeDisposable: Disposable {
 
     private let disposables = SynchronizedMutableProperty<[Disposable]>([])
 
@@ -54,9 +55,7 @@ public class CompositeDisposable: Disposable {
     }
 
     public func dispose() {
-        disposables.value
-            .filter({ $0.isDisposed == false })
-            .forEach({ $0.dispose() })
+        disposables.value.forEach({ $0.dispose() })
         disposables.value = []
     }
 
@@ -64,14 +63,15 @@ public class CompositeDisposable: Disposable {
 
 public final class VoidDisposable: Disposable {
 
-    private var _isDisposed: Bool = false
     public var isDisposed: Bool {
-        return _isDisposed
+        return _isDisposed.value
     }
+
+    private let _isDisposed = SynchronizedMutableProperty(false)
 
     public init() {}
     public func dispose() {
-        _isDisposed = true
+        _isDisposed.value = true
     }
 
 }
@@ -83,31 +83,41 @@ public extension CompositeDisposable {
     }
 }
 
-public final class ObserverDisposable: Disposable {
+public final class ActionDisposable: Disposable {
 
-    var key: Int
-    var observable: UntypedObservable?
-    private var _isDisposed: Bool = false
     public var isDisposed: Bool {
-        return _isDisposed
+        return _isDisposed.value
     }
 
-    public init(observable: UntypedObservable, key: Int) {
-        self.observable = observable
-        self.key = key
+    private var action: (() -> Void)?
+    private let _isDisposed = SynchronizedMutableProperty(false)
+
+    public init(_ action: @escaping () -> Void) {
+        self.action = action
     }
 
     public func dispose() {
-        self.observable?.removeObserver(with: key)
-        self.observable = nil // remove retain on instance
-        _isDisposed = true
+        guard !isDisposed else { return }
+
+        action?()
+        // Release just in case the instance is kept alive:
+        action = nil
+        _isDisposed.value = true
     }
 }
 
-public class DisposeBag: CompositeDisposable {
+public final class DisposeBag {
 
-    public override init() {
-        super.init()
+    private let disposable = CompositeDisposable()
+
+    public init() {}
+
+    public func add(_ disposable: Disposable) {
+        self.disposable.add(disposable)
+    }
+
+    public func dispose() {
+        disposable.dispose()
     }
 
     deinit {

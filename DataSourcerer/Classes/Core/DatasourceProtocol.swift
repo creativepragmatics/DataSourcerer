@@ -15,19 +15,12 @@ import Foundation
 /// (e.g. "Just") that only start work
 /// (no work performed) until it is started. Instead of a start()
 /// function, datasources require the first load impulse.
-///
-/// Should either synchronously return a value upon subscription,
-/// or return `false` for `sendsFirstStateSynchronously`.
-public protocol DatasourceProtocol: ValueRetainingObservable where ObservedValue == DatasourceState {
+public protocol DatasourceProtocol: StatefulObservable where ObservedValue == DatasourceState {
     associatedtype Value: Any
     associatedtype P: Parameters
     associatedtype E: DatasourceError
     typealias DatasourceState = State<Value, P, E>
     typealias StatesOverTime = ValuesOverTime
-
-    /// Must return `true` if the datasource sends a `state`
-    /// immediately on subscription.
-    var sendsFirstStateSynchronously: Bool { get }
 
     /// Emits loading impulses that prompt the datasource to do
     /// work. The datasource must subscribe to the loadImpulseEmitter,
@@ -52,7 +45,6 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public typealias E = E_
 
     public let currentValue: SynchronizedProperty<State<Value, P, E>>
-    public let sendsFirstStateSynchronously: Bool
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     private let _observe: (@escaping StatesOverTime) -> Disposable
@@ -60,7 +52,6 @@ public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 
     init<D: DatasourceProtocol>(_ datasource: D) where D.DatasourceState == DatasourceState {
         self.currentValue = datasource.currentValue
-        self.sendsFirstStateSynchronously = datasource.sendsFirstStateSynchronously
         self.loadImpulseEmitter = datasource.loadImpulseEmitter
         self._observe = datasource.observe
         self._removeObserver = datasource.removeObserver
@@ -140,4 +131,4 @@ public protocol CachedDatasourceError: DatasourceError {
 }
 
 public typealias InnerStateObservable<Value, P: Parameters, E: DatasourceError> =
-    DefaultObservable<State<Value, P, E>>
+    DefaultStatefulObservable<State<Value, P, E>>

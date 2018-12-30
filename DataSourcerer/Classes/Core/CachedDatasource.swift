@@ -15,7 +15,6 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     public var currentValue: SynchronizedProperty<DatasourceState> {
         return innerObservable.currentValue
     }
-    public let sendsFirstStateSynchronously = true
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     private let primaryDatasource: SubDatasource
@@ -53,9 +52,6 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 .observe { [weak self] in self?.setAndEmitNext(latestLoadImpulse: $0) }
                 .disposed(by: disposeBag)
         }
-
-        // Send .notReady right now, because sendsFirstStateSynchronously == true
-        statesOverTime(DatasourceState.notReady)
 
         let disposable = innerObservable.observe(statesOverTime)
         return CompositeDisposable(disposable, objectToRetain: self)

@@ -26,7 +26,7 @@ open class LastResultRetainingDatasource
     public var currentValue: SynchronizedProperty<DatasourceState> {
         return innerObservable.currentValue
     }
-    public let sendsFirstStateSynchronously = true
+
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
         return innerDatasource.loadImpulseEmitter
     }
@@ -49,9 +49,6 @@ open class LastResultRetainingDatasource
                 startObserving()
             }
         }
-
-        // Send .notReady right now, because sendsFirstStateSynchronously == true
-        statesOverTime(DatasourceState.notReady)
 
         let innerDisposable = innerObservable.observe(statesOverTime)
         return CompositeDisposable(innerDisposable, objectToRetain: self)
