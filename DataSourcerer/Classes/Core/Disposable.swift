@@ -26,8 +26,8 @@ public final class InstanceRetainingDisposable: Disposable {
     }
 
     public func dispose() {
+        guard _isDisposed.set(true, ifCurrentValueIs: false) else { return }
         instance = nil // remove retain on instance
-        _isDisposed.value = true
     }
 
 }
@@ -71,7 +71,7 @@ public final class VoidDisposable: Disposable {
 
     public init() {}
     public func dispose() {
-        _isDisposed.value = true
+        _ = _isDisposed.set(true, ifCurrentValueIs: false)
     }
 
 }
@@ -97,12 +97,11 @@ public final class ActionDisposable: Disposable {
     }
 
     public func dispose() {
-        guard !isDisposed else { return }
+        guard _isDisposed.set(true, ifCurrentValueIs: false) else { return }
 
         action?()
         // Release just in case the instance is kept alive:
         action = nil
-        _isDisposed.value = true
     }
 }
 
