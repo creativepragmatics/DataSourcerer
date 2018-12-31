@@ -1,7 +1,7 @@
 import Foundation
 
 /// This protocol should only be used for conformance.
-public protocol Property {
+internal protocol Property {
     associatedtype T
 
     var value: T { get }
@@ -9,6 +9,7 @@ public protocol Property {
 
 public typealias PropertyDidSet = Bool
 
+/// This protocol should only be used for conformance.
 internal protocol MutableProperty: Property {
     associatedtype T
 
@@ -96,31 +97,6 @@ public final class SynchronizedProperty<T_>: Property {
 
     public init(_ mutableProperty: SynchronizedMutableProperty<T>) {
         self.mutableProperty = mutableProperty
-    }
-
-}
-
-public final class ObservingProperty<T_>: Property {
-
-    public typealias T = T_
-
-    private let _value: SynchronizedMutableProperty<T>
-    private var disposable: Disposable?
-
-    public var value: T {
-        return _value.value
-    }
-
-    init(_ observable: AnyStatefulObservable<T>, queue: DispatchQueue? = nil) {
-        self._value = SynchronizedMutableProperty(observable.currentValue.value, queue: queue)
-
-        self.disposable = observable.observe { [weak self] value in
-            self?._value.value = value
-        }
-    }
-
-    deinit {
-        disposable?.dispose()
     }
 
 }
