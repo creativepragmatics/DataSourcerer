@@ -45,46 +45,6 @@ public struct AnyStatefulObservable<T_>: StatefulObservable {
     }
 }
 
-/// Sends values only on main thread. Make sure to call init() on
-/// the main thread.
-public final class UIObservable<T_>: StatefulObservable {
-
-    public typealias ObservedValue = T_
-
-    public typealias T = T_
-
-    private let innerObservable: DefaultStatefulObservable<T>
-    private var wrappedDisposable: Disposable?
-    private let executer = SynchronizedExecuter(queue: DispatchQueue.main)
-
-    public var currentValue: SynchronizedProperty<T_> {
-        return innerObservable.currentValue
-    }
-
-    public init(_ wrappedObservable: AnyStatefulObservable<T>) {
-        assert(Thread.isMainThread, "UIValueRetainingObservable.init must be called on main thread.")
-
-        innerObservable = DefaultStatefulObservable(wrappedObservable.currentValue.value)
-        wrappedDisposable = wrappedObservable.observe { [weak self] value in
-            self?.executer.sync {
-                self?.innerObservable.emit(value)
-            }
-        }
-    }
-
-    deinit {
-        wrappedDisposable?.dispose()
-    }
-
-    public func observe(_ valuesOverTime: @escaping (T_) -> Void) -> Disposable {
-        return innerObservable.observe(valuesOverTime)
-    }
-
-    public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
-    }
-}
-
 open class DefaultStatefulObservable<T_>: StatefulObservable {
     public typealias ObservedValue = T_
     public typealias ValuesOverTime = (ObservedValue) -> Void

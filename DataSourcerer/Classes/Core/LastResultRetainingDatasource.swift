@@ -21,14 +21,10 @@ open class LastResultRetainingDatasource
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias SubDatasource = AnyDatasource<Value, P, E>
+    public typealias SubDatasource = AnyStatefulObservable<State<Value, P, E>>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
         return innerObservable.currentValue
-    }
-
-    public var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
-        return innerDatasource.loadImpulseEmitter
     }
 
     private let innerDatasource: SubDatasource

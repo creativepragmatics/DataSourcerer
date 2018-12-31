@@ -42,11 +42,11 @@ class CachedDatasourceSpec: QuickSpec {
                 let loadImpulseEmitter = self.loadImpulseEmitter().any
                 let primaryDatasource = OneTwoThreeStringTestDatasource(loadImpulseEmitter: loadImpulseEmitter).any
                 let cacheDatasource = self.cacheDatasource(persistedState: self.testStringState,
-                                                           loadImpulseEmitter: primaryDatasource.loadImpulseEmitter)
-                let datasource = CachedDatasource(loadImpulseEmitter: loadImpulseEmitter,
-                                                  primaryDatasource: primaryDatasource,
-                                                  cacheDatasource: cacheDatasource.any,
-                                                  persister: cacheDatasource.persister)
+                                                           loadImpulseEmitter: loadImpulseEmitter)
+
+                let datasource = primaryDatasource.cache(with: cacheDatasource.any,
+                                                         loadImpulseEmitter: loadImpulseEmitter,
+                                                         persister: cacheDatasource.persister)
 
                 var observedStates: [State<String, String, TestDatasourceError>] = []
 
@@ -71,11 +71,10 @@ class CachedDatasourceSpec: QuickSpec {
                 let loadImpulseEmitter = self.loadImpulseEmitter().any
                 let primaryDatasource = OneTwoThreeStringTestDatasource(loadImpulseEmitter: loadImpulseEmitter).any
                 let cacheDatasource = self.cacheDatasource(persistedState: self.testStringState,
-                                                           loadImpulseEmitter: primaryDatasource.loadImpulseEmitter)
-                let datasource = CachedDatasource(loadImpulseEmitter: loadImpulseEmitter,
-                                                  primaryDatasource: primaryDatasource,
-                                                  cacheDatasource: cacheDatasource.any,
-                                                  persister: cacheDatasource.persister)
+                                                           loadImpulseEmitter: loadImpulseEmitter)
+                let datasource = primaryDatasource.cache(with: cacheDatasource.any,
+                                                         loadImpulseEmitter: loadImpulseEmitter.any,
+                                                         persister: cacheDatasource.persister)
                 weak var testStr: NSMutableString?
 
                 let testScope: () -> Disposable = {
@@ -128,10 +127,9 @@ class CachedDatasourceSpec: QuickSpec {
                     let primaryDatasource = OneTwoThreeStringTestDatasource(loadImpulseEmitter: loadImpulseEmitter.any)
                     let cacheDatasource = self.cacheDatasource(persistedState: self.testStringState,
                                                                loadImpulseEmitter: primaryDatasource.loadImpulseEmitter)
-                    let datasource = CachedDatasource(loadImpulseEmitter: loadImpulseEmitter.any,
-                                                      primaryDatasource: primaryDatasource.any,
-                                                      cacheDatasource: cacheDatasource.any,
-                                                      persister: cacheDatasource.persister)
+                    let datasource = primaryDatasource.cache(with: cacheDatasource.any,
+                                                             loadImpulseEmitter: loadImpulseEmitter.any,
+                                                             persister: cacheDatasource.persister)
 
                     let innerStr = NSMutableString(string: "")
                     testStr = innerStr

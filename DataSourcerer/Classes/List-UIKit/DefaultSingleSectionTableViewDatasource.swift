@@ -16,14 +16,11 @@ CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E
     public var useFixedItemHeights = false
     public var heightAtIndexPath: [IndexPath: CGFloat] = [:]
 
-    public lazy var cells: UIObservable<Core.Items> = {
-        return UIObservable(self.cellsProducer.any)
-    }()
-
-    private lazy var cellsProducer: DefaultSingleSectionListItemsProducer
-        <CellViewProducer.Item, Datasource> = {
-        return DefaultSingleSectionListItemsProducer(datasource: self.datasource,
-                                                     stateToMappedValue: self.core.stateToItems)
+    public lazy var cells: AnyStatefulObservable<Core.Items> = {
+        return self.datasource
+            .map(self.core.stateToItems)
+            .observeOnUIThread()
+            .any
     }()
 
     public init(datasource: Datasource) {

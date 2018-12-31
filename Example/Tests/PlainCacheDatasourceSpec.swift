@@ -16,13 +16,13 @@ class PlainCacheDatasourceSpec: QuickSpec {
         )
     }()
 
-    private func testDatasource(persistedState: State<String, String, TestDatasourceError>)
+    private func testDatasource(persistedState: State<String, String, TestDatasourceError>,
+                                loadImpulseEmitter: DefaultLoadImpulseEmitter<String>)
         -> PlainCacheDatasource<String, String, TestDatasourceError> {
 
         let persister = TestStatePersister<String, String, TestDatasourceError>()
         persister.persist(persistedState)
 
-        let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(initialImpulse: persistedState.loadImpulse)
         return PlainCacheDatasource<String, String, TestDatasourceError>(
             persister: persister.any,
             loadImpulseEmitter: loadImpulseEmitter.any,
@@ -33,8 +33,11 @@ class PlainCacheDatasourceSpec: QuickSpec {
     override func spec() {
         describe("PlainCacheDatasource") {
             it("should send stored value synchronously if initial load impulse is set") {
-
-                let datasource = self.testDatasource(persistedState: self.testStringState)
+                let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(
+                    initialImpulse: self.testStringLoadImpulse
+                )
+                let datasource = self.testDatasource(persistedState: self.testStringState,
+                                                     loadImpulseEmitter: loadImpulseEmitter)
                 var observedStates: [State<String, String, TestDatasourceError>] = []
 
                 let disposable = datasource.observe({ state in
@@ -47,8 +50,11 @@ class PlainCacheDatasourceSpec: QuickSpec {
                                            self.testStringState]
             }
             it("should release observer after disposal") {
-
-                let datasource = self.testDatasource(persistedState: self.testStringState)
+                let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(
+                    initialImpulse: self.testStringLoadImpulse
+                )
+                let datasource = self.testDatasource(persistedState: self.testStringState,
+                                                     loadImpulseEmitter: loadImpulseEmitter)
 
                 weak var testStr: NSMutableString?
 
@@ -66,7 +72,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
                 let disposable = testScope()
                 expect(testStr) == "1"
 
-                datasource.loadImpulseEmitter.emit(LoadImpulse(parameters: "1"))
+                loadImpulseEmitter.emit(LoadImpulse(parameters: "1"))
                 expect(testStr) == "11"
 
                 disposable.dispose()

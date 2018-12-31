@@ -5,66 +5,25 @@ import Foundation
 /// Must only start work after `observe(_)` is first called AND
 /// `loadImpulseEmitter` has sent the first impulse.
 ///
+/// Per definition of StatefulObservable, the current value is
+/// emitted synchronously to an observer when it calls `observe(_)`.
+///
 /// Analogy to ReactiveSwift: Datasources are like SignalProducers,
 /// which are "cold" (no work performed) until they are started.
 /// Instead of a start() function, datasources require the first
 /// load impulse. One major difference to SignalProducers is that
 /// datasources don't restart if `observe(_)` is called again.
+/// In terms of values sent, Datasources behave very much like
+/// ReactivewSwift.Property.signalProducer or
+/// SignalProducer.replayLazily(1).
 ///
-/// Analogy to RxSwift/ReactiveX: Datasources are like cold Observables
-/// (e.g. "Just") that only start work
-/// (no work performed) until it is started. Instead of a start()
-/// function, datasources require the first load impulse.
+/// Analogy to RxSwift/ReactiveX: Insert example :)
 public protocol DatasourceProtocol: StatefulObservable where ObservedValue == DatasourceState {
     associatedtype Value: Any
     associatedtype P: Parameters
     associatedtype E: DatasourceError
     typealias DatasourceState = State<Value, P, E>
     typealias StatesOverTime = ValuesOverTime
-
-    /// Emits loading impulses that prompt the datasource to do
-    /// work. The datasource must subscribe to the loadImpulseEmitter,
-    /// at least to listen for the first impulse to start work.
-    ///
-    /// From a technical point of view, this property requirement is
-    /// superfluous, but it helps the easier nesting of datasources
-    /// and end-user (=developer) convenience.
-    var loadImpulseEmitter: AnyLoadImpulseEmitter<P> { get }
-}
-
-public extension DatasourceProtocol {
-    var any: AnyDatasource<Value, P, E> {
-        return AnyDatasource(self)
-    }
-}
-
-public struct AnyDatasource<Value_, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
-
-    public typealias Value = Value_
-    public typealias P = P_
-    public typealias E = E_
-
-    public let currentValue: SynchronizedProperty<State<Value, P, E>>
-    public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-
-    private let _observe: (@escaping StatesOverTime) -> Disposable
-    private let _removeObserver: (Int) -> Void
-
-    init<D: DatasourceProtocol>(_ datasource: D) where D.DatasourceState == DatasourceState {
-        self.currentValue = datasource.currentValue
-        self.loadImpulseEmitter = datasource.loadImpulseEmitter
-        self._observe = datasource.observe
-        self._removeObserver = datasource.removeObserver
-    }
-
-    public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
-        return _observe(statesOverTime)
-    }
-
-    public func removeObserver(with key: Int) {
-        _removeObserver(key)
-    }
-
 }
 
 public protocol DatasourceError: Error, Equatable {

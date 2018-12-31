@@ -1,15 +1,16 @@
 import Foundation
 
 /// Maintains state coming from multiple sources (primary and cache).
-/// It is able to support pagination, live feeds, etc in the primary datasource (yet to be implemented).
-/// State coming from the primary datasource is treated as preferential over state from
-/// the cache datasource. You can think of the cache datasource as cache.
+/// It is able to support pagination, live feeds, etc in the primary
+/// datasource (yet to be implemented).
+/// State coming from the primary datasource is treated as preferential
+/// over state from the cache datasource.
 open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
 
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias SubDatasource = AnyDatasource<Value, P, E>
+    public typealias SubObservable = AnyStatefulObservable<State<Value, P, E>>
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
@@ -17,20 +18,20 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
     }
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
-    private let primaryDatasource: SubDatasource
-    private let cacheDatasource: SubDatasource
+    private let primaryObservable: SubObservable
+    private let cacheObservable: SubObservable
     private let persister: StatePersisterConcrete?
     private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
     private let disposeBag = DisposeBag()
     private var currentStateComponents = SynchronizedMutableProperty(StateComponents.initial)
 
     public init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
-                primaryDatasource: SubDatasource,
-                cacheDatasource: SubDatasource,
+                primaryObservable: SubObservable,
+                cacheObservable: SubObservable,
                 persister: StatePersisterConcrete?) {
         self.loadImpulseEmitter = loadImpulseEmitter
-        self.primaryDatasource = primaryDatasource
-        self.cacheDatasource = cacheDatasource
+        self.primaryObservable = primaryObservable
+        self.cacheObservable = cacheObservable
         self.persister = persister
     }
 
@@ -40,11 +41,11 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
         defer {
-            primaryDatasource
+            primaryObservable
                 .observe { [weak self] in self?.setAndEmitNext(latestPrimaryState: $0) }
                 .disposed(by: disposeBag)
 
-            cacheDatasource
+            cacheObservable
                 .observe { [weak self] in self?.setAndEmitNext(latestCachedState: $0) }
                 .disposed(by: disposeBag)
 
@@ -178,3 +179,20 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 }
 
 public typealias LoadingStarted = Bool
+
+public extension StatefulObservable {
+
+    func cache<Value, P: Parameters, E: DatasourceError>(
+        with cacheObservable: AnyStatefulObservable<ObservedValue>,
+        loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
+        persister: AnyStatePersister<Value, P, E>? = nil
+        ) -> CachedDatasource<Value, P, E> where ObservedValue == State<Value, P, E> {
+
+        return CachedDatasource(
+            loadImpulseEmitter: loadImpulseEmitter,
+            primaryObservable: self.any,
+            cacheObservable: cacheObservable,
+            persister: persister
+        )
+    }
+}

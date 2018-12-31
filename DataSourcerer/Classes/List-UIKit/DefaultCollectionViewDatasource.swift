@@ -11,14 +11,11 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
     private let datasource: Datasource
     public var core: Core
 
-    public lazy var sections: UIObservable<Core.Sections> = {
-        return UIObservable(self.sectionsProducer.any)
-    }()
-
-    private lazy var sectionsProducer: DefaultListSectionsProducer
-        <CellViewProducer.Item, Section, Datasource> = {
-            return DefaultListSectionsProducer(datasource: self.datasource,
-                                               stateToMappedValue: self.core.stateToSections)
+    public lazy var sections: AnyStatefulObservable<Core.Sections> = {
+        return self.datasource
+            .map(self.core.stateToSections)
+            .observeOnUIThread()
+            .any
     }()
 
     public init(datasource: Datasource) {

@@ -8,7 +8,7 @@ public final class PlainCacheDatasource<Value_, P_: Parameters, E_: DatasourceEr
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
 
     public let persister: StatePersisterConcrete
-    public var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
+    private var loadImpulseEmitter: AnyLoadImpulseEmitter<P>
     public let cacheLoadError: E
     public var currentValue: SynchronizedProperty<DatasourceState> {
         return innerObservable.currentValue

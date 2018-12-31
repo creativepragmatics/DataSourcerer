@@ -5,18 +5,20 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: TypedObservab
     public typealias EndedLoadingEventsOverTime = (()) -> Void
 
     private let datasource: Datasource
+    private let loadImpulseEmitter: AnyLoadImpulseEmitter<Datasource.P>
     private let disposeBag = DisposeBag()
     private var isLoading = SynchronizedMutableProperty<Bool>(false)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
     private let innerObservable = DefaultStatefulObservable<Void>(())
 
-    init(datasource: Datasource) {
+    init(datasource: Datasource, loadImpulseEmitter: AnyLoadImpulseEmitter<Datasource.P>) {
         self.datasource = datasource
+        self.loadImpulseEmitter = loadImpulseEmitter
     }
 
     private func startObserving() {
 
-        datasource.loadImpulseEmitter
+        loadImpulseEmitter
             .observe { [weak self] _ in
                 self?.isLoading.value = true
             }
@@ -60,9 +62,9 @@ open class DatasourceEndedLoading<Datasource: DatasourceProtocol>: TypedObservab
 
 public extension DatasourceProtocol {
 
-    func observeEndedLoading(_ endedLoadingEventsOverTime:
-        @escaping DatasourceEndedLoading<Self>.EndedLoadingEventsOverTime) -> Disposable {
-        return DatasourceEndedLoading(datasource: self)
+    func observeEndedLoading(_ endedLoadingEventsOverTime: @escaping (()) -> Void,
+                             loadImpulseEmitter: AnyLoadImpulseEmitter<P>) -> Disposable {
+        return DatasourceEndedLoading(datasource: self, loadImpulseEmitter: loadImpulseEmitter)
             .observe(endedLoadingEventsOverTime)
     }
 }
