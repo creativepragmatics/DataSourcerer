@@ -2,13 +2,11 @@ import Dwifft
 import Foundation
 
 open class DefaultSingleSectionTableViewController
-<Datasource: DatasourceProtocol, CellViewProducer: TableViewCellProducer> : UIViewController
-where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E {
+    <Value, P: Parameters, E, Cell: DefaultListItem>: UIViewController where Cell.E == E {
 
-    public typealias Cell = CellViewProducer.Item
     public typealias Cells = SingleSectionListItems<Cell>
     public typealias TableViewDatasource =
-        DefaultSingleSectionTableViewDatasource<Datasource, CellViewProducer>
+        DefaultSingleSectionTableViewDatasource<Value, P, E, Cell>
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()

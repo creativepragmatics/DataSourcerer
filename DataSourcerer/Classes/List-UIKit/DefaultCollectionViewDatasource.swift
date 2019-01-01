@@ -1,17 +1,27 @@
 import Foundation
 import UIKit
 
+/// Default implementation for a collection view with
+/// support for loading indicator, "no results" cell
+/// and error cell.
+/// Configuration has to be done before the `sections`
+/// property is accessed.
 open class DefaultCollectionViewDatasource
 <Datasource: DatasourceProtocol, CellViewProducer: CollectionViewCellProducer, Section: ListSection>
 : NSObject, UICollectionViewDataSource, UICollectionViewDelegate
 where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E {
-
     public typealias Core = DefaultListViewDatasourceCore<Datasource, CellViewProducer, Section>
 
-    private let datasource: Datasource
     public var core: Core
 
+    private let datasource: Datasource
+    private var isConfigured = false
+
     public lazy var sections: AnyStatefulObservable<Core.Sections> = {
+        assert(isConfigured, """
+                             Configure DefaultCollectionViewDatasource before
+                             accessing the sections property.
+                             """)
         return self.datasource
             .map(self.core.stateToSections)
             .observeOnUIThread()
@@ -23,8 +33,18 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
         self.core = DefaultListViewDatasourceCore()
     }
 
-    public func configure(with collectionView: UICollectionView, _ build: (Core.Builder) -> (Core.Builder)) {
+    public func configure(_ build: (Core.Builder) -> (Core.Builder)) {
         core = build(core.builder).core
+
+        isConfigured = true
+    }
+
+    public func registerItemViews(with collectionView: UICollectionView) {
+
+        assert(isConfigured, """
+                             Configure DefaultCollectionViewDatasource before
+                             calling registerItemViews().
+                             """)
 
         core.itemToViewMapping.forEach { args in
             let (itemViewType, producer) = args
@@ -76,7 +96,7 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
             if fallbackCell.viewWithTag(100) == nil {
                 let label = UILabel()
                 label.tag = 100
-                label.text = "Set DefaultListViewDatasourceCore.itemToViewMapping"
+                label.text = "Configure itemToViewMapping and call registerItemViews()"
                 label.textAlignment = .center
                 fallbackCell.contentView.addSubview(label)
                 label.translatesAutoresizingMaskIntoConstraints = false

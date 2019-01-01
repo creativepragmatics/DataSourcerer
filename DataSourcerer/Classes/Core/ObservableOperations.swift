@@ -12,8 +12,8 @@ public extension StatefulObservable {
         return DispatchQueueObservable(self, queue: queue)
     }
 
-    func observeOnUIThread() -> DispatchQueueObservable<Self> {
-        return DispatchQueueObservable(self, queue: DispatchQueue.main)
+    func observeOnUIThread() -> UIObservable<Self> {
+        return UIObservable(self)
     }
 
     func skipRepeats(_ isEqual:@escaping (_ lhs: ObservedValue, _ rhs: ObservedValue) -> Bool)
@@ -42,7 +42,6 @@ public final class StatefulObservableMapped<SourceValue, TransformedValue>: Stat
     private let innerObservable: DefaultStatefulObservable<TransformedValue>
     private let sourceObservable: AnyStatefulObservable<SourceValue>
     private let isObserved = SynchronizedMutableProperty<Bool>(false)
-    private let disposeBag = DisposeBag()
 
     init(_ sourceObservable: AnyStatefulObservable<SourceValue>,
          transform: @escaping (SourceValue) -> (TransformedValue)) {
@@ -54,29 +53,26 @@ public final class StatefulObservableMapped<SourceValue, TransformedValue>: Stat
 
     public func observe(_ valuesOverTime: @escaping (TransformedValue) -> Void) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                startObserving()
-            }
+        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable.add(startObserving())
         }
 
-        valuesOverTime(transform(sourceObservable.currentValue.value))
-
-        let disposable = innerObservable.observe(valuesOverTime)
-        return CompositeDisposable(disposable, objectToRetain: self)
+        return compositeDisposable
     }
 
     public func removeObserver(with key: Int) {
         innerObservable.removeObserver(with: key)
     }
 
-    private func startObserving() {
+    private func startObserving() -> Disposable {
 
-        sourceObservable.observe { [weak self] sourceValue in
+        return sourceObservable.observe { [weak self] sourceValue in
             guard let self = self else { return }
             self.innerObservable.emit(self.transform(sourceValue))
-        }.disposed(by: disposeBag)
+        }
     }
 
 }
@@ -88,7 +84,6 @@ public final class DispatchQueueObservable<SourceObservable: StatefulObservable>
 
     private let wrappedObservable: SourceObservable
     private let innerObservable: DefaultStatefulObservable<ObservedValue>
-    private let disposeBag = DisposeBag()
     private let executer: SynchronizedExecuter
     private let isObserved = SynchronizedMutableProperty(false)
 
@@ -104,30 +99,128 @@ public final class DispatchQueueObservable<SourceObservable: StatefulObservable>
 
     public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                startObserving()
-            }
+        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable.add(startObserving())
         }
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
-        return CompositeDisposable(innerDisposable, objectToRetain: self)
+        return compositeDisposable
     }
 
-    private func startObserving() {
-        wrappedObservable
-            .observe { [weak self] value in
-                self?.executer.sync { [weak self] in
-                    self?.innerObservable.emit(value)
-                }
+    private func startObserving() -> Disposable {
+        return wrappedObservable.observe { [weak self] value in
+            self?.executer.sync { [weak self] in
+                self?.innerObservable.emit(value)
             }
-            .disposed(by: disposeBag)
+        }
     }
 
     public func removeObserver(with key: Int) {
         innerObservable.removeObserver(with: key)
     }
+
+}
+
+internal struct UIObservableQueueInitializer {
+    internal static let dispatchSpecificKey = DispatchSpecificKey<UInt8>()
+    internal static let dispatchSpecificValue = UInt8.max
+
+    static var initializeOnce: () = {
+        DispatchQueue.main.setSpecific(key: dispatchSpecificKey,
+                                       value: dispatchSpecificValue)
+    }()
+}
+
+/// Heavily inspired by UIObservable from ReactiveSwift.
+public final class UIObservable<SourceObservable: StatefulObservable>: StatefulObservable {
+    public typealias ObservedValue = SourceObservable.ObservedValue
+
+    public var currentValue: SynchronizedProperty<SourceObservable.ObservedValue> {
+        return innerObservable.currentValue
+    }
+
+    private let wrappedObservable: SourceObservable
+    private let innerObservable: DefaultStatefulObservable<ObservedValue>
+    private let isObserved = SynchronizedMutableProperty(false)
+    private let disposeBag = DisposeBag()
+
+    // `inout` references do not guarantee atomicity. Use `UnsafeMutablePointer`
+    // instead.
+    //
+    // https://lists.swift.org/pipermail/swift-users/Week-of-Mon-20161205/004147.html
+    private let queueLength: UnsafeMutablePointer<Int32> = {
+        let memory = UnsafeMutablePointer<Int32>.allocate(capacity: 1)
+        memory.initialize(to: 0)
+        return memory
+    }()
+
+    deinit {
+        queueLength.deinitialize(count: 1)
+        queueLength.deallocate()
+    }
+
+    /// Initializes `UIObservable`
+    public init(_ wrappedObservable: SourceObservable) {
+        /// This call is to ensure the main queue has been setup appropriately
+        /// for `UIObservable`. It is only called once during the application
+        /// lifetime, since Swift has a `dispatch_once` like mechanism to
+        /// lazily initialize global variables and static variables.
+        _ = UIObservableQueueInitializer.initializeOnce
+
+        self.wrappedObservable = wrappedObservable
+        self.innerObservable = DefaultStatefulObservable(wrappedObservable.currentValue.value)
+    }
+
+    public func observe(_ valuesOverTime: @escaping (SourceObservable.ObservedValue) -> Void) -> Disposable {
+
+        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable.add(startObserving())
+        }
+
+        return compositeDisposable
+    }
+
+    public func removeObserver(with key: Int) {
+        innerObservable.removeObserver(with: key)
+    }
+
+    private func startObserving() -> Disposable {
+        return wrappedObservable
+            .observe { [weak self] value in
+                guard let self = self else { return }
+
+                let positionInQueue = self.enqueue()
+
+                // If we're already running on the main queue, and there isn't work
+                // already enqueued, we can skip scheduling and just execute directly.
+                if positionInQueue == 1 && DispatchQueue.getSpecific(
+                    key: UIObservableQueueInitializer.dispatchSpecificKey) ==
+                        UIObservableQueueInitializer.dispatchSpecificValue {
+                    self.innerObservable.emit(value)
+                    self.dequeue()
+                } else {
+                    DispatchQueue.main.async { [weak self] in
+                        guard let self = self else { return }
+                        self.innerObservable.emit(value)
+                        self.dequeue()
+                    }
+                }
+            }
+    }
+
+    private func dequeue() {
+        OSAtomicDecrement32(queueLength)
+    }
+
+    private func enqueue() -> Int32 {
+        return OSAtomicIncrement32(queueLength)
+    }
+
 }
 
 /// Skips repeated values (distinct until changed).
@@ -143,7 +236,6 @@ public final class SkipRepeatsObservable<SourceValue>: StatefulObservable {
     private let sourceObservable: AnyStatefulObservable<SourceValue>
     private let isObserved = SynchronizedMutableProperty<Bool>(false)
     private let isEqual: (SourceValue, SourceValue) -> (Bool)
-    private let disposeBag = DisposeBag()
 
     public init(_ sourceObservable: AnyStatefulObservable<SourceValue>,
                 isEqual: @escaping (SourceValue, SourceValue) -> (Bool)) {
@@ -156,32 +248,29 @@ public final class SkipRepeatsObservable<SourceValue>: StatefulObservable {
 
     public func observe(_ valuesOverTime: @escaping (SourceValue) -> Void) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                startObserving()
-            }
+        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable += startObserving()
         }
 
-        valuesOverTime(sourceObservable.currentValue.value)
-
-        let disposable = innerObservable.observe(valuesOverTime)
-        return CompositeDisposable(disposable, objectToRetain: self)
+        return compositeDisposable
     }
 
     public func removeObserver(with key: Int) {
         innerObservable.removeObserver(with: key)
     }
 
-    private func startObserving() {
+    private func startObserving() -> Disposable {
 
-        sourceObservable.observe { [weak self] newValue in
+        return sourceObservable.observe { [weak self] newValue in
             guard let self = self,
                 self.isEqual(newValue, self.lastValue.value) == false else { return }
 
             self.lastValue.value = newValue
             self.innerObservable.emit(newValue)
-        }.disposed(by: disposeBag)
+        }
     }
 
 }

@@ -7,7 +7,7 @@ open class ClosureDatasource
     public typealias P = P_
     public typealias E = E_
     public typealias ObservedValue = DatasourceState
-    public typealias GenerateState = (LoadImpulse<P>, SendState) -> Disposable
+    public typealias GenerateState = (LoadImpulse<P>, @escaping SendState) -> Disposable
     public typealias SendState = (State<Value, P, E>) -> Void
 
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
@@ -18,7 +18,6 @@ open class ClosureDatasource
 
     private let generateState: GenerateState
     private let isObserved = SynchronizedMutableProperty(false)
-    private let disposeBag = DisposeBag()
     private let stateGenerationDisposable = SynchronizedMutableProperty<Disposable?>(nil)
 
     public func removeObserver(with key: Int) {
@@ -32,21 +31,23 @@ open class ClosureDatasource
         self.generateState = generateState
     }
 
-    public func observe(_ statesOverTime: @escaping ValuesOverTime) -> Disposable {
+    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                startObserving()
-            }
+        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable.add(startObserving())
         }
 
-        let innerDisposable = innerObservable.observe(statesOverTime)
-        return CompositeDisposable(innerDisposable, objectToRetain: self)
+        return compositeDisposable
     }
 
-    private func startObserving() {
-        loadImpulseEmitter.observe { [weak self] loadImpulse in
+    private func startObserving() -> Disposable {
+
+        let compositeDisposable = CompositeDisposable()
+
+        return loadImpulseEmitter.observe { [weak self] loadImpulse in
             guard let strongSelf = self else { return }
 
             strongSelf.stateGenerationDisposable.value?.dispose()
@@ -56,8 +57,8 @@ open class ClosureDatasource
                     strongSelf.innerObservable.emit(nextState)
                 })
             strongSelf.stateGenerationDisposable.value = disposable
-            disposable.disposed(by: strongSelf.disposeBag)
-        }.disposed(by: disposeBag)
+            compositeDisposable += disposable
+        }
     }
 
 }

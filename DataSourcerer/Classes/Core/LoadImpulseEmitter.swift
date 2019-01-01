@@ -86,6 +86,8 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     private var isObserved = SynchronizedMutableProperty(false)
     private let timerExecuter = SynchronizedExecuter()
     private let timerEmitQueue: DispatchQueue
+
+    // TODO: refactor to use SynchronizedMutableProperty
     public var timerMode: TimerMode {
         didSet {
             if let lastLoadImpulse = lastLoadImpulse {
@@ -117,7 +119,9 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
                 break
             case let .timeInterval(timeInterval):
                 let newTimer = DispatchSource.makeTimerSource(queue: self.timerEmitQueue)
-                newTimer.schedule(deadline: .now(), repeating: timeInterval, leeway: .milliseconds(100))
+                newTimer.schedule(deadline: .now() + timeInterval,
+                                  repeating: timeInterval,
+                                  leeway: .milliseconds(100))
                 newTimer.setEventHandler { [weak self] in
                     guard let lastLoadImpulse = self?.lastLoadImpulse else { return }
                     self?.emit(lastLoadImpulse)
@@ -131,12 +135,8 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     public func observe(_ observe: @escaping LoadImpulsesOverTime) -> Disposable {
 
         defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                innerEmitter.observe { [weak self] loadImpulse in
-                    self?.emit(loadImpulse)
-                    self?.resetTimer()
-                }.disposed(by: disposeBag)
+            if isObserved.set(true, ifCurrentValueIs: false) {
+                resetTimer()
             }
         }
 
@@ -146,6 +146,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
 
     public func emit(_ loadImpulse: LoadImpulse<P>) {
         innerEmitter.emit(loadImpulse)
+        resetTimer()
     }
 
     public func removeObserver(with key: Int) {

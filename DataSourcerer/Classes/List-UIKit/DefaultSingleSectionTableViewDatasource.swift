@@ -1,35 +1,60 @@
 import Foundation
 import UIKit
 
+/// Default implementation for a single section tableview
+/// with support for loading indicator, "no results" cell
+/// and error cell.
+/// Configuration has to be done before the `cells`
+/// property is accessed.
 open class DefaultSingleSectionTableViewDatasource
-    <Datasource: DatasourceProtocol, CellViewProducer: TableViewCellProducer>:
-    NSObject, UITableViewDelegate, UITableViewDataSource where
-CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E {
+    <Value, P: Parameters, E, Cell: DefaultListItem>:
+    NSObject, UITableViewDelegate, UITableViewDataSource where Cell.E == E {
+    public typealias CellViewProducer = DefaultTableViewCellProducer<Cell>
+    public typealias SourceObservable = AnyStatefulObservable<State<Value, P, E>>
+    public typealias Core = DefaultSingleSectionListViewDatasourceCore
+        <Value, P, E, CellViewProducer>
 
-    public typealias Core = DefaultSingleSectionListViewDatasourceCore<Datasource, CellViewProducer>
-
-    private let datasource: Datasource
     public var core: Core
+
+    private let sourceObservable: SourceObservable
 
     /// If true, use heightAtIndexPath to store item heights. Most likely
     /// only makes sense in TableViews with autolayouted cells.
     public var useFixedItemHeights = false
     public var heightAtIndexPath: [IndexPath: CGFloat] = [:]
+    private var isConfigured = false
 
     public lazy var cells: AnyStatefulObservable<Core.Items> = {
-        return self.datasource
+        assert(isConfigured, """
+                             Configure DefaultSingleSectionTableViewDatasource before
+                             accessing the cells property.
+                             """)
+
+        return self.sourceObservable
             .map(self.core.stateToItems)
             .observeOnUIThread()
             .any
     }()
 
-    public init(datasource: Datasource) {
-        self.datasource = datasource
-        self.core = DefaultSingleSectionListViewDatasourceCore()
+    public init(sourceObservable: SourceObservable,
+                cellType: Cell.Type? = nil) {
+        self.sourceObservable = sourceObservable
+        self.core =
+            DefaultSingleSectionListViewDatasourceCore()
     }
 
-    public func configure(with tableView: UITableView, _ build: (Core.Builder) -> (Core.Builder)) {
+    public func configure(_ build: (Core.Builder) -> (Core.Builder)) {
         core = build(core.builder).core
+
+        isConfigured = true
+    }
+
+    public func registerItemViews(with tableView: UITableView) {
+
+        assert(isConfigured, """
+                             Configure DefaultSingleSectionTableViewDatasource before
+                             calling registerItemViews().
+                             """)
 
         core.itemToViewMapping.forEach { itemViewType, producer in
             producer.register(itemViewType: itemViewType, at: tableView)
@@ -49,7 +74,7 @@ CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E
             return itemViewProducer.view(containingView: tableView, item: cell, for: indexPath)
         } else {
             let fallbackCell = UITableViewCell()
-            fallbackCell.textLabel?.text = "Set DefaultSingleSectionListViewDatasourceCore.itemToViewMapping"
+            fallbackCell.textLabel?.text = "Configure itemToViewMapping and call registerItemViews()"
             return fallbackCell
         }
     }

@@ -14,7 +14,6 @@ public final class DefaultDatasourceStateMapper<MappedValue, Datasource: Datasou
     public typealias Value = Datasource.Value
     public typealias StateToMappedValue = (Datasource.DatasourceState) -> MappedValue
 
-    public var disposable: Disposable?
     public var isObserved = SynchronizedMutableProperty(false)
     public var currentValue: SynchronizedProperty<ObservedValue> {
         return innerObservable.currentValue
@@ -42,19 +41,18 @@ public final class DefaultDatasourceStateMapper<MappedValue, Datasource: Datasou
 
     public func observe(_ valuesOverTime: @escaping (MappedValue) -> Void) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                startObserving()
-            }
+        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable.add(startObserving())
         }
 
-        let disposable = innerObservable.observe(valuesOverTime)
-        return CompositeDisposable(disposable, objectToRetain: self)
+        return compositeDisposable
     }
 
-    public func startObserving() {
-        disposable = datasource.observe { [weak self] state in
+    public func startObserving() -> Disposable {
+        return datasource.observe { [weak self] state in
             guard let self = self else { return }
             let items = self.stateToMappedValue(state)
             self.innerObservable.emit(items)
@@ -63,10 +61,6 @@ public final class DefaultDatasourceStateMapper<MappedValue, Datasource: Datasou
 
     public func removeObserver(with key: Int) {
         innerObservable.removeObserver(with: key)
-    }
-
-    deinit {
-        disposable?.dispose()
     }
 
 }

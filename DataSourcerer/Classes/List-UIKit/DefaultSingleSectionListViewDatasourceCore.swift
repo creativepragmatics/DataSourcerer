@@ -1,28 +1,29 @@
 import Foundation
 
 public struct DefaultSingleSectionListViewDatasourceCore
-<Datasource: DatasourceProtocol, ItemViewProducer: ListItemViewProducer> {
+<Value, P: Parameters, E: DatasourceError, ItemViewProducer: ListItemViewProducer> {
 
+    public typealias ObservedState = State<Value, P, E>
     public typealias Item = ItemViewProducer.Item
     public typealias Items = SingleSectionListItems<Item>
     public typealias ItemToView = (Item.ViewType) -> ItemViewProducer
-    public typealias ValueToItems = (Datasource.DatasourceState.Value) -> [Item]?
+    public typealias ValueToItems = (Value) -> [Item]?
     public typealias ItemSelected = (Item) -> Void
     public typealias StateToItemsIncomplete =
-        (_ state: Datasource.DatasourceState,
+        (_ state: ObservedState,
         _ valueToItems: @escaping ValueToItems,
-        _ loadingItem: ((Datasource.DatasourceState) -> Item)?,
-        _ errorItem: ((Datasource.E) -> Item)?,
-        _ noResultsItem: ((Datasource.DatasourceState) -> Item)?) -> SingleSectionListItems<Item>
+        _ loadingItem: ((ObservedState) -> Item)?,
+        _ errorItem: ((E) -> Item)?,
+        _ noResultsItem: ((ObservedState) -> Item)?) -> SingleSectionListItems<Item>
 
     public var stateToItemsIncomplete: StateToItemsIncomplete
     public var valueToItems: ValueToItems?
     public var itemSelected: ItemSelected?
     public var itemToViewMapping: [Item.ViewType: ItemViewProducer] = [:]
 
-    public var loadingItem: ((Datasource.DatasourceState) -> Item)?
-    public var errorItem: ((Datasource.E) -> Item)?
-    public var noResultsItem: ((Datasource.DatasourceState) -> Item)?
+    public var loadingItem: ((ObservedState) -> Item)?
+    public var errorItem: ((E) -> Item)?
+    public var noResultsItem: ((ObservedState) -> Item)?
 
     /// If true, use heightAtIndexPath to store item heights. Most likely
     /// only makes sense in TableViews with autolayouted cells.
@@ -34,11 +35,11 @@ public struct DefaultSingleSectionListViewDatasourceCore
         self.stateToItemsIncomplete = stateToItemsIncomplete
     }
 
-    public static func defaultStateToItems(state: Datasource.DatasourceState,
+    public static func defaultStateToItems(state: ObservedState,
                                            valueToItems: @escaping ValueToItems,
-                                           loadingItem: ((Datasource.DatasourceState) -> Item)?,
-                                           errorItem: ((Datasource.E) -> Item)?,
-                                           noResultsItem: ((Datasource.DatasourceState) -> Item)?)
+                                           loadingItem: ((ObservedState) -> Item)?,
+                                           errorItem: ((E) -> Item)?,
+                                           noResultsItem: ((ObservedState) -> Item)?)
         -> SingleSectionListItems<Item> {
 
         return state.singleSectionListItems(valueToItems: valueToItems,
@@ -51,7 +52,7 @@ public struct DefaultSingleSectionListViewDatasourceCore
         return Builder(core: self)
     }
 
-    func stateToItems(_ state: Datasource.DatasourceState) -> Items {
+    func stateToItems(_ state: ObservedState) -> Items {
         let valueToItems = self.valueToItems ?? { _ -> [Item] in
             return [Item(errorMessage: "Set DefaultSingleSectionListViewDatasourceCore.valueToItems")]
         }
@@ -121,21 +122,21 @@ public extension DefaultSingleSectionListViewDatasourceCore {
         }
 
         @discardableResult
-        public func loadingItem(_ closure: @escaping (Datasource.DatasourceState) -> Item) -> Builder {
+        public func loadingItem(_ closure: @escaping (ObservedState) -> Item) -> Builder {
             var core = self.core
             core.loadingItem = closure
             return core.builder
         }
 
         @discardableResult
-        public func errorItem(_ closure: @escaping (Datasource.E) -> Item) -> Builder {
+        public func errorItem(_ closure: @escaping (E) -> Item) -> Builder {
             var core = self.core
             core.errorItem = closure
             return core.builder
         }
 
         @discardableResult
-        public func noResultsItem(_ closure: @escaping (Datasource.DatasourceState) -> Item) -> Builder {
+        public func noResultsItem(_ closure: @escaping (ObservedState) -> Item) -> Builder {
             var core = self.core
             core.noResultsItem = closure
             return core.builder

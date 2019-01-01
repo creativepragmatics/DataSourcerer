@@ -33,9 +33,9 @@ open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError
         })
     }
 
-    public func observe(_ statesOverTime: @escaping ValuesOverTime) -> Disposable {
+    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        return innerDatasource.observe(statesOverTime)
+        return innerDatasource.observe(valuesOverTime)
     }
 
 }

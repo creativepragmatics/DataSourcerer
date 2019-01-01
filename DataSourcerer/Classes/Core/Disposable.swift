@@ -59,6 +59,10 @@ public final class CompositeDisposable: Disposable {
         disposables.value = []
     }
 
+    public static func += (lhs: CompositeDisposable, rhs: Disposable) {
+        lhs.add(rhs)
+    }
+
 }
 
 public final class VoidDisposable: Disposable {
@@ -80,6 +84,10 @@ public extension CompositeDisposable {
 
     convenience init(_ disposableA: Disposable, objectToRetain: AnyObject) {
         self.init([disposableA, InstanceRetainingDisposable(objectToRetain)])
+    }
+
+    convenience init(_ disposables: [Disposable], objectToRetain: AnyObject) {
+        self.init(disposables + [InstanceRetainingDisposable(objectToRetain)])
     }
 }
 
@@ -121,5 +129,18 @@ public final class DisposeBag {
 
     deinit {
         dispose()
+    }
+}
+
+public final class SimpleDisposable: Disposable {
+
+    public var isDisposed: Bool {
+        return _isDisposed.value
+    }
+
+    private let _isDisposed = SynchronizedMutableProperty(false)
+
+    public func dispose() {
+        guard _isDisposed.set(true, ifCurrentValueIs: false) else { return }
     }
 }

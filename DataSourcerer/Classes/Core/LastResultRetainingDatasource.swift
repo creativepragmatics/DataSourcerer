@@ -21,42 +21,40 @@ open class LastResultRetainingDatasource
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias SubDatasource = AnyStatefulObservable<State<Value, P, E>>
+    public typealias SourceObservable = AnyStatefulObservable<State<Value, P, E>>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
         return innerObservable.currentValue
     }
 
-    private let innerDatasource: SubDatasource
+    private let sourceObservable: SourceObservable
     private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
     private let lastResult = SynchronizedMutableProperty<LastResult?>(nil)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
-    private let disposeBag = DisposeBag()
 
-    public init(innerDatasource: SubDatasource) {
-        self.innerDatasource = innerDatasource
+    public init(sourceObservable: SourceObservable) {
+        self.sourceObservable = sourceObservable
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
 
-        defer {
-            let isFirstObservation = isObserved.set(true, ifCurrentValueIs: false)
-            if isFirstObservation {
-                startObserving()
-            }
+        let innerDisposable = innerObservable.observe(statesOverTime)
+        let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
+
+        if isObserved.set(true, ifCurrentValueIs: false) {
+            compositeDisposable.add(startObserving())
         }
 
-        let innerDisposable = innerObservable.observe(statesOverTime)
-        return CompositeDisposable(innerDisposable, objectToRetain: self)
+        return compositeDisposable
     }
 
     public func removeObserver(with key: Int) {
         innerObservable.removeObserver(with: key)
     }
 
-    private func startObserving() {
+    private func startObserving() -> Disposable {
 
-        innerDatasource.observe { [weak self] state in
+        return sourceObservable.observe { [weak self] state in
             guard let self = self else { return }
 
             defer {
@@ -80,7 +78,7 @@ open class LastResultRetainingDatasource
 
             let nextState = self.nextState(innerState: state)
             self.innerObservable.emit(nextState)
-        }.disposed(by: disposeBag)
+        }
     }
 
     private func nextState(innerState: DatasourceState) -> DatasourceState {
@@ -168,11 +166,10 @@ open class LastResultRetainingDatasource
 
 }
 
-public extension DatasourceProtocol {
+public extension StatefulObservable {
 
-    typealias LastResultRetaining = LastResultRetainingDatasource<Value, P, E>
-
-    var retainLastResult: LastResultRetaining {
-        return LastResultRetaining(innerDatasource: self.any)
+    func retainLastResult<Value, P: Parameters, E: DatasourceError>()
+        -> LastResultRetainingDatasource<Value, P, E> where ObservedValue == State<Value, P, E> {
+            return LastResultRetainingDatasource(sourceObservable: self.any)
     }
 }
