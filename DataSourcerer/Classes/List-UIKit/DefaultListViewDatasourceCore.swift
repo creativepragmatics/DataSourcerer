@@ -2,7 +2,7 @@ import Foundation
 import UIKit
 
 public struct DefaultListViewDatasourceCore
-<Datasource: DatasourceProtocol, ItemViewProducer: ListItemViewProducer, Section_: ListSection> {
+<Datasource: StateDatasourceProtocol, ItemViewProducer: ListItemViewProducer, Section_: ListSection> {
 
     public typealias Item = ItemViewProducer.Item
     public typealias Section = Section_

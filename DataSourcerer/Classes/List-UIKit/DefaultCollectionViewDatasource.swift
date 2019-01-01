@@ -7,7 +7,7 @@ import UIKit
 /// Configuration has to be done before the `sections`
 /// property is accessed.
 open class DefaultCollectionViewDatasource
-<Datasource: DatasourceProtocol, CellViewProducer: CollectionViewCellProducer, Section: ListSection>
+<Datasource: StateDatasourceProtocol, CellViewProducer: CollectionViewCellProducer, Section: ListSection>
 : NSObject, UICollectionViewDataSource, UICollectionViewDelegate
 where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E {
     public typealias Core = DefaultListViewDatasourceCore<Datasource, CellViewProducer, Section>
@@ -17,7 +17,7 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
     private let datasource: Datasource
     private var isConfigured = false
 
-    public lazy var sections: AnyStatefulObservable<Core.Sections> = {
+    public lazy var sections: AnyDatasource<Core.Sections> = {
         assert(isConfigured, """
                              Configure DefaultCollectionViewDatasource before
                              accessing the sections property.

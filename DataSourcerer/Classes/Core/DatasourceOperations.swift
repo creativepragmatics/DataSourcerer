@@ -1,59 +1,59 @@
 import Foundation
 
-public extension StatefulObservable {
+public extension DatasourceProtocol {
 
     func map<TransformedValue>(_ transform: @escaping (ObservedValue) -> (TransformedValue))
-        -> StatefulObservableMapped<ObservedValue, TransformedValue> {
+        -> DatasourceMapped<ObservedValue, TransformedValue> {
 
-        return StatefulObservableMapped(self.any, transform: transform)
+        return DatasourceMapped(self.any, transform: transform)
     }
 
-    func observe(on queue: DispatchQueue) -> DispatchQueueObservable<Self> {
-        return DispatchQueueObservable(self, queue: queue)
+    func observe(on queue: DispatchQueue) -> DispatchQueueDatasource<Self> {
+        return DispatchQueueDatasource(self, queue: queue)
     }
 
-    func observeOnUIThread() -> UIObservable<Self> {
-        return UIObservable(self)
+    func observeOnUIThread() -> UIDatasource<Self> {
+        return UIDatasource(self)
     }
 
     func skipRepeats(_ isEqual:@escaping (_ lhs: ObservedValue, _ rhs: ObservedValue) -> Bool)
-        -> SkipRepeatsObservable<ObservedValue> {
-            return SkipRepeatsObservable(self.any, isEqual: isEqual)
+        -> SkipRepeatsDatasource<ObservedValue> {
+            return SkipRepeatsDatasource(self.any, isEqual: isEqual)
     }
 
 }
 
-public extension StatefulObservable where ObservedValue: Equatable {
+public extension DatasourceProtocol where ObservedValue: Equatable {
 
-    func skipRepeats() -> SkipRepeatsObservable<ObservedValue> {
-            return SkipRepeatsObservable(self.any)
+    func skipRepeats() -> SkipRepeatsDatasource<ObservedValue> {
+            return SkipRepeatsDatasource(self.any)
     }
 
 }
 
-public final class StatefulObservableMapped<SourceValue, TransformedValue>: StatefulObservable {
+public final class DatasourceMapped<SourceValue, TransformedValue>: DatasourceProtocol {
     public typealias ObservedValue = TransformedValue
 
     public var currentValue: SynchronizedProperty<TransformedValue> {
-        return innerObservable.currentValue
+        return coreDatasource.currentValue
     }
 
     private let transform: (SourceValue) -> (TransformedValue)
-    private let innerObservable: DefaultStatefulObservable<TransformedValue>
-    private let sourceObservable: AnyStatefulObservable<SourceValue>
+    private let coreDatasource: SimpleDatasource<TransformedValue>
+    private let sourceDatasource: AnyDatasource<SourceValue>
     private let isObserved = SynchronizedMutableProperty<Bool>(false)
 
-    init(_ sourceObservable: AnyStatefulObservable<SourceValue>,
+    init(_ sourceDatasource: AnyDatasource<SourceValue>,
          transform: @escaping (SourceValue) -> (TransformedValue)) {
-        self.sourceObservable = sourceObservable
+        self.sourceDatasource = sourceDatasource
         self.transform = transform
-        let initialValue = transform(sourceObservable.currentValue.value)
-        self.innerObservable = DefaultStatefulObservable(initialValue)
+        let initialValue = transform(sourceDatasource.currentValue.value)
+        self.coreDatasource = SimpleDatasource(initialValue)
     }
 
     public func observe(_ valuesOverTime: @escaping (TransformedValue) -> Void) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let innerDisposable = coreDatasource.observe(valuesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -64,42 +64,42 @@ public final class StatefulObservableMapped<SourceValue, TransformedValue>: Stat
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
 
-        return sourceObservable.observe { [weak self] sourceValue in
+        return sourceDatasource.observe { [weak self] sourceValue in
             guard let self = self else { return }
-            self.innerObservable.emit(self.transform(sourceValue))
+            self.coreDatasource.emit(self.transform(sourceValue))
         }
     }
 
 }
 
 /// Sends values only on the defined thread.
-public final class DispatchQueueObservable<SourceObservable: StatefulObservable>: StatefulObservable {
+public final class DispatchQueueDatasource<SourceDatasource: DatasourceProtocol>: DatasourceProtocol {
 
-    public typealias ObservedValue = SourceObservable.ObservedValue
+    public typealias ObservedValue = SourceDatasource.ObservedValue
 
-    private let wrappedObservable: SourceObservable
-    private let innerObservable: DefaultStatefulObservable<ObservedValue>
+    private let sourceDatasource: SourceDatasource
+    private let coreDatasource: SimpleDatasource<ObservedValue>
     private let executer: SynchronizedExecuter
     private let isObserved = SynchronizedMutableProperty(false)
 
     public var currentValue: SynchronizedProperty<ObservedValue> {
-        return innerObservable.currentValue
+        return coreDatasource.currentValue
     }
 
-    public init(_ wrappedObservable: SourceObservable, queue: DispatchQueue) {
+    public init(_ sourceDatasource: SourceDatasource, queue: DispatchQueue) {
         executer = SynchronizedExecuter(queue: queue)
-        innerObservable = DefaultStatefulObservable(wrappedObservable.currentValue.value)
-        self.wrappedObservable = wrappedObservable
+        coreDatasource = SimpleDatasource(sourceDatasource.currentValue.value)
+        self.sourceDatasource = sourceDatasource
     }
 
     public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let innerDisposable = coreDatasource.observe(valuesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -110,20 +110,20 @@ public final class DispatchQueueObservable<SourceObservable: StatefulObservable>
     }
 
     private func startObserving() -> Disposable {
-        return wrappedObservable.observe { [weak self] value in
+        return sourceDatasource.observe { [weak self] value in
             self?.executer.sync { [weak self] in
-                self?.innerObservable.emit(value)
+                self?.coreDatasource.emit(value)
             }
         }
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
 }
 
-internal struct UIObservableQueueInitializer {
+internal struct UIDatasourceQueueInitializer {
     internal static let dispatchSpecificKey = DispatchSpecificKey<UInt8>()
     internal static let dispatchSpecificValue = UInt8.max
 
@@ -133,16 +133,16 @@ internal struct UIObservableQueueInitializer {
     }()
 }
 
-/// Heavily inspired by UIObservable from ReactiveSwift.
-public final class UIObservable<SourceObservable: StatefulObservable>: StatefulObservable {
-    public typealias ObservedValue = SourceObservable.ObservedValue
+/// Heavily inspired by UIScheduler from ReactiveSwift.
+public final class UIDatasource<SourceDatasource: DatasourceProtocol>: DatasourceProtocol {
+    public typealias ObservedValue = SourceDatasource.ObservedValue
 
-    public var currentValue: SynchronizedProperty<SourceObservable.ObservedValue> {
-        return innerObservable.currentValue
+    public var currentValue: SynchronizedProperty<SourceDatasource.ObservedValue> {
+        return coreDatasource.currentValue
     }
 
-    private let wrappedObservable: SourceObservable
-    private let innerObservable: DefaultStatefulObservable<ObservedValue>
+    private let sourceDatasource: SourceDatasource
+    private let coreDatasource: SimpleDatasource<ObservedValue>
     private let isObserved = SynchronizedMutableProperty(false)
     private let disposeBag = DisposeBag()
 
@@ -161,21 +161,21 @@ public final class UIObservable<SourceObservable: StatefulObservable>: StatefulO
         queueLength.deallocate()
     }
 
-    /// Initializes `UIObservable`
-    public init(_ wrappedObservable: SourceObservable) {
+    /// Initializes `UIDatasource`
+    public init(_ sourceDatasource: SourceDatasource) {
         /// This call is to ensure the main queue has been setup appropriately
-        /// for `UIObservable`. It is only called once during the application
+        /// for `UIDatasource`. It is only called once during the application
         /// lifetime, since Swift has a `dispatch_once` like mechanism to
         /// lazily initialize global variables and static variables.
-        _ = UIObservableQueueInitializer.initializeOnce
+        _ = UIDatasourceQueueInitializer.initializeOnce
 
-        self.wrappedObservable = wrappedObservable
-        self.innerObservable = DefaultStatefulObservable(wrappedObservable.currentValue.value)
+        self.sourceDatasource = sourceDatasource
+        self.coreDatasource = SimpleDatasource(sourceDatasource.currentValue.value)
     }
 
-    public func observe(_ valuesOverTime: @escaping (SourceObservable.ObservedValue) -> Void) -> Disposable {
+    public func observe(_ valuesOverTime: @escaping (SourceDatasource.ObservedValue) -> Void) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let innerDisposable = coreDatasource.observe(valuesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -186,11 +186,11 @@ public final class UIObservable<SourceObservable: StatefulObservable>: StatefulO
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
-        return wrappedObservable
+        return sourceDatasource
             .observe { [weak self] value in
                 guard let self = self else { return }
 
@@ -199,14 +199,14 @@ public final class UIObservable<SourceObservable: StatefulObservable>: StatefulO
                 // If we're already running on the main queue, and there isn't work
                 // already enqueued, we can skip scheduling and just execute directly.
                 if positionInQueue == 1 && DispatchQueue.getSpecific(
-                    key: UIObservableQueueInitializer.dispatchSpecificKey) ==
-                        UIObservableQueueInitializer.dispatchSpecificValue {
-                    self.innerObservable.emit(value)
+                    key: UIDatasourceQueueInitializer.dispatchSpecificKey) ==
+                        UIDatasourceQueueInitializer.dispatchSpecificValue {
+                    self.coreDatasource.emit(value)
                     self.dequeue()
                 } else {
                     DispatchQueue.main.async { [weak self] in
                         guard let self = self else { return }
-                        self.innerObservable.emit(value)
+                        self.coreDatasource.emit(value)
                         self.dequeue()
                     }
                 }
@@ -224,31 +224,31 @@ public final class UIObservable<SourceObservable: StatefulObservable>: StatefulO
 }
 
 /// Skips repeated values (distinct until changed).
-public final class SkipRepeatsObservable<SourceValue>: StatefulObservable {
+public final class SkipRepeatsDatasource<SourceValue>: DatasourceProtocol {
     public typealias ObservedValue = SourceValue
 
     public var currentValue: SynchronizedProperty<SourceValue> {
-        return innerObservable.currentValue
+        return coreDatasource.currentValue
     }
 
     private let lastValue: SynchronizedMutableProperty<SourceValue>
-    private let innerObservable: DefaultStatefulObservable<SourceValue>
-    private let sourceObservable: AnyStatefulObservable<SourceValue>
+    private let coreDatasource: SimpleDatasource<SourceValue>
+    private let sourceDatasource: AnyDatasource<SourceValue>
     private let isObserved = SynchronizedMutableProperty<Bool>(false)
     private let isEqual: (SourceValue, SourceValue) -> (Bool)
 
-    public init(_ sourceObservable: AnyStatefulObservable<SourceValue>,
+    public init(_ sourceDatasource: AnyDatasource<SourceValue>,
                 isEqual: @escaping (SourceValue, SourceValue) -> (Bool)) {
-        self.sourceObservable = sourceObservable
+        self.sourceDatasource = sourceDatasource
         self.isEqual = isEqual
-        let initialValue = sourceObservable.currentValue.value
+        let initialValue = sourceDatasource.currentValue.value
         self.lastValue = SynchronizedMutableProperty<SourceValue>(initialValue)
-        self.innerObservable = DefaultStatefulObservable(initialValue)
+        self.coreDatasource = SimpleDatasource(initialValue)
     }
 
     public func observe(_ valuesOverTime: @escaping (SourceValue) -> Void) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let innerDisposable = coreDatasource.observe(valuesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -259,25 +259,25 @@ public final class SkipRepeatsObservable<SourceValue>: StatefulObservable {
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
 
-        return sourceObservable.observe { [weak self] newValue in
+        return sourceDatasource.observe { [weak self] newValue in
             guard let self = self,
                 self.isEqual(newValue, self.lastValue.value) == false else { return }
 
             self.lastValue.value = newValue
-            self.innerObservable.emit(newValue)
+            self.coreDatasource.emit(newValue)
         }
     }
 
 }
 
-public extension SkipRepeatsObservable where SourceValue : Equatable {
+public extension SkipRepeatsDatasource where SourceValue : Equatable {
 
-    convenience init(_ sourceObservable: AnyStatefulObservable<SourceValue>) {
-        self.init(sourceObservable, isEqual: { lhs, rhs in return lhs == rhs })
+    convenience init(_ sourceDatasource: AnyDatasource<SourceValue>) {
+        self.init(sourceDatasource, isEqual: { lhs, rhs in return lhs == rhs })
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 open class URLSessionDatasource
-<Value_: Codable, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
+<Value_: Codable, P_: Parameters, E_: DatasourceError>: StateDatasourceProtocol {
 
     public typealias Value = Value_
     public typealias P = P_
@@ -9,17 +9,17 @@ open class URLSessionDatasource
     public typealias ObservedValue = DatasourceState
     public typealias GenerateRequest = (LoadImpulse<P>) throws -> URLRequest
     public typealias GenerateError = (String) -> E
-    private typealias InnerDatasource = ClosureDatasource<Value, P, E>
+    private typealias CoreDatasource = ClosureDatasource<Value, P, E>
 
     public var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
-        return innerDatasource.loadImpulseEmitter
+        return coreDatasource.loadImpulseEmitter
     }
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
-        return innerDatasource.currentValue
+        return coreDatasource.currentValue
     }
 
-    private let innerDatasource: InnerDatasource
+    private let coreDatasource: CoreDatasource
     private let generateRequest: GenerateRequest
     private let generateError: GenerateError
     private let stateGenerationDisposable = SynchronizedMutableProperty<Disposable?>(nil)
@@ -31,27 +31,27 @@ open class URLSessionDatasource
         self.generateRequest = generateRequest
         let generateState = URLSessionDatasource<Value, P, E>.generateState(generateError: generateError,
                                                                             generateRequest: generateRequest)
-        self.innerDatasource = InnerDatasource(loadImpulseEmitter: loadImpulseEmitter, generateState)
+        self.coreDatasource = CoreDatasource(loadImpulseEmitter: loadImpulseEmitter, generateState)
     }
 
     public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        let disposable = innerDatasource.observe(valuesOverTime)
+        let disposable = coreDatasource.observe(valuesOverTime)
         return CompositeDisposable(disposable, objectToRetain: self)
     }
 
     public func removeObserver(with key: Int) {
-        innerDatasource.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     private static func generateState(generateError: @escaping GenerateError,
                                       generateRequest: @escaping GenerateRequest)
-        -> InnerDatasource.GenerateState {
+        -> CoreDatasource.GenerateState {
 
         return { loadImpulse, sendState -> Disposable in
 
             func sendError(_ error: E) {
-                sendState(InnerDatasource.DatasourceState.error(
+                sendState(CoreDatasource.DatasourceState.error(
                     error: error,
                     loadImpulse: loadImpulse,
                     fallbackValueBox: nil
@@ -85,7 +85,7 @@ open class URLSessionDatasource
                 do {
                     let value = try JSONDecoder.decode(responseData,
                                                        to: Value.self)
-                    let state = InnerDatasource.DatasourceState.value(valueBox: EquatableBox(value),
+                    let state = CoreDatasource.DatasourceState.value(valueBox: EquatableBox(value),
                                                                       loadImpulse: loadImpulse,
                                                                       fallbackError: nil)
                     sendState(state)

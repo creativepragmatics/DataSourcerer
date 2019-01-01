@@ -1,30 +1,30 @@
 import Foundation
 
 open class LoadingEndedObservable
-    <Value, P: Parameters, E: DatasourceError> : TypedObservable {
+    <Value, P: Parameters, E: DatasourceError> : TypedObservableProtocol {
     public typealias ObservedValue = Void
     public typealias EndedLoadingEventsOverTime = (()) -> Void
-    public typealias SourceObservable = AnyStatefulObservable<State<Value, P, E>>
+    public typealias SourceDatasource = AnyDatasource<State<Value, P, E>>
 
-    private let sourceObservable: AnyStatefulObservable<State<Value, P, E>>
+    private let sourceDatasource: AnyDatasource<State<Value, P, E>>
     private let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
     private let disposeBag = DisposeBag()
     private var isLoading = SynchronizedMutableProperty<Bool>(false)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
-    private let innerObservable = DefaultStatefulObservable<Void>(())
+    private let coreDatasource = SimpleDatasource<Void>(())
     private let executer: SynchronizedExecuter
 
-    init(sourceObservable: SourceObservable,
+    init(sourceDatasource: SourceDatasource,
          loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
          queue: DispatchQueue = .main) {
-        self.sourceObservable = sourceObservable
+        self.sourceDatasource = sourceDatasource
         self.loadImpulseEmitter = loadImpulseEmitter
         self.executer = SynchronizedExecuter(queue: queue)
     }
 
     public func observe(_ valuesOverTime: @escaping EndedLoadingEventsOverTime) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let innerDisposable = coreDatasource.observe(valuesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -35,7 +35,7 @@ open class LoadingEndedObservable
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
@@ -47,7 +47,7 @@ open class LoadingEndedObservable
                 self?.isLoading.value = true
             }
 
-        disposable += sourceObservable
+        disposable += sourceDatasource
             .observe { [weak self] state in
                 guard let self = self,
                     self.isLoading.value,
@@ -57,7 +57,7 @@ open class LoadingEndedObservable
                 case .result:
                     self.isLoading.value = false
                     self.executer.async { [weak self] in
-                        self?.innerObservable.emit(())
+                        self?.coreDatasource.emit(())
                     }
                 case .notReady, .loading:
                     break
@@ -69,7 +69,7 @@ open class LoadingEndedObservable
 
 }
 
-public extension StatefulObservable {
+public extension DatasourceProtocol {
 
     func loadingEndedEvents<Value, P: Parameters, E: DatasourceError>(
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
@@ -77,7 +77,7 @@ public extension StatefulObservable {
         -> LoadingEndedObservable<Value, P, E> where ObservedValue == State<Value, P, E> {
 
             return LoadingEndedObservable<Value, P, E>(
-                sourceObservable: self.any,
+                sourceDatasource: self.any,
                 loadImpulseEmitter: loadImpulseEmitter,
                 queue: queue
             )

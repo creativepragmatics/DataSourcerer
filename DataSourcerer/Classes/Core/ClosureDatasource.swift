@@ -1,7 +1,7 @@
 import Foundation
 
 open class ClosureDatasource
-<Value_, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
+<Value_, P_: Parameters, E_: DatasourceError>: StateDatasourceProtocol {
 
     public typealias Value = Value_
     public typealias P = P_
@@ -13,18 +13,17 @@ open class ClosureDatasource
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
-        return innerObservable.currentValue
+        return coreDatasource.currentValue
     }
 
+    private let coreDatasource = SimpleDatasource<State<Value, P, E>>(.notReady)
     private let generateState: GenerateState
     private let isObserved = SynchronizedMutableProperty(false)
     private let stateGenerationDisposable = SynchronizedMutableProperty<Disposable?>(nil)
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
-
-    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
 
     public init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>, _ generateState: @escaping GenerateState) {
         self.loadImpulseEmitter = loadImpulseEmitter
@@ -33,7 +32,7 @@ open class ClosureDatasource
 
     public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(valuesOverTime)
+        let innerDisposable = coreDatasource.observe(valuesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -54,7 +53,7 @@ open class ClosureDatasource
             let disposable = strongSelf
                 .generateState(loadImpulse, { [weak self] nextState in
                     guard let strongSelf = self else { return }
-                    strongSelf.innerObservable.emit(nextState)
+                    strongSelf.coreDatasource.emit(nextState)
                 })
             strongSelf.stateGenerationDisposable.value = disposable
             compositeDisposable += disposable

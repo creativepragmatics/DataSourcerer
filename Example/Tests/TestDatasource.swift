@@ -1,7 +1,8 @@
 import Foundation
 import DataSourcerer
 
-open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError>: DatasourceProtocol {
+open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError>:
+StateDatasourceProtocol {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
@@ -10,22 +11,20 @@ open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError
     public let sendsFirstStateSynchronously = true
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
     public var currentValue: SynchronizedProperty<DatasourceState> {
-        return innerDatasource.currentValue
+        return coreDatasource.currentValue
     }
-    private let innerDatasource: ClosureDatasource<Value, P, E>
+    private let coreDatasource: ClosureDatasource<Value, P, E>
 
     private let disposeBag = DisposeBag()
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
-
-    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
 
     init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>, states: [State<Value, P, E>], error: E) {
         self.loadImpulseEmitter = loadImpulseEmitter
 
-        self.innerDatasource = ClosureDatasource.init(loadImpulseEmitter: loadImpulseEmitter, { (loadImpulse, send) in
+        self.coreDatasource = ClosureDatasource.init(loadImpulseEmitter: loadImpulseEmitter, { (loadImpulse, send) in
             let state = states.first(where: { $0.loadImpulse == loadImpulse })
                 ?? DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValueBox: nil)
             send(state)
@@ -35,7 +34,7 @@ open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError
 
     public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        return innerDatasource.observe(valuesOverTime)
+        return coreDatasource.observe(valuesOverTime)
     }
 
 }

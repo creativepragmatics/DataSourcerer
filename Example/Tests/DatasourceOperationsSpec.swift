@@ -3,7 +3,7 @@ import Foundation
 import Nimble
 import Quick
 
-class DefaultDatasourceStateMapperSpec: QuickSpec {
+class DatasourceOperationsSpec: QuickSpec {
 
     private lazy var testStringLoadImpulse = LoadImpulse(parameters: "1")
 
@@ -15,7 +15,7 @@ class DefaultDatasourceStateMapperSpec: QuickSpec {
     }
 
     override func spec() {
-        describe("DefaultDatasourceStateMapper") {
+        describe("DatasourceMapped") {
             it("should send mapped values to observer") {
 
                 let datasource = self.testDatasource()
@@ -24,7 +24,7 @@ class DefaultDatasourceStateMapperSpec: QuickSpec {
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
-                let mapper = DefaultDatasourceStateMapper.init(datasource: datasource, stateToMappedValue: transform)
+                let mapper = DatasourceMapped(datasource.any, transform: transform)
 
                 var observedInts: [Int?] = []
 
@@ -48,7 +48,7 @@ class DefaultDatasourceStateMapperSpec: QuickSpec {
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
-                let mapper = DefaultDatasourceStateMapper.init(datasource: datasource, stateToMappedValue: transform)
+                let mapper = DatasourceMapped(datasource.any, transform: transform)
 
                 weak var testStr: NSMutableString?
 

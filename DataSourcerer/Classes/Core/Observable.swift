@@ -1,96 +1,15 @@
 import Foundation
 
-public protocol UntypedObservable {
+/// Base observable type.
+public protocol ObservableProtocol {
     func removeObserver(with: Int)
 }
 
-public protocol TypedObservable: UntypedObservable {
+/// Typed observable which sends values to each
+/// observer (subscribed via `observe(_)`).
+public protocol TypedObservableProtocol: ObservableProtocol {
     associatedtype ObservedValue
     typealias ValuesOverTime = (ObservedValue) -> Void
 
     func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable
-}
-
-/// Retains the current value and sends an initial value
-/// synchronously on subscription.
-public protocol StatefulObservable: TypedObservable {
-    var currentValue: SynchronizedProperty<ObservedValue> { get }
-}
-
-public extension StatefulObservable {
-    var any: AnyStatefulObservable<ObservedValue> {
-        return AnyStatefulObservable(self)
-    }
-}
-
-public struct AnyStatefulObservable<T_>: StatefulObservable {
-    public typealias ObservedValue = T_
-
-    public let currentValue: SynchronizedProperty<ObservedValue>
-    private var _observe: (@escaping ValuesOverTime) -> Disposable
-    private var _removeObserver: (Int) -> Void
-
-    init<O: StatefulObservable>(_ observable: O) where O.ObservedValue == ObservedValue {
-        self.currentValue = observable.currentValue
-        self._observe = observable.observe
-        self._removeObserver = observable.removeObserver
-    }
-
-    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
-        return _observe(valuesOverTime)
-    }
-
-    public func removeObserver(with key: Int) {
-        _removeObserver(key)
-    }
-}
-
-open class DefaultStatefulObservable<T_>: StatefulObservable {
-    public typealias ObservedValue = T_
-    public typealias ValuesOverTime = (ObservedValue) -> Void
-
-    private let mutableLastValue: SynchronizedMutableProperty<ObservedValue>
-    public lazy var currentValue = SynchronizedProperty<ObservedValue>(self.mutableLastValue)
-
-    private let observers = SynchronizedMutableProperty([Int: ValuesOverTime]())
-
-    public init(_ firstValue: ObservedValue) {
-        mutableLastValue = SynchronizedMutableProperty<ObservedValue>(firstValue)
-    }
-
-    open func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
-
-        // Send current value
-        valuesOverTime(currentValue.value)
-
-        return observeWithoutCurrentValue(valuesOverTime)
-    }
-
-    /// In some cases, the first value is not desired.
-    /// We want the sending of the first value upen observation
-    /// to be the standard behavior in observe(_), so this
-    /// separate method is needed.
-    open func observeWithoutCurrentValue(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
-
-        let uniqueKey = Int(arc4random_uniform(10_000))
-        observers.modify({ $0[uniqueKey] = valuesOverTime })
-
-        // Keeps a reference to self until disposed:
-        return ActionDisposable {
-            self.removeObserver(with: uniqueKey)
-        }
-    }
-
-    open func emit(_ value: ObservedValue) {
-
-        mutableLastValue.value = value
-        observers.value.values.forEach({ valuesOverTime in
-            valuesOverTime(value)
-        })
-    }
-
-    open func removeObserver(with key: Int) {
-
-        observers.modify({ $0.removeValue(forKey: key) })
-    }
 }

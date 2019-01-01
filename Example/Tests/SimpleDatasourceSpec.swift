@@ -3,63 +3,63 @@ import Foundation
 import Nimble
 import Quick
 
-class ObservableSpec: QuickSpec {
+class SimpleDatasourceSpec: QuickSpec {
 
     override func spec() {
-        describe("DefaultStatefulObservable") {
+        describe("SimpleDatasource") {
             it("should send values to an observer") {
 
-                let observable = DefaultStatefulObservable<Int>(1)
+                let datasource = SimpleDatasource<Int>(1)
 
                 var observedValues: [Int] = []
 
-                _ = observable.observe { value in
+                _ = datasource.observe { value in
                     observedValues.append(value)
                 }
 
-                observable.emit(2)
+                datasource.emit(2)
 
                 expect(observedValues) == [1,2]
             }
             it("should not duplicate values with multiple observers subscribed") {
 
-                let observable = DefaultStatefulObservable<Int>(1)
+                let datasource = SimpleDatasource<Int>(1)
 
                 var observedValues: [Int] = []
 
-                _ = observable.observe { value in
+                _ = datasource.observe { value in
                     observedValues.append(value)
                 }
-                _ = observable.observe({ _ in })
+                _ = datasource.observe({ _ in })
 
-                observable.emit(2)
+                datasource.emit(2)
 
                 expect(observedValues) == [1,2]
             }
             it("should stop sending values to an observer after disposal") {
 
-                let observable = DefaultStatefulObservable<Int>(1)
+                let datasource = SimpleDatasource<Int>(1)
 
                 var observedValues: [Int] = []
 
-                let disposable = observable.observe { value in
+                let disposable = datasource.observe { value in
                     observedValues.append(value)
                 }
 
-                observable.emit(2)
+                datasource.emit(2)
                 disposable.dispose()
-                observable.emit(3)
+                datasource.emit(3)
 
                 expect(observedValues) == [1,2]
             }
             it("should release observer after disposal") {
 
                 weak var testStr: NSMutableString?
-                let observable = DefaultStatefulObservable<String>("")
+                let datasource = SimpleDatasource<String>("")
 
                 let testScope: () -> Disposable = {
                     let innerStr = NSMutableString(string: "")
-                    let disposable = observable.observe { value in
+                    let disposable = datasource.observe { value in
                         innerStr.append("\(value)")
                     }
                     testStr = innerStr
@@ -68,9 +68,9 @@ class ObservableSpec: QuickSpec {
 
                 let disposable = testScope()
 
-                observable.emit("1")
+                datasource.emit("1")
                 expect(testStr) == "1"
-                observable.emit("2")
+                datasource.emit("2")
                 expect(testStr) == "12"
 
                 disposable.dispose()

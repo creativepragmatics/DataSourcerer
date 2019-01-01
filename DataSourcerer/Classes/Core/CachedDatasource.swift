@@ -5,47 +5,47 @@ import Foundation
 /// datasource (yet to be implemented).
 /// State coming from the primary datasource is treated as preferential
 /// over state from the cache datasource.
-open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
+open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: StateDatasourceProtocol {
 
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias SubObservable = AnyStatefulObservable<State<Value, P, E>>
+    public typealias SubDatasource = AnyDatasource<State<Value, P, E>>
     public typealias StatePersisterConcrete = AnyStatePersister<Value, P, E>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
-        return innerObservable.currentValue
+        return coreDatasource.currentValue
     }
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
-    private let primaryObservable: SubObservable
-    private let cacheObservable: SubObservable
+    private let primaryDatasource: SubDatasource
+    private let cacheDatasource: SubDatasource
     private let persister: StatePersisterConcrete?
-    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
+    private let coreDatasource = SimpleDatasource<State<Value, P, E>>(.notReady)
     private let disposeBag = DisposeBag()
     private var currentStateComponents = SynchronizedMutableProperty(StateComponents.initial)
 
     public init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
-                primaryObservable: SubObservable,
-                cacheObservable: SubObservable,
+                primaryDatasource: SubDatasource,
+                cacheDatasource: SubDatasource,
                 persister: StatePersisterConcrete?) {
         self.loadImpulseEmitter = loadImpulseEmitter
-        self.primaryObservable = primaryObservable
-        self.cacheObservable = cacheObservable
+        self.primaryDatasource = primaryDatasource
+        self.cacheDatasource = cacheDatasource
         self.persister = persister
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
         defer {
-            primaryObservable
+            primaryDatasource
                 .observe { [weak self] in self?.setAndEmitNext(latestPrimaryState: $0) }
                 .disposed(by: disposeBag)
 
-            cacheObservable
+            cacheDatasource
                 .observe { [weak self] in self?.setAndEmitNext(latestCachedState: $0) }
                 .disposed(by: disposeBag)
 
@@ -54,7 +54,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
                 .disposed(by: disposeBag)
         }
 
-        let disposable = innerObservable.observe(statesOverTime)
+        let disposable = coreDatasource.observe(statesOverTime)
         return CompositeDisposable(disposable, objectToRetain: self)
     }
 
@@ -89,7 +89,7 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
         let combinedState = self.combinedState(primary: primary, cache: cached, loadImpulse: loadImpulse)
 
         if currentValue.value != combinedState {
-            innerObservable.emit(combinedState)
+            coreDatasource.emit(combinedState)
         }
     }
 
@@ -180,18 +180,18 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: Dataso
 
 public typealias LoadingStarted = Bool
 
-public extension StatefulObservable {
+public extension DatasourceProtocol {
 
     func cache<Value, P: Parameters, E: DatasourceError>(
-        with cacheObservable: AnyStatefulObservable<ObservedValue>,
+        with cacheDatasource: AnyDatasource<ObservedValue>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
         persister: AnyStatePersister<Value, P, E>? = nil
         ) -> CachedDatasource<Value, P, E> where ObservedValue == State<Value, P, E> {
 
         return CachedDatasource(
             loadImpulseEmitter: loadImpulseEmitter,
-            primaryObservable: self.any,
-            cacheObservable: cacheObservable,
+            primaryDatasource: self.any,
+            cacheDatasource: cacheDatasource,
             persister: persister
         )
     }

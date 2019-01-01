@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol LoadImpulseEmitterProtocol: TypedObservable where ObservedValue == LoadImpulse<P> {
+public protocol LoadImpulseEmitterProtocol: TypedObservableProtocol where ObservedValue == LoadImpulse<P> {
     associatedtype P: Parameters
     typealias LoadImpulsesOverTime = ValuesOverTime
 
@@ -39,12 +39,12 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     }
 }
 
-public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, UntypedObservable {
+public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
     private let initialImpulse: LoadImpulse<P>?
-    private let innerObservable = DefaultStatefulObservable<LI?>(nil)
+    private let coreDatasource = SimpleDatasource<LI?>(nil)
 
     public init(initialImpulse: LoadImpulse<P>?) {
         self.initialImpulse = initialImpulse
@@ -56,7 +56,7 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
             observe(initialImpulse)
         }
 
-        let innerDisposable = innerObservable.observeWithoutCurrentValue { loadImpulse in
+        let innerDisposable = coreDatasource.observeWithoutCurrentValue { loadImpulse in
             if let loadImpulse = loadImpulse {
                 observe(loadImpulse)
             }
@@ -66,16 +66,16 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P>) {
-        innerObservable.emit(loadImpulse)
+        coreDatasource.emit(loadImpulse)
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
 }
 
-public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, UntypedObservable {
+public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 

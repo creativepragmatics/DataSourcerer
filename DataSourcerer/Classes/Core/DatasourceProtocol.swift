@@ -1,11 +1,95 @@
 import Foundation
 
+/// Must emit current value to an observer when `observe(_)`
+/// is called.
+public protocol DatasourceProtocol: TypedObservableProtocol {
+    var currentValue: SynchronizedProperty<ObservedValue> { get }
+}
+
+public extension DatasourceProtocol {
+    var any: AnyDatasource<ObservedValue> {
+        return AnyDatasource(self)
+    }
+}
+
+public struct AnyDatasource<T_>: DatasourceProtocol {
+    public typealias ObservedValue = T_
+
+    public let currentValue: SynchronizedProperty<ObservedValue>
+    private var _observe: (@escaping ValuesOverTime) -> Disposable
+    private var _removeObserver: (Int) -> Void
+
+    init<D: DatasourceProtocol>(_ datasource: D) where D.ObservedValue == ObservedValue {
+        self.currentValue = datasource.currentValue
+        self._observe = datasource.observe
+        self._removeObserver = datasource.removeObserver
+    }
+
+    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
+        return _observe(valuesOverTime)
+    }
+
+    public func removeObserver(with key: Int) {
+        _removeObserver(key)
+    }
+}
+
+open class SimpleDatasource<T_>: DatasourceProtocol {
+    public typealias ObservedValue = T_
+    public typealias ValuesOverTime = (ObservedValue) -> Void
+
+    private let mutableLastValue: SynchronizedMutableProperty<ObservedValue>
+    public lazy var currentValue = SynchronizedProperty<ObservedValue>(self.mutableLastValue)
+
+    private let observers = SynchronizedMutableProperty([Int: ValuesOverTime]())
+
+    public init(_ firstValue: ObservedValue) {
+        mutableLastValue = SynchronizedMutableProperty<ObservedValue>(firstValue)
+    }
+
+    open func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
+
+        // Send current value
+        valuesOverTime(currentValue.value)
+
+        return observeWithoutCurrentValue(valuesOverTime)
+    }
+
+    /// In some cases, the first value is not desired.
+    /// We want "send first value upon observation synchronously"
+    /// to be the standard behavior in observe(_), so this
+    /// separate method is needed.
+    open func observeWithoutCurrentValue(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
+
+        let uniqueKey = Int(arc4random_uniform(10_000))
+        observers.modify({ $0[uniqueKey] = valuesOverTime })
+
+        // Keeps a reference to self until disposed:
+        return ActionDisposable {
+            self.removeObserver(with: uniqueKey)
+        }
+    }
+
+    open func emit(_ value: ObservedValue) {
+
+        mutableLastValue.value = value
+        observers.value.values.forEach({ valuesOverTime in
+            valuesOverTime(value)
+        })
+    }
+
+    open func removeObserver(with key: Int) {
+
+        observers.modify({ $0.removeValue(forKey: key) })
+    }
+}
+
 /// Provides or transforms a stream of States.
 ///
 /// Must only start work after `observe(_)` is first called AND
 /// `loadImpulseEmitter` has sent the first impulse.
 ///
-/// Per definition of StatefulObservable, the current value is
+/// Per definition of DatasourceProtocol, the current value is
 /// emitted synchronously to an observer when it calls `observe(_)`.
 ///
 /// Analogy to ReactiveSwift: Datasources are like SignalProducers,
@@ -18,7 +102,7 @@ import Foundation
 /// SignalProducer.replayLazily(1).
 ///
 /// Analogy to RxSwift/ReactiveX: Insert example :)
-public protocol DatasourceProtocol: StatefulObservable where ObservedValue == DatasourceState {
+public protocol StateDatasourceProtocol: DatasourceProtocol where ObservedValue == DatasourceState {
     associatedtype Value: Any
     associatedtype P: Parameters
     associatedtype E: DatasourceError
@@ -88,6 +172,3 @@ public protocol CachedDatasourceError: DatasourceError {
 
     init(cacheLoadError type: DatasourceErrorMessage)
 }
-
-public typealias InnerStateObservable<Value, P: Parameters, E: DatasourceError> =
-    DefaultStatefulObservable<State<Value, P, E>>

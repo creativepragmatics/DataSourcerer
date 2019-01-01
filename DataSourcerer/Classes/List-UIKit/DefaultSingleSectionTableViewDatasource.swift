@@ -10,13 +10,13 @@ open class DefaultSingleSectionTableViewDatasource
     <Value, P: Parameters, E, Cell: DefaultListItem>:
     NSObject, UITableViewDelegate, UITableViewDataSource where Cell.E == E {
     public typealias CellViewProducer = DefaultTableViewCellProducer<Cell>
-    public typealias SourceObservable = AnyStatefulObservable<State<Value, P, E>>
+    public typealias SourceDatasource = AnyDatasource<State<Value, P, E>>
     public typealias Core = DefaultSingleSectionListViewDatasourceCore
         <Value, P, E, CellViewProducer>
 
     public var core: Core
 
-    private let sourceObservable: SourceObservable
+    private let sourceDatasource: SourceDatasource
 
     /// If true, use heightAtIndexPath to store item heights. Most likely
     /// only makes sense in TableViews with autolayouted cells.
@@ -24,21 +24,21 @@ open class DefaultSingleSectionTableViewDatasource
     public var heightAtIndexPath: [IndexPath: CGFloat] = [:]
     private var isConfigured = false
 
-    public lazy var cells: AnyStatefulObservable<Core.Items> = {
+    public lazy var cells: AnyDatasource<Core.Items> = {
         assert(isConfigured, """
                              Configure DefaultSingleSectionTableViewDatasource before
                              accessing the cells property.
                              """)
 
-        return self.sourceObservable
+        return self.sourceDatasource
             .map(self.core.stateToItems)
             .observeOnUIThread()
             .any
     }()
 
-    public init(sourceObservable: SourceObservable,
+    public init(sourceDatasource: SourceDatasource,
                 cellType: Cell.Type? = nil) {
-        self.sourceObservable = sourceObservable
+        self.sourceDatasource = sourceDatasource
         self.core =
             DefaultSingleSectionListViewDatasourceCore()
     }

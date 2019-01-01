@@ -16,29 +16,29 @@ import Foundation
 /// This struct helps with this by caching the last value and/or
 /// error,.
 open class LastResultRetainingDatasource
-<Value_: Any, P_: Parameters, E_: DatasourceError>: DatasourceProtocol {
+<Value_: Any, P_: Parameters, E_: DatasourceError>: StateDatasourceProtocol {
 
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias SourceObservable = AnyStatefulObservable<State<Value, P, E>>
+    public typealias SourceDatasource = AnyDatasource<State<Value, P, E>>
 
     public var currentValue: SynchronizedProperty<DatasourceState> {
-        return innerObservable.currentValue
+        return coreDatasource.currentValue
     }
 
-    private let sourceObservable: SourceObservable
-    private let innerObservable = InnerStateObservable<Value, P, E>(.notReady)
+    private let sourceDatasource: SourceDatasource
+    private let coreDatasource = SimpleDatasource<State<Value, P, E>>(.notReady)
     private let lastResult = SynchronizedMutableProperty<LastResult?>(nil)
     private var isObserved = SynchronizedMutableProperty<Bool>(false)
 
-    public init(sourceObservable: SourceObservable) {
-        self.sourceObservable = sourceObservable
+    public init(sourceDatasource: SourceDatasource) {
+        self.sourceDatasource = sourceDatasource
     }
 
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
 
-        let innerDisposable = innerObservable.observe(statesOverTime)
+        let innerDisposable = coreDatasource.observe(statesOverTime)
         let compositeDisposable = CompositeDisposable(innerDisposable, objectToRetain: self)
 
         if isObserved.set(true, ifCurrentValueIs: false) {
@@ -49,12 +49,12 @@ open class LastResultRetainingDatasource
     }
 
     public func removeObserver(with key: Int) {
-        innerObservable.removeObserver(with: key)
+        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
 
-        return sourceObservable.observe { [weak self] state in
+        return sourceDatasource.observe { [weak self] state in
             guard let self = self else { return }
 
             defer {
@@ -77,7 +77,7 @@ open class LastResultRetainingDatasource
             }
 
             let nextState = self.nextState(innerState: state)
-            self.innerObservable.emit(nextState)
+            self.coreDatasource.emit(nextState)
         }
     }
 
@@ -166,10 +166,10 @@ open class LastResultRetainingDatasource
 
 }
 
-public extension StatefulObservable {
+public extension DatasourceProtocol {
 
     func retainLastResult<Value, P: Parameters, E: DatasourceError>()
         -> LastResultRetainingDatasource<Value, P, E> where ObservedValue == State<Value, P, E> {
-            return LastResultRetainingDatasource(sourceObservable: self.any)
+            return LastResultRetainingDatasource(sourceDatasource: self.any)
     }
 }

@@ -11,7 +11,7 @@ class PublicReposViewModel {
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
-    private lazy var primaryDatasource: AnyStatefulObservable<State<Value, P, E>> = {
+    private lazy var primaryDatasource: AnyDatasource<State<Value, P, E>> = {
         return PublicReposPrimaryDatasourceBuilder(loadImpulseEmitter: loadImpulseEmitter.any)
             .datasource
             .any

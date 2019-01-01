@@ -11,7 +11,7 @@ class PublicReposRootViewController : UIViewController {
     private let disposeBag = DisposeBag()
 
     lazy var tableViewDatasource: DefaultSingleSectionTableViewDatasource = {
-        return DefaultSingleSectionTableViewDatasource(sourceObservable: viewModel.datasource.any,
+        return DefaultSingleSectionTableViewDatasource(sourceDatasource: viewModel.datasource.any,
                                                        cellType: PublicReposCell.self)
     }()
 
