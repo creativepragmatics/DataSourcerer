@@ -40,10 +40,6 @@ open class URLSessionDatasource
         return CompositeDisposable(disposable, objectToRetain: self)
     }
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
     private static func generateState(generateError: @escaping GenerateError,
                                       generateRequest: @escaping GenerateRequest)
         -> CoreDatasource.GenerateState {

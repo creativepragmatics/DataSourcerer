@@ -17,10 +17,6 @@ StateDatasourceProtocol {
 
     private let disposeBag = DisposeBag()
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
     init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>, states: [State<Value, P, E>], error: E) {
         self.loadImpulseEmitter = loadImpulseEmitter
 

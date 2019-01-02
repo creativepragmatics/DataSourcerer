@@ -63,10 +63,6 @@ public final class DatasourceMapped<SourceValue, TransformedValue>: DatasourcePr
         return compositeDisposable
     }
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
     private func startObserving() -> Disposable {
 
         return sourceDatasource.observe { [weak self] sourceValue in
@@ -115,10 +111,6 @@ public final class DispatchQueueDatasource<SourceDatasource: DatasourceProtocol>
                 self?.coreDatasource.emit(value)
             }
         }
-    }
-
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
     }
 
 }
@@ -183,10 +175,6 @@ public final class UIDatasource<SourceDatasource: DatasourceProtocol>: Datasourc
         }
 
         return compositeDisposable
-    }
-
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
@@ -256,10 +244,6 @@ public final class SkipRepeatsDatasource<SourceValue>: DatasourceProtocol {
         }
 
         return compositeDisposable
-    }
-
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {

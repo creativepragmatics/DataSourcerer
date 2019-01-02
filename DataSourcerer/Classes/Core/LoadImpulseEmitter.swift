@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol LoadImpulseEmitterProtocol: TypedObservableProtocol where ObservedValue == LoadImpulse<P> {
+public protocol LoadImpulseEmitterProtocol: ObservableProtocol where ObservedValue == LoadImpulse<P> {
     associatedtype P: Parameters
     typealias LoadImpulsesOverTime = ValuesOverTime
 
@@ -17,13 +17,11 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     public typealias P = P_
 
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
-    private let _removeObserver: (Int) -> Void
     private let _emit: (LoadImpulse<P>) -> Void
 
     init<Emitter: LoadImpulseEmitterProtocol>(_ emitter: Emitter) where Emitter.P == P {
         self._emit = emitter.emit
         self._observe = emitter.observe
-        self._removeObserver = emitter.removeObserver
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P_>) {
@@ -32,10 +30,6 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
 
     public func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable {
         return _observe(loadImpulsesOverTime)
-    }
-
-    public func removeObserver(with key: Int) {
-        _removeObserver(key)
     }
 }
 
@@ -67,10 +61,6 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
 
     public func emit(_ loadImpulse: LoadImpulse<P>) {
         coreDatasource.emit(loadImpulse)
-    }
-
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
     }
 
 }
@@ -147,10 +137,6 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     public func emit(_ loadImpulse: LoadImpulse<P>) {
         innerEmitter.emit(loadImpulse)
         resetTimer()
-    }
-
-    public func removeObserver(with key: Int) {
-        innerEmitter.removeObserver(with: key)
     }
 
     deinit {

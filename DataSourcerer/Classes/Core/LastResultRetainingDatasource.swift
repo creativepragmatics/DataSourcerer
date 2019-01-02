@@ -48,10 +48,6 @@ open class LastResultRetainingDatasource
         return compositeDisposable
     }
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
     private func startObserving() -> Disposable {
 
         return sourceDatasource.observe { [weak self] state in

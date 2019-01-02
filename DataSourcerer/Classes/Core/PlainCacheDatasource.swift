@@ -51,8 +51,4 @@ StateDatasourceProtocol {
         return CompositeDisposable(disposable, objectToRetain: self)
     }
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
 }

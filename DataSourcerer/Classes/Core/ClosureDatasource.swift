@@ -21,10 +21,6 @@ open class ClosureDatasource
     private let isObserved = SynchronizedMutableProperty(false)
     private let stateGenerationDisposable = SynchronizedMutableProperty<Disposable?>(nil)
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
     public init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>, _ generateState: @escaping GenerateState) {
         self.loadImpulseEmitter = loadImpulseEmitter
         self.generateState = generateState

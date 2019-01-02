@@ -35,10 +35,6 @@ open class CachedDatasource<Value_, P_: Parameters, E_: DatasourceError>: StateD
         self.persister = persister
     }
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
     public func observe(_ statesOverTime: @escaping StatesOverTime) -> Disposable {
         defer {
             primaryDatasource

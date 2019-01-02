@@ -2,7 +2,7 @@ import Foundation
 
 /// Must emit current value to an observer when `observe(_)`
 /// is called.
-public protocol DatasourceProtocol: TypedObservableProtocol {
+public protocol DatasourceProtocol: ObservableProtocol {
     var currentValue: SynchronizedProperty<ObservedValue> { get }
 }
 
@@ -17,20 +17,14 @@ public struct AnyDatasource<T_>: DatasourceProtocol {
 
     public let currentValue: SynchronizedProperty<ObservedValue>
     private var _observe: (@escaping ValuesOverTime) -> Disposable
-    private var _removeObserver: (Int) -> Void
 
     init<D: DatasourceProtocol>(_ datasource: D) where D.ObservedValue == ObservedValue {
         self.currentValue = datasource.currentValue
         self._observe = datasource.observe
-        self._removeObserver = datasource.removeObserver
     }
 
     public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
         return _observe(valuesOverTime)
-    }
-
-    public func removeObserver(with key: Int) {
-        _removeObserver(key)
     }
 }
 
@@ -64,10 +58,7 @@ open class SimpleDatasource<T_>: DatasourceProtocol {
         let uniqueKey = Int(arc4random_uniform(10_000))
         observers.modify({ $0[uniqueKey] = valuesOverTime })
 
-        // Keeps a reference to self until disposed:
-        return ActionDisposable {
-            self.removeObserver(with: uniqueKey)
-        }
+        return InstanceRetainingDisposable(self)
     }
 
     open func emit(_ value: ObservedValue) {
@@ -76,11 +67,6 @@ open class SimpleDatasource<T_>: DatasourceProtocol {
         observers.value.values.forEach({ valuesOverTime in
             valuesOverTime(value)
         })
-    }
-
-    open func removeObserver(with key: Int) {
-
-        observers.modify({ $0.removeValue(forKey: key) })
     }
 }
 

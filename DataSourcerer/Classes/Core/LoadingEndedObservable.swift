@@ -1,7 +1,7 @@
 import Foundation
 
 open class LoadingEndedObservable
-    <Value, P: Parameters, E: DatasourceError> : TypedObservableProtocol {
+    <Value, P: Parameters, E: DatasourceError> : ObservableProtocol {
     public typealias ObservedValue = Void
     public typealias EndedLoadingEventsOverTime = (()) -> Void
     public typealias SourceDatasource = AnyDatasource<State<Value, P, E>>
@@ -32,10 +32,6 @@ open class LoadingEndedObservable
         }
 
         return compositeDisposable
-    }
-
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
     }
 
     private func startObserving() -> Disposable {
