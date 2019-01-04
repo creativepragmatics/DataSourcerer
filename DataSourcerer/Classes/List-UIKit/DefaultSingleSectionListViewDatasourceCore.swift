@@ -1,7 +1,7 @@
 import Foundation
 
 public struct DefaultSingleSectionListViewDatasourceCore
-<Value, P: Parameters, E: DatasourceError, ItemViewProducer: ListItemViewProducer> {
+<Value, P: Parameters, E: StateError, ItemViewProducer: ListItemViewProducer> {
 
     public typealias ObservedState = State<Value, P, E>
     public typealias Item = ItemViewProducer.Item

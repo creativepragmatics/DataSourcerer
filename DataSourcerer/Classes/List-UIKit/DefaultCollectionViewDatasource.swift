@@ -7,17 +7,17 @@ import UIKit
 /// Configuration has to be done before the `sections`
 /// property is accessed.
 open class DefaultCollectionViewDatasource
-<Datasource: StateDatasourceProtocol, CellViewProducer: CollectionViewCellProducer, Section: ListSection>
+    <Value, P: Parameters, E, CellViewProducer: CollectionViewCellProducer, Section: ListSection>
 : NSObject, UICollectionViewDataSource, UICollectionViewDelegate
-where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Datasource.E {
-    public typealias Core = DefaultListViewDatasourceCore<Datasource, CellViewProducer, Section>
+where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == E {
+    public typealias Core = DefaultListViewDatasourceCore<Value, P, E, CellViewProducer, Section>
 
     public var core: Core
 
-    private let datasource: Datasource
+    private let datasource: Datasource<State<Value, P, E>>
     private var isConfigured = false
 
-    public lazy var sections: AnyDatasource<Core.Sections> = {
+    public lazy var sections: ObservableProperty<Core.Sections> = {
         assert(isConfigured, """
                              Configure DefaultCollectionViewDatasource before
                              accessing the sections property.
@@ -25,12 +25,12 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
         return self.datasource
             .map(self.core.stateToSections)
             .observeOnUIThread()
-            .any
+            .property(initialValue: Core.Sections.notReady)
     }()
 
-    public init(datasource: Datasource) {
+    public init(datasource: Datasource<State<Value, P, E>>) {
         self.datasource = datasource
-        self.core = DefaultListViewDatasourceCore()
+        self.core = Core()
     }
 
     public func configure(_ build: (Core.Builder) -> (Core.Builder)) {
@@ -53,16 +53,16 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
     }
 
     public func numberOfSections(in collectionView: UICollectionView) -> Int {
-        return sections.currentValue.value.sectionsWithItems?.count ?? 0
+        return sections.value.sectionsWithItems?.count ?? 0
     }
 
     public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int)
         -> Int {
-        return sections.currentValue.value.sectionsWithItems?[section].items.count ?? 0
+        return sections.value.sectionsWithItems?[section].items.count ?? 0
     }
 
     private func isInBounds(indexPath: IndexPath) -> Bool {
-        if let sectionsWithItems = sections.currentValue.value.sectionsWithItems,
+        if let sectionsWithItems = sections.value.sectionsWithItems,
             indexPath.section < sectionsWithItems.count,
             indexPath.item < sectionsWithItems[indexPath.section].items.count {
             return true
@@ -73,10 +73,10 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
 
     public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath)
         -> UICollectionViewCell {
-        guard let sectionsWithItems = sections.currentValue.value.sectionsWithItems,
+        guard let sectionsWithItems = sections.value.sectionsWithItems,
             isInBounds(indexPath: indexPath) else {
             print(indexPath)
-            print(sections.currentValue.value.sectionsWithItems?.count ?? 0)
+            print(sections.value.sectionsWithItems?.count ?? 0)
             collectionView.register(UICollectionViewCell.self,
                                     forCellWithReuseIdentifier: "noSectionsWithItemsCell")
             return collectionView.dequeueReusableCell(withReuseIdentifier: "noSectionsWithItemsCell",
@@ -111,7 +111,7 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == Dataso
 
     public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
 
-        guard let sectionsWithItems = sections.currentValue.value.sectionsWithItems,
+        guard let sectionsWithItems = sections.value.sectionsWithItems,
             isInBounds(indexPath: indexPath) else {
             return
         }
@@ -128,7 +128,7 @@ public extension DefaultCollectionViewDatasource {
 
     func sectionWithItems(at indexPath: IndexPath) ->
         SectionWithItems<CellViewProducer.Item, Section>? {
-        guard let sectionsWithItems = sections.currentValue.value.sectionsWithItems,
+        guard let sectionsWithItems = sections.value.sectionsWithItems,
             indexPath.section < sectionsWithItems.count else { return nil }
         return sectionsWithItems[indexPath.section]
     }

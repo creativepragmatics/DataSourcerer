@@ -38,7 +38,7 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     public typealias LI = LoadImpulse<P>
 
     private let initialImpulse: LoadImpulse<P>?
-    private let coreDatasource = SimpleDatasource<LI?>(nil)
+    private let broadcastObservable = BroadcastObservable<LI>()
 
     public init(initialImpulse: LoadImpulse<P>?) {
         self.initialImpulse = initialImpulse
@@ -50,17 +50,11 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
             observe(initialImpulse)
         }
 
-        let innerDisposable = coreDatasource.observeWithoutCurrentValue { loadImpulse in
-            if let loadImpulse = loadImpulse {
-                observe(loadImpulse)
-            }
-        }
-        let selfDisposable: Disposable = InstanceRetainingDisposable(self)
-        return CompositeDisposable([innerDisposable, selfDisposable])
+        return broadcastObservable.observe(observe)
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P>) {
-        coreDatasource.emit(loadImpulse)
+        broadcastObservable.emit(loadImpulse)
     }
 
 }
@@ -80,9 +74,6 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     // TODO: refactor to use SynchronizedMutableProperty
     public var timerMode: TimerMode {
         didSet {
-            if let lastLoadImpulse = lastLoadImpulse {
-                emit(lastLoadImpulse)
-            }
             resetTimer()
         }
     }
@@ -114,7 +105,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
                                   leeway: .milliseconds(100))
                 newTimer.setEventHandler { [weak self] in
                     guard let lastLoadImpulse = self?.lastLoadImpulse else { return }
-                    self?.emit(lastLoadImpulse)
+                    self?.innerEmitter.emit(lastLoadImpulse)
                 }
                 newTimer.resume()
                 timer = newTimer

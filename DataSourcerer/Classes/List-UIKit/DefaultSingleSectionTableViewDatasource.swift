@@ -10,13 +10,13 @@ open class DefaultSingleSectionTableViewDatasource
     <Value, P: Parameters, E, Cell: DefaultListItem>:
     NSObject, UITableViewDelegate, UITableViewDataSource where Cell.E == E {
     public typealias CellViewProducer = DefaultTableViewCellProducer<Cell>
-    public typealias SourceDatasource = AnyDatasource<State<Value, P, E>>
+    public typealias StatesObservable = AnyObservable<State<Value, P, E>>
     public typealias Core = DefaultSingleSectionListViewDatasourceCore
         <Value, P, E, CellViewProducer>
 
     public var core: Core
 
-    private let sourceDatasource: SourceDatasource
+    private let statesObservable: StatesObservable
 
     /// If true, use heightAtIndexPath to store item heights. Most likely
     /// only makes sense in TableViews with autolayouted cells.
@@ -24,23 +24,22 @@ open class DefaultSingleSectionTableViewDatasource
     public var heightAtIndexPath: [IndexPath: CGFloat] = [:]
     private var isConfigured = false
 
-    public lazy var cells: AnyDatasource<Core.Items> = {
+    public lazy var cells: ObservableProperty<Core.Items> = {
         assert(isConfigured, """
                              Configure DefaultSingleSectionTableViewDatasource before
                              accessing the cells property.
                              """)
 
-        return self.sourceDatasource
+        return self.statesObservable
             .map(self.core.stateToItems)
             .observeOnUIThread()
-            .any
+            .property(initialValue: Core.Items.notReady)
     }()
 
-    public init(sourceDatasource: SourceDatasource,
+    public init(statesObservable: StatesObservable,
                 cellType: Cell.Type? = nil) {
-        self.sourceDatasource = sourceDatasource
-        self.core =
-            DefaultSingleSectionListViewDatasourceCore()
+        self.statesObservable = statesObservable
+        self.core = DefaultSingleSectionListViewDatasourceCore()
     }
 
     public func configure(_ build: (Core.Builder) -> (Core.Builder)) {
@@ -62,12 +61,12 @@ open class DefaultSingleSectionTableViewDatasource
     }
 
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let cells = cells.currentValue.value.items else { return 0 }
+        guard let cells = cells.value.items else { return 0 }
         return cells.count
     }
 
     public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        guard let cells = cells.currentValue.value.items,
+        guard let cells = cells.value.items,
             indexPath.row < cells.count else { return UITableViewCell() }
         let cell = cells[indexPath.row]
         if let itemViewProducer = core.itemToViewMapping[cell.viewType] {
@@ -81,7 +80,7 @@ open class DefaultSingleSectionTableViewDatasource
 
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
-        guard let cells = cells.currentValue.value.items else { return }
+        guard let cells = cells.value.items else { return }
         let cell = cells[indexPath.row]
         if cell.viewType.isSelectable {
             core.itemSelected?(cell)

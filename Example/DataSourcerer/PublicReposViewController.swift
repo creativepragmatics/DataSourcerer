@@ -11,7 +11,7 @@ class PublicReposRootViewController : UIViewController {
     private let disposeBag = DisposeBag()
 
     lazy var tableViewDatasource: DefaultSingleSectionTableViewDatasource = {
-        return DefaultSingleSectionTableViewDatasource(sourceDatasource: viewModel.datasource.any,
+        return DefaultSingleSectionTableViewDatasource(statesObservable: viewModel.states.any,
                                                        cellType: PublicReposCell.self)
     }()
 
@@ -64,7 +64,7 @@ class PublicReposRootViewController : UIViewController {
                         case .noResults:
                             return .instantiate({ _ in
                                 let tableViewCell = ErrorTableViewCell()
-                                tableViewCell.content = DatasourceErrorMessage
+                                tableViewCell.content = StateErrorMessage
                                     .message("Strangely, there are no public repos on Github.")
                                 return tableViewCell
                             })
@@ -106,8 +106,9 @@ class PublicReposRootViewController : UIViewController {
 
     private func setupObservers() {
 
-        viewModel.datasource
-            .loadingEndedEvents(loadImpulseEmitter: viewModel.loadImpulseEmitter.any)
+        viewModel.states
+            .loadingEnded()
+            .observeOnUIThread()
             .observe { [weak self] _ in
                 self?.tableViewController.refreshControl?.endRefreshing()
             }
@@ -117,7 +118,7 @@ class PublicReposRootViewController : UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        viewModel.loadImpulseEmitter.timerMode = .timeInterval(.seconds(30))
+        viewModel.loadImpulseEmitter.timerMode = .timeInterval(.seconds(90))
     }
 
     override func viewWillDisappear(_ animated: Bool) {

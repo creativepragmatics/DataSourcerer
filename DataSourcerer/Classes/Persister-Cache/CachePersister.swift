@@ -1,7 +1,7 @@
 import Cache
 import Foundation
 
-public struct CachePersister<Value_: Codable, P_: Parameters & Codable, E_: DatasourceError & Codable>
+public struct CachePersister<Value_: Codable, P_: Parameters & Codable, E_: StateError & Codable>
 : StatePersister {
     public typealias Value = Value_
     public typealias P = P_

@@ -77,7 +77,7 @@ open class DefaultSingleSectionTableViewController
             self.refreshControl = refreshControl
         }
 
-        var previousCells = tableViewDatasource.cells.currentValue.value
+        var previousCells = tableViewDatasource.cells.value
 
         // Update table with most current cells
         tableViewDatasource.cells.observe({ [weak self] cells in
