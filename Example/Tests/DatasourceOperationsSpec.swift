@@ -8,7 +8,7 @@ class DatasourceOperationsSpec: QuickSpec {
     private lazy var testStringLoadImpulse = LoadImpulse(parameters: "1")
 
     var stringLoadImpulseEmitter: AnyLoadImpulseEmitter<String> {
-        return DefaultLoadImpulseEmitter<String>(initialImpulse: testStringLoadImpulse).any
+        return SimpleLoadImpulseEmitter<String>(initialImpulse: testStringLoadImpulse).any
     }
 
     private func testDatasource(_ loadImpulseEmitter: AnyLoadImpulseEmitter<String>)

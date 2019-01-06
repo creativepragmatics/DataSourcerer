@@ -23,7 +23,7 @@ enum PublicReposCell {
     }
 }
 
-extension PublicReposCell: DefaultListItem {
+extension PublicReposCell: IdiomaticListItem {
     typealias DatasourceItem = PublicRepo
     typealias E = APIError
 

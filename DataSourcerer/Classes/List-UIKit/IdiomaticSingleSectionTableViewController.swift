@@ -1,12 +1,12 @@
 import Dwifft
 import Foundation
 
-open class DefaultSingleSectionTableViewController
-    <Value, P: Parameters, E, Cell: DefaultListItem>: UIViewController where Cell.E == E {
+open class IdiomaticSingleSectionTableViewController
+    <Value, P: Parameters, E, Cell: IdiomaticListItem>: UIViewController where Cell.E == E {
 
     public typealias Cells = SingleSectionListItems<Cell>
     public typealias TableViewDatasource =
-        DefaultSingleSectionTableViewDatasource<Value, P, E, Cell>
+        IdiomaticSingleSectionTableViewDatasource<Value, P, E, Cell>
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()

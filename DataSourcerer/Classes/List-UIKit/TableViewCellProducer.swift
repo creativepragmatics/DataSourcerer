@@ -4,7 +4,7 @@ import UIKit
 public protocol TableViewCellProducer : ListItemViewProducer
 where ProducedView == UITableViewCell, ContainingView == UITableView {}
 
-public enum DefaultTableViewCellProducer<Cell: ListItem>: TableViewCellProducer {
+public enum SimpleTableViewCellProducer<Cell: ListItem>: TableViewCellProducer {
     public typealias Item = Cell
     public typealias ProducedView = UITableViewCell
     public typealias ContainingView = UITableView

@@ -1,16 +1,16 @@
 import Foundation
 import UIKit
 
-/// Default implementation for a collection view with
+/// Idiomatic implementation for a collection view with
 /// support for loading indicator, "no results" cell
 /// and error cell.
 /// Configuration has to be done before the `sections`
 /// property is accessed.
-open class DefaultCollectionViewDatasource
+open class IdiomaticCollectionViewDatasource
     <Value, P: Parameters, E, CellViewProducer: CollectionViewCellProducer, Section: ListSection>
 : NSObject, UICollectionViewDataSource, UICollectionViewDelegate
-where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == E {
-    public typealias Core = DefaultListViewDatasourceCore<Value, P, E, CellViewProducer, Section>
+where CellViewProducer.Item : IdiomaticListItem, CellViewProducer.Item.E == E {
+    public typealias Core = IdiomaticListViewDatasourceCore<Value, P, E, CellViewProducer, Section>
 
     public var core: Core
 
@@ -19,7 +19,7 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == E {
 
     public lazy var sections: ObservableProperty<Core.Sections> = {
         assert(isConfigured, """
-                             Configure DefaultCollectionViewDatasource before
+                             Configure IdiomaticCollectionViewDatasource before
                              accessing the sections property.
                              """)
         return self.datasource
@@ -42,7 +42,7 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == E {
     public func registerItemViews(with collectionView: UICollectionView) {
 
         assert(isConfigured, """
-                             Configure DefaultCollectionViewDatasource before
+                             Configure IdiomaticCollectionViewDatasource before
                              calling registerItemViews().
                              """)
 
@@ -124,7 +124,7 @@ where CellViewProducer.Item : DefaultListItem, CellViewProducer.Item.E == E {
 
 }
 
-public extension DefaultCollectionViewDatasource {
+public extension IdiomaticCollectionViewDatasource {
 
     func sectionWithItems(at indexPath: IndexPath) ->
         SectionWithItems<CellViewProducer.Item, Section>? {

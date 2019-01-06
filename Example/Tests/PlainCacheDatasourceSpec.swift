@@ -17,7 +17,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
     }()
 
     private func testDatasource(persistedState: State<String, String, TestStateError>,
-                                loadImpulseEmitter: DefaultLoadImpulseEmitter<String>)
+                                loadImpulseEmitter: SimpleLoadImpulseEmitter<String>)
         -> Datasource<State<String, String, TestStateError>> {
 
             let persister = TestStatePersister<String, String, TestStateError>()
@@ -31,7 +31,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
     override func spec() {
         describe("PlainCacheDatasource") {
             it("should send stored value synchronously if initial load impulse is set") {
-                let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(
+                let loadImpulseEmitter = SimpleLoadImpulseEmitter<String>(
                     initialImpulse: self.testStringLoadImpulse
                 )
                 let datasource = self.testDatasource(persistedState: self.testStringState,
@@ -47,7 +47,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
                 expect(observedStates) == [self.testStringState]
             }
             it("should release observer after disposal") {
-                let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(
+                let loadImpulseEmitter = SimpleLoadImpulseEmitter<String>(
                     initialImpulse: self.testStringLoadImpulse
                 )
                 let datasource = self.testDatasource(persistedState: self.testStringState,

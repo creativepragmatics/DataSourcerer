@@ -79,7 +79,7 @@ public extension State {
     }
 
     /// Convenience
-    func listItems<Item: DefaultListItem, Section: ListSection>(
+    func listItems<Item: IdiomaticListItem, Section: ListSection>(
         valueToSections: @escaping (Value) -> [SectionWithItems<Item, Section>]?
         ) -> ListSections<Item, Section> where Item.E == E {
 
@@ -164,7 +164,7 @@ public extension State {
     }
 
     /// Convenience
-    func singleSectionListItems<Item: DefaultListItem>(valueToItems: @escaping (Value) -> [Item]?)
+    func singleSectionListItems<Item: IdiomaticListItem>(valueToItems: @escaping (Value) -> [Item]?)
         -> SingleSectionListItems<Item> where Item.E == E {
             return self.singleSectionListItems(valueToItems: valueToItems,
                                                loadingItem: { _ in Item.loadingCell },

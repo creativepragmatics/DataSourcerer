@@ -1,6 +1,6 @@
 import Foundation
 
-public struct DefaultListViewDatasourceCore
+public struct IdiomaticListViewDatasourceCore
 <Value, P: Parameters, E: StateError, ItemViewProducer: ListItemViewProducer, Section_: ListSection> {
 
     public typealias Item = ItemViewProducer.Item
@@ -28,7 +28,7 @@ public struct DefaultListViewDatasourceCore
     public var noResultsSection: ((State<Value, P, E>) -> Sections.SectionWithItemsConcrete)?
 
     init(stateToSections: @escaping StateToSectionsIncomplete =
-        DefaultListViewDatasourceCore.defaultStateToSections) {
+        IdiomaticListViewDatasourceCore.defaultStateToSections) {
         self.stateToSectionsIncomplete = stateToSections
     }
 
@@ -52,7 +52,7 @@ public struct DefaultListViewDatasourceCore
 
     func stateToSections(_ state: State<Value, P, E>) -> ListSections<Item, Section> {
         let valueToSections = self.valueToSections ?? { _ -> [SectionWithItems<Item, Section>] in
-            let errorItem = Item(errorMessage: "Set DefaultListViewDatasourceCore.valueToSections")
+            let errorItem = Item(errorMessage: "Set IdiomaticListViewDatasourceCore.valueToSections")
             return [SectionWithItems(Section(), [errorItem])]
         }
         return stateToSectionsIncomplete(state,
@@ -64,7 +64,7 @@ public struct DefaultListViewDatasourceCore
 
 }
 
-public extension DefaultListViewDatasourceCore {
+public extension IdiomaticListViewDatasourceCore {
 
     /// Configures standard components and assumes standard behavior that might be suitable
     /// for most "normal" UITableView use cases:
@@ -80,7 +80,7 @@ public extension DefaultListViewDatasourceCore {
     /// Usage: Instantiate and configure with the offered parameters and functions and add the
     /// `tableViewController` to the view hierarchy.
     struct Builder {
-        public typealias Core = DefaultListViewDatasourceCore
+        public typealias Core = IdiomaticListViewDatasourceCore
 
         public var core: Core
 

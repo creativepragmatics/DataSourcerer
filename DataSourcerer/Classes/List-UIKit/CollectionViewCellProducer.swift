@@ -4,7 +4,7 @@ import UIKit
 public protocol CollectionViewCellProducer : ListItemViewProducer
 where ProducedView == UICollectionViewCell, ContainingView == UICollectionView {}
 
-public enum DefaultCollectionViewCellProducer<Cell: ListItem>: CollectionViewCellProducer {
+public enum SimpleCollectionViewCellProducer<Cell: ListItem>: CollectionViewCellProducer {
     public typealias Item = Cell
     public typealias ProducedView = UICollectionViewCell
     public typealias ContainingView = UICollectionView

@@ -10,14 +10,14 @@ class PublicReposRootViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
-    lazy var tableViewDatasource: DefaultSingleSectionTableViewDatasource = {
-        return DefaultSingleSectionTableViewDatasource(statesObservable: viewModel.states.any,
+    lazy var tableViewDatasource: IdiomaticSingleSectionTableViewDatasource = {
+        return IdiomaticSingleSectionTableViewDatasource(statesObservable: viewModel.states.any,
                                                        cellType: PublicReposCell.self)
     }()
 
-    lazy var tableViewController: DefaultSingleSectionTableViewController
+    lazy var tableViewController: IdiomaticSingleSectionTableViewController
         <PublicReposResponseContainer, VoidParameters, APIError, PublicReposCell> = {
-        return DefaultSingleSectionTableViewController(tableViewDatasource: self.tableViewDatasource)
+        return IdiomaticSingleSectionTableViewController(tableViewDatasource: self.tableViewDatasource)
     }()
 
     init() {
@@ -40,10 +40,10 @@ class PublicReposRootViewController : UIViewController {
                     .valueToItems({ publicReposResponseContainer -> [PublicReposCell]? in
                         return publicReposResponseContainer.map({ PublicReposCell.repo($0) })
                     })
-                    .itemToView({ viewType -> DefaultTableViewCellProducer<PublicReposCell> in
+                    .itemToView({ viewType -> SimpleTableViewCellProducer<PublicReposCell> in
                         switch viewType {
                         case .repo:
-                            return DefaultTableViewCellProducer.instantiate({ cell -> UITableViewCell in
+                            return SimpleTableViewCellProducer.instantiate({ cell -> UITableViewCell in
                                 switch cell {
                                 case .loading, .noResults, .error: return UITableViewCell()
                                 case let .repo(repo):

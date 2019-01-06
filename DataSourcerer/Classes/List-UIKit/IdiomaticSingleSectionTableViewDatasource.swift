@@ -1,17 +1,17 @@
 import Foundation
 import UIKit
 
-/// Default implementation for a single section tableview
+/// Idiomatic implementation for a single section tableview
 /// with support for loading indicator, "no results" cell
 /// and error cell.
 /// Configuration has to be done before the `cells`
 /// property is accessed.
-open class DefaultSingleSectionTableViewDatasource
-    <Value, P: Parameters, E, Cell: DefaultListItem>:
+open class IdiomaticSingleSectionTableViewDatasource
+    <Value, P: Parameters, E, Cell: IdiomaticListItem>:
     NSObject, UITableViewDelegate, UITableViewDataSource where Cell.E == E {
-    public typealias CellViewProducer = DefaultTableViewCellProducer<Cell>
+    public typealias CellViewProducer = SimpleTableViewCellProducer<Cell>
     public typealias StatesObservable = AnyObservable<State<Value, P, E>>
-    public typealias Core = DefaultSingleSectionListViewDatasourceCore
+    public typealias Core = IdiomaticSingleSectionListViewDatasourceCore
         <Value, P, E, CellViewProducer>
 
     public var core: Core
@@ -26,7 +26,7 @@ open class DefaultSingleSectionTableViewDatasource
 
     public lazy var cells: ObservableProperty<Core.Items> = {
         assert(isConfigured, """
-                             Configure DefaultSingleSectionTableViewDatasource before
+                             Configure IdiomaticSingleSectionTableViewDatasource before
                              accessing the cells property.
                              """)
 
@@ -39,7 +39,7 @@ open class DefaultSingleSectionTableViewDatasource
     public init(statesObservable: StatesObservable,
                 cellType: Cell.Type? = nil) {
         self.statesObservable = statesObservable
-        self.core = DefaultSingleSectionListViewDatasourceCore()
+        self.core = IdiomaticSingleSectionListViewDatasourceCore()
     }
 
     public func configure(_ build: (Core.Builder) -> (Core.Builder)) {
@@ -51,7 +51,7 @@ open class DefaultSingleSectionTableViewDatasource
     public func registerItemViews(with tableView: UITableView) {
 
         assert(isConfigured, """
-                             Configure DefaultSingleSectionTableViewDatasource before
+                             Configure IdiomaticSingleSectionTableViewDatasource before
                              calling registerItemViews().
                              """)
 

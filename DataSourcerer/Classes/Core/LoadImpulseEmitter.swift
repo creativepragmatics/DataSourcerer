@@ -33,7 +33,7 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     }
 }
 
-public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
+public class SimpleLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
@@ -64,7 +64,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     public typealias LI = LoadImpulse<P>
 
     private let lastLoadImpulse: LoadImpulse<P>?
-    private let innerEmitter: DefaultLoadImpulseEmitter<P>
+    private let innerEmitter: SimpleLoadImpulseEmitter<P>
     private let disposeBag = DisposeBag()
     private var timer = SynchronizedMutableProperty<DispatchSourceTimer?>(nil)
     private var isObserved = SynchronizedMutableProperty(false)
@@ -84,7 +84,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
 
         self.lastLoadImpulse = initialImpulse
         self.timerMode = timerMode
-        self.innerEmitter = DefaultLoadImpulseEmitter<P>(initialImpulse: initialImpulse)
+        self.innerEmitter = SimpleLoadImpulseEmitter<P>(initialImpulse: initialImpulse)
         self.timerEmitQueue = timerEmitQueue ??
             DispatchQueue(label: "datasourcerer.recurringloadimpulseemitter.timer", attributes: [])
     }

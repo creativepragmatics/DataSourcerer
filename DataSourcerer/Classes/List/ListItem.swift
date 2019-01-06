@@ -14,7 +14,7 @@ public protocol ListItemViewType: CaseIterable, Hashable {
     var isSelectable: Bool { get }
 }
 
-public protocol DefaultListItem : ListItem {
+public protocol IdiomaticListItem : ListItem {
     associatedtype DatasourceItem: Any
     associatedtype E: StateError
 

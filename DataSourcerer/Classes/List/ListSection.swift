@@ -9,6 +9,6 @@ public protocol ListSection: Equatable {
 
 /// Section implementation that has no data attached. Ideal
 /// for lists where all data resides in the cells.
-public struct DefaultListSection : ListSection {
+public struct IdiomaticListSection : ListSection {
     public init() {}
 }

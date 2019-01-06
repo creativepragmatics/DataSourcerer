@@ -8,7 +8,7 @@ import UIKit
 public protocol CollectionReusableViewProducer : ListItemViewProducer
 where ProducedView == UICollectionReusableView, ContainingView == UICollectionView {}
 
-public enum DefaultCollectionReusableViewProducer<ReusableView: ListItem>: CollectionReusableViewProducer {
+public enum SimpleCollectionReusableViewProducer<ReusableView: ListItem>: CollectionReusableViewProducer {
     public typealias Item = ReusableView
     public typealias ProducedView = UICollectionReusableView
     public typealias ContainingView = UICollectionView

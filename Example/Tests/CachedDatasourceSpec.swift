@@ -17,7 +17,7 @@ class CachedDatasourceSpec: QuickSpec {
     }()
 
     private func loadImpulseEmitter() -> AnyLoadImpulseEmitter<String> {
-        return DefaultLoadImpulseEmitter(initialImpulse: self.testStringLoadImpulse).any
+        return SimpleLoadImpulseEmitter(initialImpulse: self.testStringLoadImpulse).any
     }
 
     override func spec() {
@@ -108,7 +108,7 @@ class CachedDatasourceSpec: QuickSpec {
 //
 //                struct Resources {
 //                    let disposable: Disposable
-//                    let loadImpulseEmitter: WeakReference<DefaultLoadImpulseEmitter<String>>
+//                    let loadImpulseEmitter: WeakReference<SimpleLoadImpulseEmitter<String>>
 //                    let primaryDatasource: WeakReference<Datasource<State<String, String, TestStateError>>>
 //                    let cacheDatasource: WeakReference<Datasource<String, String, TestStateError>>
 //                    let cachedDatasource: WeakReference<Datasource<String, String, TestStateError>>

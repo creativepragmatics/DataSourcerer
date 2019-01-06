@@ -1,6 +1,6 @@
 import Foundation
 
-public struct DefaultSingleSectionListViewDatasourceCore
+public struct IdiomaticSingleSectionListViewDatasourceCore
 <Value, P: Parameters, E: StateError, ItemViewProducer: ListItemViewProducer> {
 
     public typealias ObservedState = State<Value, P, E>
@@ -31,7 +31,7 @@ public struct DefaultSingleSectionListViewDatasourceCore
     public var heightAtIndexPath: [IndexPath: CGFloat] = [:]
 
     init(stateToItemsIncomplete: @escaping StateToItemsIncomplete =
-        DefaultSingleSectionListViewDatasourceCore.defaultStateToItems) {
+        IdiomaticSingleSectionListViewDatasourceCore.defaultStateToItems) {
         self.stateToItemsIncomplete = stateToItemsIncomplete
     }
 
@@ -54,14 +54,14 @@ public struct DefaultSingleSectionListViewDatasourceCore
 
     func stateToItems(_ state: ObservedState) -> Items {
         let valueToItems = self.valueToItems ?? { _ -> [Item] in
-            return [Item(errorMessage: "Set DefaultSingleSectionListViewDatasourceCore.valueToItems")]
+            return [Item(errorMessage: "Set IdiomaticSingleSectionListViewDatasourceCore.valueToItems")]
         }
         return stateToItemsIncomplete(state, valueToItems, loadingItem, errorItem, noResultsItem)
     }
 
 }
 
-public extension DefaultSingleSectionListViewDatasourceCore {
+public extension IdiomaticSingleSectionListViewDatasourceCore {
 
     /// Configures standard components and assumes standard behavior that might be suitable
     /// for most "normal" UITableView use cases:
@@ -77,7 +77,7 @@ public extension DefaultSingleSectionListViewDatasourceCore {
     /// Usage: Instantiate and configure with the offered parameters and functions and add the
     /// `tableViewController` to the view hierarchy.
     struct Builder {
-        public typealias Core = DefaultSingleSectionListViewDatasourceCore
+        public typealias Core = IdiomaticSingleSectionListViewDatasourceCore
 
         public var core: Core
 
