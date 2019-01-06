@@ -48,7 +48,7 @@ The same applies to the [IdiomaticSingleSectionTableViewDatasource](DataSourcere
 
 ## Is it tested?
 
-[Yes](DataSourcerer/tree/master/Example/Tests). More tests are expected to be added within Q1 2019. The goal is to reach 100% coverage eventually.
+[Yes](Example/Tests). More tests are expected to be added within Q1 2019. The goal is to reach 100% coverage eventually.
 
 ## Example
 
