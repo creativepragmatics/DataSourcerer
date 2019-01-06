@@ -7,7 +7,7 @@
 [![License](https://img.shields.io/cocoapods/l/DataSourcerer.svg?style=flat)](https://cocoapods.org/pods/DataSourcerer)
 [![Platform](https://img.shields.io/cocoapods/p/DataSourcerer.svg?style=flat)](https://cocoapods.org/pods/DataSourcerer)
 
-# What is a DataSourcerer?
+## What is a DataSourcerer?
 
 This Swift library lets you connect an API call (or any other datasource) to the view layer within minutes. It has a ready-to-go `UITableViewDatasource` and `UICollectionViewDatasource` along with matching ViewControllers and is built in a way that datasources for other view types (e.g. `UIStackView`) can be easily composed. 
 
@@ -21,22 +21,22 @@ An idiomatic tableview that displays data from an API call and supports:
 
 can be setup with ~250 lines (see [Example](Example/DataSourcerer)).
 
-# How does this work?
+## How does this work?
 
 DataSourcerer can be viewed as two parts:
 1. A very basic [FRP](https://en.wikipedia.org/wiki/Functional_reactive_programming) core
-2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They use the FRP core's structures 
+2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They subscribe to the FRP core's structures to do work like refresh subviews.
 
 You may ask, who needs another FRP framework, why reinvent the wheel? There are various reasons this project has its own FRP core:
 * Reducing references to projects that are not under our control
 * Keeping development cadence (e.g. with new Swift releases) independent of other projects
 * Avoid binding Datasourcerer users to a specific ReactiveSwift/RxSwift/ReactiveKit/... version (especially annoying for Cocoapods users)
 
-# Idiomatic
+## Idiomatic
 
 > You keep using that word. I don't think you know what it means.
 >
-> — Inigo Montoya, The Princess Bride, on Vizzini's use of the word "inconceivable".
+> — Inigo Montoya, The Princess Bride, on Vizzini's use of the word ~"idiomatic"~ "inconceivable".
 
 Classes whose name starts with `Idiomatic` have behavior encoded that might or might not suit your needs. 
 
@@ -46,7 +46,7 @@ If your use case is more complex than that, you will want to implement your own 
 
 The same applies to the [IdiomaticSingleSectionTableViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionTableViewDatasource.swift), of course, and other upcoming structures.
 
-# Is it tested?
+## Is it tested?
 
 [Yes](DataSourcerer/tree/master/Example/Tests). More tests are expected to be added within Q1 2019. The goal is to reach 100% coverage eventually.
 
@@ -58,12 +58,23 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 
 ## Installation
 
-DataSourcerer is available through [CocoaPods](https://cocoapods.org). To install
+DataSourcerer will __soon__ be available through [CocoaPods](https://cocoapods.org). To install
 it, simply add the following line to your Podfile:
 
 ```ruby
 pod 'DataSourcerer'
 ```
+
+## Roadmap
+
+Q1 2019:
+
+* Add seamless interaction with various Rx libraries
+* Add missing IdiomaticSectionedTableViewDatasource
+* Up test coverage to 100%
+
+Later, but ASAP:
+* AloeStackView support
 
 ## Author
 
