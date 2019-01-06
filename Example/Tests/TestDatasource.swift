@@ -1,49 +1,37 @@
 import Foundation
 import DataSourcerer
 
-open class TestDatasource<Value_, P_: Parameters & Hashable, E_: DatasourceError>:
-StateDatasourceProtocol {
-    public typealias Value = Value_
-    public typealias P = P_
-    public typealias E = E_
-    public typealias ObservedValue = DatasourceState
+internal extension Datasource {
 
-    public let sendsFirstStateSynchronously = true
-    public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-    public var currentValue: SynchronizedProperty<DatasourceState> {
-        return coreDatasource.currentValue
-    }
-    private let coreDatasource: ClosureDatasource<Value, P, E>
+    internal init<Value, P: Parameters>(
+        testStates states: [State<Value, P, TestStateError>],
+        testError: TestStateError,
+        loadImpulseEmitter: AnyLoadImpulseEmitter<P>) where ObservedValue == State<Value, P, TestStateError> {
 
-    private let disposeBag = DisposeBag()
+        self.init(
+            makeStatesWithClosure: { loadImpulse, sendState -> Disposable in
+                if let state = states.first(where: { $0.loadImpulse == loadImpulse }) {
+                    sendState(state)
+                } else {
+                    let errorState = State<Value, P, TestStateError>.error(
+                        error: testError,
+                        loadImpulse: loadImpulse,
+                        fallbackValueBox: nil
+                    )
+                    sendState(errorState)
+                }
 
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
-    }
-
-    init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>, states: [State<Value, P, E>], error: E) {
-        self.loadImpulseEmitter = loadImpulseEmitter
-
-        self.coreDatasource = ClosureDatasource.init(loadImpulseEmitter: loadImpulseEmitter, { (loadImpulse, send) in
-            let state = states.first(where: { $0.loadImpulse == loadImpulse })
-                ?? DatasourceState.error(error: error, loadImpulse: loadImpulse, fallbackValueBox: nil)
-            send(state)
-            return VoidDisposable()
-        })
-    }
-
-    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
-
-        return coreDatasource.observe(valuesOverTime)
+                return VoidDisposable()
+            },
+            loadImpulseEmitter: loadImpulseEmitter
+        )
     }
 
 }
 
-class OneTwoThreeStringTestDatasource: TestDatasource<String, String, TestDatasourceError> {
+struct OneTwoThreeStringTestStates {
 
-    public static let initialRequestParameter = "1"
-
-    public static let states: [OneTwoThreeStringTestDatasource.DatasourceState] = {
+    public static var oneTwoThreeStringStates: [State<String, String, TestStateError>] = {
         return [
             State.value(valueBox: EquatableBox("1"),
                         loadImpulse: LoadImpulse(parameters: "1"),
@@ -56,8 +44,4 @@ class OneTwoThreeStringTestDatasource: TestDatasource<String, String, TestDataso
                         fallbackError: nil)
         ]
     }()
-
-    init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>) {
-        super.init(loadImpulseEmitter: loadImpulseEmitter, states: OneTwoThreeStringTestDatasource.states, error: TestDatasourceError.unknown(description: "Value not in values parameter"))
-    }
 }

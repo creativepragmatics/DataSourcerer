@@ -7,54 +7,61 @@ class DatasourceOperationsSpec: QuickSpec {
 
     private lazy var testStringLoadImpulse = LoadImpulse(parameters: "1")
 
-    private func testDatasource() -> OneTwoThreeStringTestDatasource {
+    var stringLoadImpulseEmitter: AnyLoadImpulseEmitter<String> {
+        return DefaultLoadImpulseEmitter<String>(initialImpulse: testStringLoadImpulse).any
+    }
 
-        let initialImpulse = LoadImpulse(parameters: OneTwoThreeStringTestDatasource.initialRequestParameter)
-        let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(initialImpulse: initialImpulse)
-        return OneTwoThreeStringTestDatasource(loadImpulseEmitter: loadImpulseEmitter.any)
+    private func testDatasource(_ loadImpulseEmitter: AnyLoadImpulseEmitter<String>)
+        -> Datasource<State<String, String, TestStateError>> {
+
+        return Datasource.init(testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
+                               testError: TestStateError.unknown(description: "Value unavailable"),
+                               loadImpulseEmitter: loadImpulseEmitter)
     }
 
     override func spec() {
-        describe("DatasourceMapped") {
+        describe("Datasource.map") {
             it("should send mapped values to observer") {
 
-                let datasource = self.testDatasource()
+                let loadImpulseEmitter = self.stringLoadImpulseEmitter
+                let datasource = self.testDatasource(loadImpulseEmitter)
 
-                let transform: (State<String, String, TestDatasourceError>) -> Int? = { state in
+                let transform: (State<String, String, TestStateError>) -> Int? = { state in
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
-                let mapper = DatasourceMapped(datasource.any, transform: transform)
+                let mapped = datasource.map(transform)
 
                 var observedInts: [Int?] = []
 
-                let disposable = mapper.observe({ value in
+                let disposable = mapped.observe({ value in
                     observedInts.append(value)
                 })
 
-                datasource.loadImpulseEmitter.emit(LoadImpulse(parameters: "2"))
-                datasource.loadImpulseEmitter.emit(LoadImpulse(parameters: "3"))
+                loadImpulseEmitter.emit(LoadImpulse(parameters: "2"))
+                loadImpulseEmitter.emit(LoadImpulse(parameters: "3"))
 
                 disposable.dispose()
 
-                let expectedValues = OneTwoThreeStringTestDatasource.states.map(transform)
+                let expectedValues = OneTwoThreeStringTestStates.oneTwoThreeStringStates.map(transform)
                 expect(observedInts).to(contain(expectedValues))
             }
             it("should release observer after disposal") {
 
-                let datasource = self.testDatasource()
+                let loadImpulseEmitter = self.stringLoadImpulseEmitter
+                let datasource = self.testDatasource(loadImpulseEmitter)
 
-                let transform: (State<String, String, TestDatasourceError>) -> Int? = { state in
+                let transform: (State<String, String, TestStateError>) -> Int? = { state in
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
-                let mapper = DatasourceMapped(datasource.any, transform: transform)
+                let mapped = datasource.map(transform)
 
                 weak var testStr: NSMutableString?
 
                 let testScope: () -> Disposable = {
                     let innerStr = NSMutableString(string: "")
-                    let disposable = mapper.observe({ value in
+                    let disposable = mapped.observe({ value in
                         if let string = value.map({ String($0) }) {
                             innerStr.append(string)
                         }
@@ -66,7 +73,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let disposable = testScope()
                 expect(testStr) == "1"
 
-                datasource.loadImpulseEmitter.emit(LoadImpulse(parameters: "1"))
+                loadImpulseEmitter.emit(LoadImpulse(parameters: "1"))
                 expect(testStr) == "11"
 
                 disposable.dispose()

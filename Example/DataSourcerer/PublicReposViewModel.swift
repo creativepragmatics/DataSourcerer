@@ -11,28 +11,15 @@ class PublicReposViewModel {
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
-    private lazy var primaryDatasource: AnyDatasource<State<Value, P, E>> = {
+    lazy var states: ObservableProperty<State<Value, P, E>> = {
         return PublicReposPrimaryDatasourceBuilder(loadImpulseEmitter: loadImpulseEmitter.any)
             .datasource
-            .any
-    }()
-
-    lazy var datasource: CachedDatasource<Value, P, E> = {
-        let persister = CachePersister<Value, P, E>(key: "public_repos").any
-        let primaryDatasource =
-            PublicReposPrimaryDatasourceBuilder(loadImpulseEmitter: loadImpulseEmitter.any)
-                .datasource
-                .any
-        let cacheDatasource = PlainCacheDatasource<Value, P, E>(
-            persister: persister.any,
-            loadImpulseEmitter: loadImpulseEmitter.any,
-            cacheLoadError: APIError.cacheCouldNotLoad(.default)
-        ).any
-        return self.primaryDatasource
-            .retainLastResult()
-            .cache(with: cacheDatasource,
-                   loadImpulseEmitter: loadImpulseEmitter.any,
-                   persister: persister)
+            .retainLastResultState()
+            .persistedCachedState(persister: CachePersister<Value, P, E>(key: "public_repos").any,
+                                  loadImpulseEmitter: loadImpulseEmitter.any,
+                                  cacheLoadError: APIError.cacheCouldNotLoad(.default))
+            .observeOnUIThread()
+            .property(initialValue: .notReady)
     }()
 
     func refresh() {

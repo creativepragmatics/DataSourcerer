@@ -2,21 +2,21 @@ import Foundation
 import UIKit
 
 public struct DefaultListViewDatasourceCore
-<Datasource: StateDatasourceProtocol, ItemViewProducer: ListItemViewProducer, Section_: ListSection> {
+<Value, P: Parameters, E: StateError, ItemViewProducer: ListItemViewProducer, Section_: ListSection> {
 
     public typealias Item = ItemViewProducer.Item
     public typealias Section = Section_
     public typealias Sections = ListSections<Item, Section>
     public typealias ItemToView = (Item.ViewType) -> ItemViewProducer
     public typealias ValueToSections =
-        (Datasource.DatasourceState.Value) -> [SectionWithItems<Item, Section>]?
+        (Value) -> [SectionWithItems<Item, Section>]?
     public typealias ItemSelected = (Item, Section) -> Void
     public typealias StateToSectionsIncomplete =
-        (_ state: Datasource.DatasourceState,
+        (_ state: State<Value, P, E>,
         _ valueToSections: @escaping ValueToSections,
-        _ loadingSection: ((Datasource.DatasourceState) -> SectionWithItems<Item, Section>)?,
-        _ errorSection: ((Datasource.E) -> SectionWithItems<Item, Section>)?,
-        _ noResultsSection: ((Datasource.DatasourceState) -> SectionWithItems<Item, Section>)?)
+        _ loadingSection: ((State<Value, P, E>) -> SectionWithItems<Item, Section>)?,
+        _ errorSection: ((E) -> SectionWithItems<Item, Section>)?,
+        _ noResultsSection: ((State<Value, P, E>) -> SectionWithItems<Item, Section>)?)
         -> ListSections<Item, Section>
 
     public var stateToSectionsIncomplete: StateToSectionsIncomplete
@@ -24,9 +24,9 @@ public struct DefaultListViewDatasourceCore
     public var itemSelected: ItemSelected?
     public var itemToViewMapping: [Item.ViewType: ItemViewProducer] = [:]
 
-    public var loadingSection: ((Datasource.DatasourceState) -> Sections.SectionWithItemsConcrete)?
-    public var errorSection: ((Datasource.E) -> Sections.SectionWithItemsConcrete)?
-    public var noResultsSection: ((Datasource.DatasourceState) -> Sections.SectionWithItemsConcrete)?
+    public var loadingSection: ((State<Value, P, E>) -> Sections.SectionWithItemsConcrete)?
+    public var errorSection: ((E) -> Sections.SectionWithItemsConcrete)?
+    public var noResultsSection: ((State<Value, P, E>) -> Sections.SectionWithItemsConcrete)?
 
     init(stateToSections: @escaping StateToSectionsIncomplete =
         DefaultListViewDatasourceCore.defaultStateToSections) {
@@ -34,11 +34,11 @@ public struct DefaultListViewDatasourceCore
     }
 
     public static func defaultStateToSections(
-        state: Datasource.DatasourceState,
+        state: State<Value, P, E>,
         valueToSections: @escaping ValueToSections,
-        loadingSection: ((Datasource.DatasourceState) -> SectionWithItems<Item, Section>)?,
-        errorSection: ((Datasource.E) -> SectionWithItems<Item, Section>)?,
-        noResultsSection: ((Datasource.DatasourceState) -> SectionWithItems<Item, Section>)?)
+        loadingSection: ((State<Value, P, E>) -> SectionWithItems<Item, Section>)?,
+        errorSection: ((E) -> SectionWithItems<Item, Section>)?,
+        noResultsSection: ((State<Value, P, E>) -> SectionWithItems<Item, Section>)?)
         -> ListSections<Item, Section> {
 
         return state.listItems(valueToSections: valueToSections,
@@ -51,7 +51,7 @@ public struct DefaultListViewDatasourceCore
         return Builder(core: self)
     }
 
-    func stateToSections(_ state: Datasource.DatasourceState) -> ListSections<Item, Section> {
+    func stateToSections(_ state: State<Value, P, E>) -> ListSections<Item, Section> {
         let valueToSections = self.valueToSections ?? { _ -> [SectionWithItems<Item, Section>] in
             let errorItem = Item(errorMessage: "Set DefaultListViewDatasourceCore.valueToSections")
             return [SectionWithItems(Section(), [errorItem])]
@@ -126,7 +126,7 @@ public extension DefaultListViewDatasourceCore {
         }
 
         @discardableResult
-        public func loadingSection(_ closure: @escaping (Datasource.DatasourceState)
+        public func loadingSection(_ closure: @escaping (State<Value, P, E>)
             -> SectionWithItems<Item, Section>)
             -> Builder {
             var core = self.core
@@ -135,7 +135,7 @@ public extension DefaultListViewDatasourceCore {
         }
 
         @discardableResult
-        public func errorSection(_ closure: @escaping (Datasource.E) -> SectionWithItems<Item, Section>)
+        public func errorSection(_ closure: @escaping (E) -> SectionWithItems<Item, Section>)
             -> Builder {
             var core = self.core
             core.errorSection = closure
@@ -143,7 +143,7 @@ public extension DefaultListViewDatasourceCore {
         }
 
         @discardableResult
-        public func noResultsSection(_ closure: @escaping (Datasource.DatasourceState)
+        public func noResultsSection(_ closure: @escaping (State<Value, P, E>)
             -> SectionWithItems<Item, Section>)
             -> Builder {
             var core = self.core

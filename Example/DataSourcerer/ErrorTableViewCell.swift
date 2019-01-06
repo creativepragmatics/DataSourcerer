@@ -4,7 +4,7 @@ import UIKit
 
 public class ErrorTableViewCell : UITableViewCell {
 
-    public var content: DatasourceErrorMessage = .default {
+    public var content: StateErrorMessage = .default {
         didSet {
             refreshContent()
         }

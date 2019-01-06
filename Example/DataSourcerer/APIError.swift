@@ -1,16 +1,16 @@
 import DataSourcerer
 import Foundation
 
-enum APIError : CachedDatasourceError, Codable {
+enum APIError : CachedStateError, Codable {
     case unknown(description: String?)
     case unreachable
     case notConnectedToInternet
     case deserializationFailed(path: String?, debugDescription: String?, responseSize: Int)
     case requestTagsChanged
     case notAuthenticated
-    case cacheCouldNotLoad(DatasourceErrorMessage)
+    case cacheCouldNotLoad(StateErrorMessage)
 
-    var errorMessage: DatasourceErrorMessage {
+    var errorMessage: StateErrorMessage {
         let defaultMessage =
             NSLocalizedString("An error occurred while loading.\nPlease try again!", comment: "")
         let message: String = {
@@ -41,7 +41,7 @@ enum APIError : CachedDatasourceError, Codable {
         return .message(message)
     }
 
-    init(cacheLoadError type: DatasourceErrorMessage) {
+    init(cacheLoadError type: StateErrorMessage) {
         self = .cacheCouldNotLoad(type)
     }
 }
@@ -96,7 +96,7 @@ extension APIError {
         case .notConnectedToInternet:
             self = .notConnectedToInternet
         case .cacheCouldNotLoad:
-            let type = try? container.decode(DatasourceErrorMessage.self, forKey: .cacheCouldNotLoadType)
+            let type = try? container.decode(StateErrorMessage.self, forKey: .cacheCouldNotLoadType)
             self = .cacheCouldNotLoad(type ?? .default)
         default: throw DecodingError.dataCorrupted(
             .init(codingPath: decoder.codingPath, debugDescription: "Unknown enum case '\(enumCase)'")

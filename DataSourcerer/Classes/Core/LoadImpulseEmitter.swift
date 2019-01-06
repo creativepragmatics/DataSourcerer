@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol LoadImpulseEmitterProtocol: TypedObservableProtocol where ObservedValue == LoadImpulse<P> {
+public protocol LoadImpulseEmitterProtocol: ObservableProtocol where ObservedValue == LoadImpulse<P> {
     associatedtype P: Parameters
     typealias LoadImpulsesOverTime = ValuesOverTime
 
@@ -17,13 +17,11 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     public typealias P = P_
 
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
-    private let _removeObserver: (Int) -> Void
     private let _emit: (LoadImpulse<P>) -> Void
 
     init<Emitter: LoadImpulseEmitterProtocol>(_ emitter: Emitter) where Emitter.P == P {
         self._emit = emitter.emit
         self._observe = emitter.observe
-        self._removeObserver = emitter.removeObserver
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P_>) {
@@ -33,10 +31,6 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     public func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable {
         return _observe(loadImpulsesOverTime)
     }
-
-    public func removeObserver(with key: Int) {
-        _removeObserver(key)
-    }
 }
 
 public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
@@ -44,7 +38,7 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
     public typealias LI = LoadImpulse<P>
 
     private let initialImpulse: LoadImpulse<P>?
-    private let coreDatasource = SimpleDatasource<LI?>(nil)
+    private let broadcastObservable = BroadcastObservable<LI>()
 
     public init(initialImpulse: LoadImpulse<P>?) {
         self.initialImpulse = initialImpulse
@@ -56,21 +50,11 @@ public class DefaultLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoc
             observe(initialImpulse)
         }
 
-        let innerDisposable = coreDatasource.observeWithoutCurrentValue { loadImpulse in
-            if let loadImpulse = loadImpulse {
-                observe(loadImpulse)
-            }
-        }
-        let selfDisposable: Disposable = InstanceRetainingDisposable(self)
-        return CompositeDisposable([innerDisposable, selfDisposable])
+        return broadcastObservable.observe(observe)
     }
 
     public func emit(_ loadImpulse: LoadImpulse<P>) {
-        coreDatasource.emit(loadImpulse)
-    }
-
-    public func removeObserver(with key: Int) {
-        coreDatasource.removeObserver(with: key)
+        broadcastObservable.emit(loadImpulse)
     }
 
 }
@@ -90,9 +74,6 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     // TODO: refactor to use SynchronizedMutableProperty
     public var timerMode: TimerMode {
         didSet {
-            if let lastLoadImpulse = lastLoadImpulse {
-                emit(lastLoadImpulse)
-            }
             resetTimer()
         }
     }
@@ -124,7 +105,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
                                   leeway: .milliseconds(100))
                 newTimer.setEventHandler { [weak self] in
                     guard let lastLoadImpulse = self?.lastLoadImpulse else { return }
-                    self?.emit(lastLoadImpulse)
+                    self?.innerEmitter.emit(lastLoadImpulse)
                 }
                 newTimer.resume()
                 timer = newTimer
@@ -147,10 +128,6 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
     public func emit(_ loadImpulse: LoadImpulse<P>) {
         innerEmitter.emit(loadImpulse)
         resetTimer()
-    }
-
-    public func removeObserver(with key: Int) {
-        innerEmitter.removeObserver(with: key)
     }
 
     deinit {

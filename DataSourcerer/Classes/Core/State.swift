@@ -2,7 +2,7 @@ import Foundation
 
 /// Originally an enum, State is a struct to provide maximal flexibility,
 /// and remove any semantic annotations of value and error.
-public struct State<Value_, P_: Parameters, E_: DatasourceError>: Equatable {
+public struct State<Value_, P_: Parameters, E_: StateError>: Equatable {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
@@ -55,12 +55,16 @@ public extension State {
                      error: fallbackError)
     }
 
-    var hasLoadedSuccessfully: Bool {
+    func hasLoadedSuccessfully(for loadImpulse: LoadImpulse<P>) -> Bool {
         switch provisioningState {
         case .loading, .notReady:
             return false
         case .result:
-            return value?.value != nil && error == nil
+            if cacheCompatibleValue(for: loadImpulse) != nil {
+                return error == nil
+            } else {
+                return false
+            }
         }
     }
 
@@ -92,3 +96,66 @@ public enum ProvisioningState: Int, Equatable, Codable {
 }
 
 extension State: Codable where Value_: Codable, P_: Codable, E_: Codable {}
+
+public protocol StateError: Error, Equatable {
+
+    var errorMessage: StateErrorMessage { get }
+}
+
+public enum StateErrorMessage: Equatable, Codable {
+    case `default`
+    case message(String)
+
+    enum CodingKeys: String, CodingKey {
+        case enumCaseKey = "type"
+        case `default`
+        case message
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        let enumCaseString = try container.decode(String.self, forKey: .enumCaseKey)
+        guard let enumCase = CodingKeys(rawValue: enumCaseString) else {
+            throw DecodingError.dataCorrupted(
+                .init(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Unknown enum case '\(enumCaseString)'"
+                )
+            )
+        }
+
+        switch enumCase {
+        case .default:
+            self = .default
+        case .message:
+            if let message = try? container.decode(String.self, forKey: .message) {
+                self = .message(message)
+            } else {
+                self = .default
+            }
+        default: throw DecodingError.dataCorrupted(
+            .init(
+                codingPath: decoder.codingPath,
+                debugDescription: "Unknown enum case '\(enumCase)'")
+            )
+        }
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        switch self {
+        case let .message(message):
+            try container.encode(CodingKeys.message.rawValue, forKey: .enumCaseKey)
+            try container.encode(message, forKey: .message)
+        case .default:
+            try container.encode(CodingKeys.default.rawValue, forKey: .enumCaseKey)
+        }
+    }
+}
+
+public protocol CachedStateError: StateError {
+
+    init(cacheLoadError type: StateErrorMessage)
+}

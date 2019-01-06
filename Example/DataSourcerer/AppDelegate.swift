@@ -13,14 +13,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?)
         -> Bool {
 
-        window = UIWindow(frame: UIScreen.main.bounds)
-        if let window = window {
-            window.rootViewController =
-                UINavigationController(rootViewController: PublicReposRootViewController())
-            window.makeKeyAndVisible()
-        }
+            // Skip app launch if testing
+            guard ProcessInfo.processInfo.environment["XCInjectBundleInto"] == nil else {
+                return false
+            }
 
-        return true
+            window = UIWindow(frame: UIScreen.main.bounds)
+            if let window = window {
+                window.rootViewController =
+                    UINavigationController(rootViewController: PublicReposRootViewController())
+                window.makeKeyAndVisible()
+            }
+
+            return true
     }
 
 }

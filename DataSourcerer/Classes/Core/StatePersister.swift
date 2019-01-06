@@ -3,7 +3,7 @@ import Foundation
 public protocol StatePersister {
     associatedtype Value: Any
     associatedtype P: Parameters
-    associatedtype E: DatasourceError
+    associatedtype E: StateError
     typealias PersistedState = State<Value, P, E>
 
     func persist(_ state: PersistedState)
@@ -17,7 +17,7 @@ public extension StatePersister {
     }
 }
 
-public struct AnyStatePersister<Value_: Any, P_: Parameters, E_: DatasourceError> : StatePersister {
+public struct AnyStatePersister<Value_: Any, P_: Parameters, E_: StateError> : StatePersister {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_

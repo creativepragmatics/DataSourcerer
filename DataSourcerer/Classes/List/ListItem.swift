@@ -16,7 +16,7 @@ public protocol ListItemViewType: CaseIterable, Hashable {
 
 public protocol DefaultListItem : ListItem {
     associatedtype DatasourceItem: Any
-    associatedtype E: DatasourceError
+    associatedtype E: StateError
 
     static var loadingCell: Self { get }
     static var noResultsCell: Self { get }

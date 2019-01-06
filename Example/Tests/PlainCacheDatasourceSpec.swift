@@ -7,7 +7,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
 
     private lazy var testStringLoadImpulse = LoadImpulse(parameters: "1")
 
-    private lazy var testStringState: State<String, String, TestDatasourceError> = {
+    private lazy var testStringState: State<String, String, TestStateError> = {
         return State(
             provisioningState: .result,
             loadImpulse: testStringLoadImpulse,
@@ -16,18 +16,16 @@ class PlainCacheDatasourceSpec: QuickSpec {
         )
     }()
 
-    private func testDatasource(persistedState: State<String, String, TestDatasourceError>,
+    private func testDatasource(persistedState: State<String, String, TestStateError>,
                                 loadImpulseEmitter: DefaultLoadImpulseEmitter<String>)
-        -> PlainCacheDatasource<String, String, TestDatasourceError> {
+        -> Datasource<State<String, String, TestStateError>> {
 
-        let persister = TestStatePersister<String, String, TestDatasourceError>()
-        persister.persist(persistedState)
+            let persister = TestStatePersister<String, String, TestStateError>()
+            persister.persist(persistedState)
 
-        return PlainCacheDatasource<String, String, TestDatasourceError>(
-            persister: persister.any,
-            loadImpulseEmitter: loadImpulseEmitter.any,
-            cacheLoadError: TestDatasourceError.cacheCouldNotLoad(.default)
-        )
+            return Datasource.init(loadStatesFromPersister: persister.any,
+                                   loadImpulseEmitter: loadImpulseEmitter.any,
+                                   cacheLoadError: TestStateError.cacheCouldNotLoad(.default))
     }
 
     override func spec() {
@@ -38,7 +36,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
                 )
                 let datasource = self.testDatasource(persistedState: self.testStringState,
                                                      loadImpulseEmitter: loadImpulseEmitter)
-                var observedStates: [State<String, String, TestDatasourceError>] = []
+                var observedStates: [State<String, String, TestStateError>] = []
 
                 let disposable = datasource.observe({ state in
                     observedStates.append(state)
@@ -46,8 +44,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
 
                 disposable.dispose()
 
-                expect(observedStates) == [State<String, String, TestDatasourceError>.notReady,
-                                           self.testStringState]
+                expect(observedStates) == [self.testStringState]
             }
             it("should release observer after disposal") {
                 let loadImpulseEmitter = DefaultLoadImpulseEmitter<String>(
