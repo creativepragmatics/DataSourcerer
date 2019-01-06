@@ -1,5 +1,4 @@
 import Foundation
-import UIKit
 
 public struct DefaultListViewDatasourceCore
 <Value, P: Parameters, E: StateError, ItemViewProducer: ListItemViewProducer, Section_: ListSection> {
