@@ -25,7 +25,7 @@ can be setup with ~250 lines (see [Example](Example/DataSourcerer)).
 
 DataSourcerer can be viewed as two parts:
 1. A very basic [FRP](https://en.wikipedia.org/wiki/Functional_reactive_programming) core
-2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They subscribe to the FRP core's structures to do work like refresh subviews.
+2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They subscribe to the FRP core's structures to do work, like refreshing subviews.
 
 You may ask, who needs another FRP framework, why reinvent the wheel? There are various reasons this project has its own FRP core:
 * Reducing references to projects that are not under our control
@@ -38,9 +38,9 @@ You may ask, who needs another FRP framework, why reinvent the wheel? There are 
 >
 > — Inigo Montoya, The Princess Bride, on Vizzini's use of the word ~"idiomatic"~ "inconceivable".
 
-Classes whose name starts with `Idiomatic` have behavior encoded that might or might not suit your needs. 
+Classes whose name starts with `Idiomatic` have behavior encoded that might or might not suit your needs. If an idiomatic class doesn't have the required behavior, it can be subclassed or just copy/pasted/changed.
 
-For example: The [IdiomaticCollectionViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift) expects its items to conform to `IdiomaticListItem` which has to implement `loadingCell`, `noResultsCell`, and `errorCell(_)`. Doing so, the CollectionViewDatasource itself is able to decide when it will show the loading state, or a "no results" text, keeping configuration to a minimum. 
+For example: The [IdiomaticCollectionViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift) expects its items to conform to `IdiomaticListItem` which has to implement `loadingCell`, `noResultsCell`, and `errorCell(_)`. Doing so, the CollectionViewDatasource itself is able to decide when it will show the loading state, or a "no results" text, taking that load off your shoulders. 
 
 If your use case is more complex than that, you will want to implement your own `UICollectionViewDataSource`. You might still be able to use [IdiomaticListViewDatasourceCore](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and profit from the builder pattern implemented there.
 
