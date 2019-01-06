@@ -12,6 +12,22 @@ public extension ObservableProtocol {
             }.any
     }
 
+    func reduce<ReducedValue>(_ reduce:
+        @escaping (_ previous: ReducedValue?, _ next: ObservedValue) -> (ReducedValue))
+        -> AnyObservable<ReducedValue> {
+
+            return Datasource<ReducedValue> { sendValue, disposable in
+
+                let cumulativeValue = SynchronizedMutableProperty<ReducedValue?>(nil)
+
+                disposable += self.observe { value in
+                    let next = reduce(cumulativeValue.value, value)
+                    cumulativeValue.value = next
+                    sendValue(next)
+                }
+            }.any
+    }
+
     func filter(_ include: @escaping (ObservedValue) -> (Bool))
         -> AnyObservable<ObservedValue> {
 
