@@ -12,7 +12,7 @@ class PublicReposRootViewController : UIViewController {
 
     lazy var tableViewDatasource: IdiomaticSingleSectionTableViewDatasource = {
         return IdiomaticSingleSectionTableViewDatasource(statesObservable: viewModel.states.any,
-                                                       cellType: PublicReposCell.self)
+                                                         cellType: PublicReposCell.self)
     }()
 
     lazy var tableViewController: IdiomaticSingleSectionTableViewController
