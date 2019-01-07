@@ -2,10 +2,7 @@ import Foundation
 
 /// Originally an enum, State is a struct to provide maximal flexibility,
 /// and remove any semantic annotations of value and error.
-public struct State<Value_, P_: Parameters, E_: StateError>: Equatable {
-    public typealias Value = Value_
-    public typealias P = P_
-    public typealias E = E_
+public struct State<Value, P: Parameters, E: StateError>: Equatable {
 
     public var provisioningState: ProvisioningState
     public var loadImpulse: LoadImpulse<P>?
@@ -95,7 +92,7 @@ public enum ProvisioningState: Int, Equatable, Codable {
     case result
 }
 
-extension State: Codable where Value_: Codable, P_: Codable, E_: Codable {}
+extension State: Codable where Value: Codable, P: Codable, E: Codable {}
 
 public protocol StateError: Error, Equatable {
 
