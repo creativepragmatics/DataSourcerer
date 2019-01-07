@@ -19,7 +19,7 @@ An idiomatic tableview that displays data from an API call and supports:
 * a "no results" cell, and 
 * an error cell 
 
-can be setup with ~250 lines (see [Example](Example/DataSourcerer)).
+can be setup with ~100 lines of configuration (see [Example](Example/DataSourcerer)).
 
 ## How does this work?
 
