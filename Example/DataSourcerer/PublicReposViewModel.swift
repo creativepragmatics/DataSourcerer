@@ -24,7 +24,9 @@ class PublicReposViewModel {
 
     func refresh() {
         let loadImpulse = LoadImpulse(parameters: VoidParameters())
-        loadImpulseEmitter.emit(loadImpulse)
+        DispatchQueue(label: "PublicReposViewModel.refresh").async { [weak self] in
+            self?.loadImpulseEmitter.emit(loadImpulse)
+        }
     }
 
 }
