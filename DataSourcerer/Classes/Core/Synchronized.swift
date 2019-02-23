@@ -142,7 +142,11 @@ public final class ObservableProperty<T_>: ObservableProtocol, Property {
     /// separate method is needed.
     public func observeWithoutCurrentValue(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
 
-        return broadcastObservable.observe(valuesOverTime)
+        // Retain self until returned disposable is disposed of. Or else,
+        // this ObservableProperty might get deallocated even though there
+        // are still observers.
+        return CompositeDisposable(broadcastObservable.observe(valuesOverTime),
+                                   objectToRetain: self)
     }
 }
 
