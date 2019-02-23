@@ -41,10 +41,19 @@ public extension ObservableProtocol {
     }
 
     func observe(on queue: DispatchQueue) -> AnyObservable<ObservedValue> {
+        return observe(on: queue, if: { _ in true })
+    }
+
+    func observe(on queue: DispatchQueue,
+                 if: @escaping (ObservedValue) -> Bool) -> AnyObservable<ObservedValue> {
 
         return Datasource<ObservedValue> { sendValue, disposable in
             disposable += self.observe { value in
-                queue.async {
+                if `if`(value) {
+                    queue.async {
+                        sendValue(value)
+                    }
+                } else {
                     sendValue(value)
                 }
             }

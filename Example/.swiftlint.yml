@@ -106,6 +106,7 @@ identifier_name:
     - box
     - nib
     - url
+    - if
   allowed_symbols: "_"
 nesting:
   type_level: 2
