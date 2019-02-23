@@ -1,14 +1,7 @@
 import Foundation
 import UIKit
 
-// Will probably never be needed because datasources should not
-// mix data (ListItem) with view attributes (supplementary views).
-// Keeping this file for now, just in case.
-
-public protocol CollectionReusableViewProducer : ListItemViewProducer
-where ProducedView == UICollectionReusableView, ContainingView == UICollectionView {}
-
-public enum SimpleCollectionReusableViewProducer<ReusableView: ListItem>: CollectionReusableViewProducer {
+public enum SimpleCollectionReusableViewProducer<ReusableView: SupplementaryItem>: SupplementaryViewProducer {
     public typealias Item = ReusableView
     public typealias ProducedView = UICollectionReusableView
     public typealias ContainingView = UICollectionView
@@ -52,7 +45,7 @@ public enum SimpleCollectionReusableViewProducer<ReusableView: ListItem>: Collec
             }
     }
 
-    public func register(itemViewType: ReusableView.ViewType, at containingView: UICollectionView) {
+    public func register(at containingView: UICollectionView) {
         switch self {
         case let .classAndIdentifier(clazz, kind, identifier, _):
             containingView.register(clazz,

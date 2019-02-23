@@ -1,29 +1,26 @@
 import Foundation
 
 public protocol ListItem: Equatable {
-    associatedtype ViewType: ListItemViewType
-
-    var viewType: ViewType { get }
+    associatedtype E: StateError
 
     // Required to display configuration or system errors
     // for easier debugging.
-    init(errorMessage: String)
+    init(error: E)
 }
 
-public protocol ListItemViewType: CaseIterable, Hashable {
-    var isSelectable: Bool { get }
+public protocol IdiomaticStateError: StateError {
+    init(message: StateErrorMessage)
 }
 
-public protocol IdiomaticListItem : ListItem {
-    associatedtype DatasourceItem: Any
-    associatedtype E: StateError
+public enum IdiomaticListItem<DatasourceItem: ListItem> : ListItem {
+    case datasourceItem(DatasourceItem)
+    case loading
+    case error(DatasourceItem.E)
+    case noResults(String)
 
-    static var loadingCell: Self { get }
-    static var noResultsCell: Self { get }
-
-    static func errorCell(_ error: E) -> Self
-
-    init(datasourceItem: DatasourceItem)
+    public init(error: DatasourceItem.E) {
+        self = .error(error)
+    }
 }
 
 public protocol HashableListItem : ListItem, Hashable { }
@@ -38,6 +35,15 @@ public enum SingleSectionListItems<LI: ListItem>: Equatable {
         switch self {
         case .notReady: return nil
         case let .readyToDisplay(items): return items
+        }
+    }
+
+    init(sections: ListSections<LI, NoSection>) {
+        switch sections {
+        case .notReady:
+            self = .notReady
+        case let .readyToDisplay(sectionsWithItems):
+            self = .readyToDisplay(sectionsWithItems.first?.items ?? [])
         }
     }
 }

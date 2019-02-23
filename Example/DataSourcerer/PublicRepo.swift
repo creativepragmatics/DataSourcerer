@@ -1,3 +1,4 @@
+import DataSourcerer
 import Foundation
 
 struct PublicRepo : Codable, Equatable {
@@ -50,3 +51,14 @@ struct PublicRepo : Codable, Equatable {
 }
 
 typealias PublicReposResponseContainer = [PublicRepo]
+
+enum PublicRepoCell : ListItem {
+    typealias E = APIError
+
+    case repo(PublicRepo)
+    case error(APIError)
+
+    init(error: APIError) {
+        self = .error(error)
+    }
+}

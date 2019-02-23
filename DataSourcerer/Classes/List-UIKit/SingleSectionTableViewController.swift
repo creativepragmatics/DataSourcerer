@@ -1,12 +1,16 @@
 import Dwifft
 import Foundation
 
-open class IdiomaticSingleSectionTableViewController
-    <Value, P: Parameters, E, Cell: IdiomaticListItem>: UIViewController where Cell.E == E {
+open class SingleSectionTableViewController
+<Value: Equatable, Cell: ListItem>: UIViewController {
 
+    public typealias ValuesObservable = AnyObservable<Value>
     public typealias Cells = SingleSectionListItems<Cell>
-    public typealias TableViewDatasource =
-        IdiomaticSingleSectionTableViewDatasource<Value, P, E, Cell>
+    public typealias TableViewDatasource = SimpleTableViewDatasource
+        <Value, Cell, NoSection, NoSupplementaryItem, NoSupplementaryItem>
+    public typealias Core = ListViewDatasourceCore
+        <Value, Cell, UITableViewCell, NoSection, NoSupplementaryItem, UIView,
+        NoSupplementaryItem, UIView, UITableView>
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()
@@ -36,11 +40,13 @@ open class IdiomaticSingleSectionTableViewController
         return viewIfLoaded?.window != nil && view.alpha > 0.001
     }
 
-    private let tableViewDatasource: TableViewDatasource
+    private let core: Core
+    public lazy var tableViewDatasource = TableViewDatasource(core: core, tableView: tableView)
+
     private var tableViewDiffCalculator: SingleSectionTableViewDiffCalculator<Cell>?
 
-    public init(tableViewDatasource: TableViewDatasource) {
-        self.tableViewDatasource = tableViewDatasource
+    public init(core: Core) {
+        self.core = core
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -77,10 +83,11 @@ open class IdiomaticSingleSectionTableViewController
             self.refreshControl = refreshControl
         }
 
-        var previousCells = tableViewDatasource.cells.value
+        let cellsProperty = tableViewDatasource.cellsProperty
+        var previousCells = cellsProperty.value
 
         // Update table with most current cells
-        tableViewDatasource.cells.observe({ [weak self] cells in
+        cellsProperty.observe({ [weak self] cells in
             self?.updateCells(previous: previousCells, next: cells)
             previousCells = cells
         }).disposed(by: disposeBag)

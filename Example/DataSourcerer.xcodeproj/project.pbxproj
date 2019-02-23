@@ -17,12 +17,11 @@
 		6F714E9D21D78F2D003CC5C1 /* CachedDatasourceSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF1A99D21D78E29000D9E53 /* CachedDatasourceSpec.swift */; };
 		6FA5920821D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920721D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift */; };
 		6FA5920A21D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920921D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift */; };
-		6FA5920C21D620E400BF4A1C /* TestDatasourceError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920B21D620E400BF4A1C /* TestDatasourceError.swift */; };
+		6FA5920C21D620E400BF4A1C /* TestStateError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920B21D620E400BF4A1C /* TestStateError.swift */; };
 		6FA5920E21D621B800BF4A1C /* TestStatePersister.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920D21D621B700BF4A1C /* TestStatePersister.swift */; };
 		6FC5BFA321D799E2003DD629 /* TestDatasource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC5BFA221D799E2003DD629 /* TestDatasource.swift */; };
 		6FCC264721DA1AC2005DE711 /* PublicRepo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC263F21DA1AC2005DE711 /* PublicRepo.swift */; };
 		6FCC264821DA1AC2005DE711 /* PublicReposRemoteDatasource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264021DA1AC2005DE711 /* PublicReposRemoteDatasource.swift */; };
-		6FCC264921DA1AC2005DE711 /* PublicReposCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264121DA1AC2005DE711 /* PublicReposCell.swift */; };
 		6FCC264B21DA1AC2005DE711 /* LoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264321DA1AC2005DE711 /* LoadingCell.swift */; };
 		6FCC264C21DA1AC2005DE711 /* PublicReposViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264421DA1AC2005DE711 /* PublicReposViewModel.swift */; };
 		6FCC264D21DA1AC2005DE711 /* APIError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264521DA1AC2005DE711 /* APIError.swift */; };
@@ -59,12 +58,11 @@
 		6F55688521D9338F0055EEAE /* DatasourceOperationsSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatasourceOperationsSpec.swift; sourceTree = "<group>"; };
 		6FA5920721D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadImpulseEmitterSpec.swift; sourceTree = "<group>"; };
 		6FA5920921D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainCacheDatasourceSpec.swift; sourceTree = "<group>"; };
-		6FA5920B21D620E400BF4A1C /* TestDatasourceError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDatasourceError.swift; sourceTree = "<group>"; };
+		6FA5920B21D620E400BF4A1C /* TestStateError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStateError.swift; sourceTree = "<group>"; };
 		6FA5920D21D621B700BF4A1C /* TestStatePersister.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStatePersister.swift; sourceTree = "<group>"; };
 		6FC5BFA221D799E2003DD629 /* TestDatasource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDatasource.swift; sourceTree = "<group>"; };
 		6FCC263F21DA1AC2005DE711 /* PublicRepo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicRepo.swift; sourceTree = "<group>"; };
 		6FCC264021DA1AC2005DE711 /* PublicReposRemoteDatasource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicReposRemoteDatasource.swift; sourceTree = "<group>"; };
-		6FCC264121DA1AC2005DE711 /* PublicReposCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicReposCell.swift; sourceTree = "<group>"; };
 		6FCC264321DA1AC2005DE711 /* LoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingCell.swift; sourceTree = "<group>"; };
 		6FCC264421DA1AC2005DE711 /* PublicReposViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicReposViewModel.swift; sourceTree = "<group>"; };
 		6FCC264521DA1AC2005DE711 /* APIError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIError.swift; sourceTree = "<group>"; };
@@ -139,7 +137,6 @@
 				6FCC264F21DA336C005DE711 /* ErrorTableViewCell.swift */,
 				6FCC264321DA1AC2005DE711 /* LoadingCell.swift */,
 				6FCC263F21DA1AC2005DE711 /* PublicRepo.swift */,
-				6FCC264121DA1AC2005DE711 /* PublicReposCell.swift */,
 				6FCC264021DA1AC2005DE711 /* PublicReposRemoteDatasource.swift */,
 				6FCC264621DA1AC2005DE711 /* PublicReposViewController.swift */,
 				6FCC264421DA1AC2005DE711 /* PublicReposViewModel.swift */,
@@ -166,7 +163,7 @@
 				6FA5920721D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift */,
 				6FDEB2EB21D56D0C005ED5C8 /* BroadcastObservableSpec.swift */,
 				6FA5920921D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift */,
-				6FA5920B21D620E400BF4A1C /* TestDatasourceError.swift */,
+				6FA5920B21D620E400BF4A1C /* TestStateError.swift */,
 				6FA5920D21D621B700BF4A1C /* TestStatePersister.swift */,
 				6FF1A99D21D78E29000D9E53 /* CachedDatasourceSpec.swift */,
 				6FC5BFA221D799E2003DD629 /* TestDatasource.swift */,
@@ -428,7 +425,6 @@
 			files = (
 				607FACD81AFB9204008FA782 /* ViewController.swift in Sources */,
 				6FCC264C21DA1AC2005DE711 /* PublicReposViewModel.swift in Sources */,
-				6FCC264921DA1AC2005DE711 /* PublicReposCell.swift in Sources */,
 				6FCC264821DA1AC2005DE711 /* PublicReposRemoteDatasource.swift in Sources */,
 				6FCC264B21DA1AC2005DE711 /* LoadingCell.swift in Sources */,
 				6FCC264721DA1AC2005DE711 /* PublicRepo.swift in Sources */,
@@ -444,7 +440,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6FDEB2ED21D56D11005ED5C8 /* BroadcastObservableSpec.swift in Sources */,
-				6FA5920C21D620E400BF4A1C /* TestDatasourceError.swift in Sources */,
+				6FA5920C21D620E400BF4A1C /* TestStateError.swift in Sources */,
 				6F55688621D9338F0055EEAE /* DatasourceOperationsSpec.swift in Sources */,
 				6FA5920821D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift in Sources */,
 				6FA5920A21D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift in Sources */,

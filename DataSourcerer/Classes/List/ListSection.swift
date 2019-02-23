@@ -9,6 +9,13 @@ public protocol ListSection: Equatable {
 
 /// Section implementation that has no data attached. Ideal
 /// for lists where all data resides in the cells.
-public struct IdiomaticListSection : ListSection {
+public struct PlainListSection : ListSection {
+    public init() {}
+}
+
+/// To be used when a list view shall have no _visible_ sections at all.
+/// This is mainly for matching generics such that a SingleSection*Controller
+/// can be created cleanly.
+public struct NoSection: ListSection {
     public init() {}
 }

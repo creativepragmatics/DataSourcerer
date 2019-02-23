@@ -1,7 +1,7 @@
 import Foundation
 
-public protocol ListItemViewProducer {
-    associatedtype Item: Equatable
+public protocol SupplementaryViewProducer {
+    associatedtype Item: SupplementaryItem
     associatedtype ProducedView: UIView
     associatedtype ContainingView: UIView
     func register(at containingView: ContainingView)
@@ -10,14 +10,14 @@ public protocol ListItemViewProducer {
     var defaultView: ProducedView { get }
 }
 
-public extension ListItemViewProducer {
-    var any: AnyListItemViewProducer<Item, ProducedView, ContainingView> {
-        return AnyListItemViewProducer(self)
+public extension SupplementaryViewProducer {
+    var any: AnySupplementaryViewProducer<Item, ProducedView, ContainingView> {
+        return AnySupplementaryViewProducer(self)
     }
 }
 
-public struct AnyListItemViewProducer
-<Item_: Equatable, ProducedView_: UIView, ContainingView_: UIView> : ListItemViewProducer {
+public struct AnySupplementaryViewProducer
+<Item_: SupplementaryItem, ProducedView_: UIView, ContainingView_: UIView> : SupplementaryViewProducer {
 
     public typealias Item = Item_
     public typealias ProducedView = ProducedView_
@@ -28,11 +28,11 @@ public struct AnyListItemViewProducer
 
     public let defaultView: ProducedView
 
-    public init<P: ListItemViewProducer>(_ producer: P) where P.Item == Item,
+    public init<P: SupplementaryViewProducer>(_ producer: P) where P.Item == Item,
         P.ProducedView == ProducedView, P.ContainingView == ContainingView {
-        self._view = producer.view
-        self._register = producer.register
-        self.defaultView = producer.defaultView
+            self._view = producer.view
+            self._register = producer.register
+            self.defaultView = producer.defaultView
     }
 
     public func view(containingView: ContainingView, item: Item, for indexPath: IndexPath) -> ProducedView {

@@ -97,6 +97,15 @@ extension State: Codable where Value: Codable, P: Codable, E: Codable {}
 public protocol StateError: Error, Equatable {
 
     var errorMessage: StateErrorMessage { get }
+
+    init(message: StateErrorMessage)
+}
+
+public struct NoStateError: StateError {
+
+    public var errorMessage: StateErrorMessage { return .default }
+
+    public init(message: StateErrorMessage) {}
 }
 
 public enum StateErrorMessage: Equatable, Codable {
@@ -150,9 +159,4 @@ public enum StateErrorMessage: Equatable, Codable {
             try container.encode(CodingKeys.default.rawValue, forKey: .enumCaseKey)
         }
     }
-}
-
-public protocol CachedStateError: StateError {
-
-    init(cacheLoadError type: StateErrorMessage)
 }
