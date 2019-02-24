@@ -15,6 +15,7 @@
 		607FACE01AFB9204008FA782 /* LaunchScreen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 607FACDE1AFB9204008FA782 /* LaunchScreen.xib */; };
 		6F55688621D9338F0055EEAE /* DatasourceOperationsSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F55688521D9338F0055EEAE /* DatasourceOperationsSpec.swift */; };
 		6F714E9D21D78F2D003CC5C1 /* CachedDatasourceSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FF1A99D21D78E29000D9E53 /* CachedDatasourceSpec.swift */; };
+		6F850B632221E167006D6A77 /* Watchdog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F850B622221E167006D6A77 /* Watchdog.swift */; };
 		6FA5920821D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920721D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift */; };
 		6FA5920A21D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920921D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift */; };
 		6FA5920C21D620E400BF4A1C /* TestStateError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FA5920B21D620E400BF4A1C /* TestStateError.swift */; };
@@ -56,6 +57,7 @@
 		607FACE51AFB9204008FA782 /* DataSourcerer_Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DataSourcerer_Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACEA1AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		6F55688521D9338F0055EEAE /* DatasourceOperationsSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatasourceOperationsSpec.swift; sourceTree = "<group>"; };
+		6F850B622221E167006D6A77 /* Watchdog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Watchdog.swift; sourceTree = "<group>"; };
 		6FA5920721D61B2000BF4A1C /* LoadImpulseEmitterSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadImpulseEmitterSpec.swift; sourceTree = "<group>"; };
 		6FA5920921D6206F00BF4A1C /* PlainCacheDatasourceSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlainCacheDatasourceSpec.swift; sourceTree = "<group>"; };
 		6FA5920B21D620E400BF4A1C /* TestStateError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestStateError.swift; sourceTree = "<group>"; };
@@ -143,6 +145,7 @@
 				607FACDC1AFB9204008FA782 /* Images.xcassets */,
 				607FACDE1AFB9204008FA782 /* LaunchScreen.xib */,
 				607FACD31AFB9204008FA782 /* Supporting Files */,
+				6F850B622221E167006D6A77 /* Watchdog.swift */,
 			);
 			name = "Example for DataSourcerer";
 			path = DataSourcerer;
@@ -427,6 +430,7 @@
 				6FCC264C21DA1AC2005DE711 /* PublicReposViewModel.swift in Sources */,
 				6FCC264821DA1AC2005DE711 /* PublicReposRemoteDatasource.swift in Sources */,
 				6FCC264B21DA1AC2005DE711 /* LoadingCell.swift in Sources */,
+				6F850B632221E167006D6A77 /* Watchdog.swift in Sources */,
 				6FCC264721DA1AC2005DE711 /* PublicRepo.swift in Sources */,
 				607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */,
 				6FCC264D21DA1AC2005DE711 /* APIError.swift in Sources */,

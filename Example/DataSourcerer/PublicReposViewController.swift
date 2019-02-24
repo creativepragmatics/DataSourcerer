@@ -8,6 +8,8 @@ class PublicReposRootViewController : UIViewController {
         PublicReposViewModel()
     }()
 
+    lazy var watchdog = Watchdog(threshold: 0.1, strictMode: false)
+
     private let disposeBag = DisposeBag()
 
     private lazy var datasourceCore = TableViewDatasourceCore<
@@ -178,6 +180,12 @@ class PublicReposRootViewController : UIViewController {
         super.viewWillAppear(animated)
 
         viewModel.loadImpulseEmitter.timerMode = .timeInterval(.seconds(90))
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        _ = watchdog // init
     }
 
     override func viewWillDisappear(_ animated: Bool) {

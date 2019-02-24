@@ -18,7 +18,6 @@ class PublicReposViewModel {
             .persistedCachedState(persister: CachePersister<Value, P, E>(key: "public_repos").any,
                                   loadImpulseEmitter: loadImpulseEmitter.any,
                                   cacheLoadError: APIError.cacheCouldNotLoad(.default))
-            .observeOnUIThread()
             .property(initialValue: .notReady)
     }()
 
