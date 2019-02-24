@@ -9,7 +9,8 @@ final public class Watchdog: NSObject {
     /// Convenience initializer that allows you to construct a `WatchDog` object with default behavior.
     /// - parameter threshold: number of seconds that must pass to consider the main thread blocked.
     /// - parameter strictMode: boolean value that stops the execution whenever the threshold is reached.
-    @objc public convenience init(threshold: Double = Watchdog.defaultThreshold, strictMode: Bool = false) {
+    @objc
+    public convenience init(threshold: Double = Watchdog.defaultThreshold, strictMode: Bool = false) {
         let message = "👮 Main thread was blocked for " + String(format:"%.2f", threshold) + "s 👮"
 
         self.init(threshold: threshold) {
@@ -24,7 +25,9 @@ final public class Watchdog: NSObject {
     /// Default initializer that allows you to construct a `WatchDog` object specifying a custom callback.
     /// - parameter threshold: number of seconds that must pass to consider the main thread blocked.
     /// - parameter watchdogFiredCallback: a callback that will be called when the the threshold is reached
-    @objc public init(threshold: Double = Watchdog.defaultThreshold, watchdogFiredCallback: @escaping () -> Void) {
+    @objc
+    public init(threshold: Double = Watchdog.defaultThreshold,
+                watchdogFiredCallback: @escaping () -> Void) {
         self.pingThread = PingThread(threshold: threshold, handler: watchdogFiredCallback)
 
         self.pingThread.start()
@@ -40,7 +43,7 @@ private final class PingThread: Thread {
     fileprivate var pingTaskIsRunning: Bool {
         get {
             objc_sync_enter(pingTaskIsRunningLock)
-            let result = _pingTaskIsRunning;
+            let result = _pingTaskIsRunning
             objc_sync_exit(pingTaskIsRunningLock)
             return result
         }

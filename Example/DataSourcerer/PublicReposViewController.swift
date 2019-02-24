@@ -12,22 +12,21 @@ class PublicReposRootViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
-    private lazy var datasourceCore = TableViewDatasourceCore.base(
-        valueAndSections: self.viewModel.valueAndSections,
-        itemViewAdapter: TableViewCellAdapter<PublicRepoCell>.tableViewCell(
-            withCellClass: UITableViewCell.self,
-            reuseIdentifier: "cell", configure: { repo, cellView in
-                cellView.textLabel?.text = {
-                    switch repo {
-                    case let .repo(repo): return repo.name
-                    case .error: return nil
-                    }
-                }()
-            }
+    private lazy var tableViewDatasourceCore = TableViewDatasourceCore
+        .base(
+            listDatasource: self.viewModel.listDatasource,
+            itemViewAdapter: TableViewCellAdapter<PublicRepoCell>.tableViewCell(
+                withCellClass: UITableViewCell.self,
+                reuseIdentifier: "cell", configure: { repo, cellView in
+                    cellView.textLabel?.text = {
+                        switch repo {
+                        case let .repo(repo): return repo.name
+                        case .error: return nil
+                        }
+                    }()
+                }
+            )
         )
-    )
-
-    private lazy var idiomaticDatasourceCore = datasourceCore
         .idiomatic(
             noResultsText: "No results",
             loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
@@ -43,10 +42,10 @@ class PublicReposRootViewController : UIViewController {
                     .message("Strangely, there are no public repos on Github.")
                 return tableViewCell
             }
-    )
+        )
 
     private lazy var tableViewController = SingleSectionTableViewController(
-        core: idiomaticDatasourceCore
+        core: tableViewDatasourceCore
     )
 
     init() {

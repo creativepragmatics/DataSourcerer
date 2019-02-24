@@ -22,10 +22,10 @@ class PublicReposViewModel {
             .property(initialValue: .notReady)
     }()
 
-    var valueAndSections: ObservableProperty
-        <ListValueAndSections<State<Value, P, E>, PublicRepoCell, NoSection>> {
+    lazy var listDatasource: ListDatasource
+        <State<Value, P, E>, PublicRepoCell, NoSection> = {
 
-        return states
+        let valueAndSections = states
             .map { state
                 -> ListValueAndSections<State<Value, P, E>, PublicRepoCell, NoSection> in
 
@@ -38,7 +38,8 @@ class PublicReposViewModel {
                 return ListValueAndSections(value: state, sections: sections)
             }
             .property(initialValue: ListValueAndSections(value: states.value, sections: .notReady))
-    }
+        return ListDatasource(valueAndSections)
+    }()
 
     func refresh() {
         let loadImpulse = LoadImpulse(parameters: VoidParameters())

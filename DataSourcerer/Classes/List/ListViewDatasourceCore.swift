@@ -30,7 +30,7 @@ public struct ListViewDatasourceCore
     public typealias WillDisplayFooterItem =
         (FooterItemView, FooterItem, IndexPath) -> Void
 
-    public let valueAndSections: ObservableProperty<ValueAndSections>
+    public let listDatasource: ListDatasource<ObservedValue, Item, Section>
     public let itemViewAdapter: ItemViewAdapter
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
@@ -48,7 +48,7 @@ public struct ListViewDatasourceCore
     public var willDisplayHeaderItem: WillDisplayHeaderItem?
     public var willDisplayFooterItem: WillDisplayFooterItem?
 
-    public init(valueAndSectionsProperty: ObservableProperty<ValueAndSections>,
+    public init(listDatasource: ListDatasource<ObservedValue, Item, Section>,
                 itemViewAdapter: ItemViewAdapter,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
@@ -62,7 +62,7 @@ public struct ListViewDatasourceCore
                 willDisplayHeaderItem: WillDisplayHeaderItem?,
                 willDisplayFooterItem: WillDisplayFooterItem?) {
 
-        self.valueAndSections = valueAndSectionsProperty
+        self.listDatasource = listDatasource
         self.itemViewAdapter = itemViewAdapter
         self.headerItemViewAdapter = headerItemViewAdapter
         self.footerItemViewAdapter = footerItemViewAdapter
@@ -84,14 +84,14 @@ HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
 FooterItemView == UIView {
 
     static func base(
-        valueAndSections: ObservableProperty<ListValueAndSections<ObservedValue, Item, Section>>,
+        listDatasource: ListDatasource<ObservedValue, Item, Section>,
         itemViewAdapter: ListViewItemAdapter<Item, ItemView, ContainingView>)
         -> ListViewDatasourceCore
         <ObservedValue, Item, ItemView, Section, NoSupplementaryItem, UIView,
         NoSupplementaryItem, UIView, ContainingView> {
 
             return ListViewDatasourceCore(
-                    valueAndSectionsProperty: valueAndSections,
+                    listDatasource: listDatasource,
                     itemViewAdapter: itemViewAdapter,
                     headerItemViewAdapter: .noSupplementaryViewAdapter,
                     footerItemViewAdapter: .noSupplementaryViewAdapter,
@@ -121,7 +121,7 @@ public struct ListValueAndSections<Value, Item: ListItem, Section: ListSection> 
 public extension ListViewDatasourceCore {
 
     var sections: ListSections<Item, Section> {
-        return valueAndSections.value.sections
+        return listDatasource.valueAndSections.value.sections
     }
 
     func section(at index: Int) -> SectionWithItems<Item, Section> {
@@ -134,7 +134,7 @@ public extension ListViewDatasourceCore {
     }
 
     func items(in section: Int) -> [Item] {
-        return valueAndSections.value.sections
+        return listDatasource.valueAndSections.value.sections
             .sectionedValues.sectionsAndValues[section].1
     }
 
@@ -194,34 +194,6 @@ public extension ListViewDatasourceCore {
         ViewProducer.Item == IdiomaticListItem<Item>, ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, Item.E == E {
 
-            typealias IdiomaticItem = IdiomaticListItem<Item>
-            typealias IdiomaticSections = ListSections<IdiomaticItem, Section>
-            typealias IdiomaticValueAndSections
-                = ListValueAndSections<ObservedValue, IdiomaticItem, Section>
-
-            let sections = self.sections
-
-            func idiomaticValueAndSections(_ valueAndSections: ValueAndSections)
-                -> IdiomaticValueAndSections {
-                    let idiomaticSections = valueAndSections.sections.sectionsWithItems?
-                        .map { sectionWithItems -> SectionWithItems<IdiomaticItem, Section> in
-                            let items = sectionWithItems.items
-                                .map { IdiomaticListItem.datasourceItem($0) }
-                            return SectionWithItems(sectionWithItems.section, items)
-                    }
-
-                    return ListValueAndSections(
-                        value: valueAndSections.value,
-                        sections: IdiomaticSections.readyToDisplay(idiomaticSections ?? [])
-                    )
-            }
-
-            let idiomaticValueAndSectionsProperty = valueAndSections
-                .map { idiomaticValueAndSections($0) }
-                .property(
-                    initialValue: idiomaticValueAndSections(self.valueAndSections.value)
-                )
-
             let idiomaticItemViewAdapter = self.itemViewAdapter.idiomatic(
                 loadingViewProducer: loadingViewProducer,
                 errorViewProducer: errorViewProducer,
@@ -232,7 +204,7 @@ public extension ListViewDatasourceCore {
                 <ObservedValue, IdiomaticListItem<Item>, ItemView,
                 Section, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
                 ContainingView> (
-                    valueAndSectionsProperty: idiomaticValueAndSectionsProperty,
+                    listDatasource: self.listDatasource.idiomatic(),
                     itemViewAdapter: idiomaticItemViewAdapter,
                     headerItemViewAdapter: headerItemViewAdapter,
                     footerItemViewAdapter: footerItemViewAdapter,
