@@ -12,29 +12,20 @@ class PublicReposRootViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
-    private lazy var datasourceCore = TableViewDatasourceCore<
-    State<PublicReposViewModel.Value, PublicReposViewModel.P, PublicReposViewModel.E>,
-    PublicRepoCell, UITableViewCell, NoSection, NoSupplementaryItem, UIView,
-        NoSupplementaryItem, UIView
-    >(
-        simpleCoreWithValueAndSectionsProperty: self.viewModel.valueAndSections,
-        itemViewAdapter: ListViewItemAdapter(
-            simpleWithViewProducer: SimpleTableViewCellProducer.classAndIdentifier(
-                class: UITableViewCell.self,
-                identifier: "cell",
-                configure: { repo, cell in
-                    cell.textLabel?.text = {
-                        switch repo {
-                        case let .repo(repo): return repo.name
-                        case .error: return nil
-                        }
-                    }()
-                }
-            )
-        ),
-        headerItemViewAdapter: .noSupplementaryTableViewAdapter,
-        footerItemViewAdapter: .noSupplementaryTableViewAdapter
+    private lazy var datasourceCore = TableViewDatasourceCore.base(
+        valueAndSections: self.viewModel.valueAndSections,
+        itemViewAdapter: TableViewCellAdapter<PublicRepoCell>.tableViewCell(
+            withCellClass: UITableViewCell.self,
+            reuseIdentifier: "cell", configure: { repo, cellView in
+                cellView.textLabel?.text = {
+                    switch repo {
+                    case let .repo(repo): return repo.name
+                    case .error: return nil
+                    }
+                }()
+            }
         )
+    )
 
     private lazy var idiomaticDatasourceCore = datasourceCore
         .idiomatic(
@@ -58,25 +49,6 @@ class PublicReposRootViewController : UIViewController {
         core: idiomaticDatasourceCore
     )
 
-//    private lazy var tableViewController: TableViewController = {
-//        let tableViewController = makeTableViewController()
-//
-//        tableViewController.willMove(toParent: self)
-//        self.addChild(tableViewController)
-//        self.view.addSubview(tableViewController.view)
-//
-//        let view = tableViewController.view!
-//        view.translatesAutoresizingMaskIntoConstraints = false
-//        view.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
-//        view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
-//        view.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
-//        view.rightAnchor.constraint(equalTo: self.view.rightAnchor).isActive = true
-//
-//        tableViewController.didMove(toParent: self)
-//
-//        return tableViewController
-//    }()
-
     init() {
         super.init(nibName: nil, bundle: nil)
     }
@@ -85,51 +57,6 @@ class PublicReposRootViewController : UIViewController {
     required init?(coder aDecoder: NSCoder) {
         fatalError("Storyboards not supported for PublicReposViewController")
     }
-
-//    private func makeTableViewController() -> TableViewController {
-//
-//
-//        return TableViewController(statesObservable: viewModel.states.any) { configure in
-//            configure
-//                .valueToItems { publicReposResponseContainer -> [PublicReposCell]? in
-//                    return publicReposResponseContainer.map({ PublicReposCell.repo($0) })
-//                }
-//                .idiomaticItemToView { viewType -> SimpleTableViewCellProducer<PublicReposCell> in
-//                    switch viewType {
-//                    case .repo:
-//                        return SimpleTableViewCellProducer.instantiate { cell -> UITableViewCell in
-//                            switch cell {
-//                            case .loading, .noResults, .error: return UITableViewCell()
-//                            case let .repo(repo):
-//                                let cell = UITableViewCell()
-//                                cell.textLabel?.text = repo.full_name
-//                                return cell
-//                            }
-//                        }
-//                    case .loading:
-//                        return .instantiate { _ in return LoadingCell() }
-//                    case .error:
-//                        return .instantiate { cell in
-//                            guard case let .error(error) = cell else { return ErrorTableViewCell() }
-//                            let tableViewCell = ErrorTableViewCell()
-//                            tableViewCell.content = error.errorMessage
-//                            return tableViewCell
-//                        }
-//                    case .noResults:
-//                        return .instantiate { _ in
-//                            let tableViewCell = ErrorTableViewCell()
-//                            tableViewCell.content = StateErrorMessage
-//                                .message("Strangely, there are no public repos on Github.")
-//                            return tableViewCell
-//                        }
-//                    }
-//                }
-//                .itemSelected { [weak self] cell in
-//                    guard case let .repo(repo) = cell else { return }
-//                    self?.repoSelected(repo: repo)
-//                }
-//        }
-//    }
 
     override func viewDidLoad() {
         super.viewDidLoad()

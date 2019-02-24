@@ -79,3 +79,37 @@ public extension ListViewItemAdapter {
     }
 
 }
+
+extension ListViewItemAdapter where Item == NoSupplementaryItem {
+
+    static var noSupplementaryViewAdapter: ListViewItemAdapter
+        <NoSupplementaryItem, UIView, ContainingView> {
+
+            return ListViewItemAdapter<NoSupplementaryItem, UIView, ContainingView>(
+                produceView: { _, _, _ in UIView() },
+                registerAtContainingView: { _ in }
+            )
+    }
+}
+
+public typealias TableViewCellAdapter<Cell: ListItem>
+    = ListViewItemAdapter<Cell, UITableViewCell, UITableView>
+
+public extension TableViewCellAdapter {
+
+    static func tableViewCell<Cell: ListItem, CellView: UITableViewCell>(
+        withCellClass `class`: CellView.Type,
+        reuseIdentifier: String,
+        configure: @escaping (Cell, UITableViewCell) -> Void
+        ) -> TableViewCellAdapter<Cell> {
+
+        return TableViewCellAdapter<Cell>(
+            simpleWithViewProducer: SimpleTableViewCellProducer.classAndIdentifier(
+                class: `class`,
+                identifier: reuseIdentifier,
+                configure: configure
+            )
+        )
+    }
+
+}
