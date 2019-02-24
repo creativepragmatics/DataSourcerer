@@ -114,8 +114,9 @@ public extension SimpleTableViewDatasource where Section == NoSection {
 
     var cellsProperty: ObservableProperty<SingleSectionListItems<Cell>> {
 
-        return core.sectionsProperty
-            .map { SingleSectionListItems<Cell>(sections: $0) }
+        return core.valueAndSectionsProperty
+            .map { SingleSectionListItems<Cell>(sections: $0.sections) }
+            .observeOnUIThread()
             .property(initialValue: .notReady)
     }
 

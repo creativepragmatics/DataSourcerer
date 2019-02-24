@@ -17,15 +17,7 @@ class PublicReposRootViewController : UIViewController {
     PublicRepoCell, UITableViewCell, NoSection, NoSupplementaryItem, UIView,
         NoSupplementaryItem, UIView
     >(
-        simpleCoreWithValueProperty: self.viewModel.states,
-        valueToSections: { state in
-            let cells = state.value?.value.map { PublicRepoCell.repo($0) } ?? []
-            return ListSections<PublicRepoCell, NoSection>.readyToDisplay(
-                [
-                    SectionWithItems<PublicRepoCell, NoSection>(NoSection(), cells)
-                ]
-            )
-        },
+        simpleCoreWithValueAndSectionsProperty: self.viewModel.valueAndSections,
         itemViewAdapter: ListViewItemAdapter(
             simpleWithViewProducer: SimpleTableViewCellProducer.classAndIdentifier(
                 class: UITableViewCell.self,
