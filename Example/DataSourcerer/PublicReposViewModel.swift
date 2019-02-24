@@ -12,12 +12,13 @@ class PublicReposViewModel {
     }()
 
     lazy var states: ObservableProperty<State<Value, P, E>> = {
-        return PublicReposPrimaryDatasourceBuilder(loadImpulseEmitter: loadImpulseEmitter.any)
-            .datasource
+        return PublicReposPrimaryDatasourceBuilder()
+            .datasource(with: loadImpulseEmitter.any)
             .retainLastResultState()
             .persistedCachedState(persister: CachePersister<Value, P, E>(key: "public_repos").any,
                                   loadImpulseEmitter: loadImpulseEmitter.any,
                                   cacheLoadError: APIError.cacheCouldNotLoad(.default))
+            .skipRepeats()
             .property(initialValue: .notReady)
     }()
 

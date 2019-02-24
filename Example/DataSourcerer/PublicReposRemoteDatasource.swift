@@ -6,14 +6,9 @@ struct PublicReposPrimaryDatasourceBuilder {
     typealias P = VoidParameters
     typealias E = APIError
 
-    let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-    let loadsSynchronously: Bool = false
+    func datasource(with loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
+        -> Datasource<State<Value, P, E>> {
 
-    init(loadImpulseEmitter: AnyLoadImpulseEmitter<P>) {
-        self.loadImpulseEmitter = loadImpulseEmitter
-    }
-
-    var datasource: Datasource<State<Value, P, E>> {
         return Datasource(
             loadStatesWithURLRequest: { _ -> URLRequest in
                 let publicReposUrlString: String = "https://api.github.com/repositories"
