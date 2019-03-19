@@ -2,14 +2,14 @@ import Dwifft
 import Foundation
 
 open class SingleSectionTableViewController
-<Value: Equatable, Cell: ListItem>: UIViewController {
+<Value: Equatable, P: Parameters, E: StateError, Cell: ListItem>: UIViewController {
 
     public typealias ValuesObservable = AnyObservable<Value>
     public typealias Cells = SingleSectionListItems<Cell>
     public typealias TableViewDatasource = SimpleTableViewDatasource
-        <Value, Cell, NoSection, NoSupplementaryItem, NoSupplementaryItem>
+        <Value, P, E, Cell, NoSection, NoSupplementaryItem, NoSupplementaryItem>
     public typealias Core = ListViewDatasourceCore
-        <Value, Cell, UITableViewCell, NoSection, NoSupplementaryItem, UIView,
+        <Value, P, E, Cell, UITableViewCell, NoSection, NoSupplementaryItem, UIView,
         NoSupplementaryItem, UIView, UITableView>
 
     open var refreshControl: UIRefreshControl?

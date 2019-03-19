@@ -6,14 +6,15 @@ import Foundation
 // If you think a closure is missing (and you can therefore not use this struct
 // for your own purposes), please create an issue at the Github page.
 public struct ListViewDatasourceCore
-    <ObservedValue, Item: ListItem, ItemView: UIView, Section: ListSection,
-    HeaderItem: SupplementaryItem, HeaderItemView: UIView,
+    <Value, P: Parameters, E: StateError, Item: ListItem, ItemView: UIView,
+    Section: ListSection, HeaderItem: SupplementaryItem, HeaderItemView: UIView,
     FooterItem: SupplementaryItem, FooterItemView: UIView,
     ContainingView: UIView> {
+    public typealias ListState = State<Value, P, E>
     public typealias ItemViewAdapter = ListViewItemAdapter<Item, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ListViewItemAdapter<HeaderItem, HeaderItemView, ContainingView>
     public typealias FooterItemViewAdapter = ListViewItemAdapter<FooterItem, FooterItemView, ContainingView>
-    public typealias ValueAndSections = ListValueAndSections<ObservedValue, Item, Section>
+    public typealias StateAndSections = ListStateAndSections<ListState, Item, Section>
 
     // MARK: - Definitions based on UITableViewDatasource & UICollectionViewDatasource
     public typealias HeaderItemAtIndexPath = (IndexPath) -> HeaderItem?
@@ -30,7 +31,7 @@ public struct ListViewDatasourceCore
     public typealias WillDisplayFooterItem =
         (FooterItemView, FooterItem, IndexPath) -> Void
 
-    public let listDatasource: ListDatasource<ObservedValue, Item, Section>
+    public let listDatasource: Datasource<Value, P, E, Item, Section>
     public let itemViewAdapter: ItemViewAdapter
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
@@ -48,7 +49,7 @@ public struct ListViewDatasourceCore
     public var willDisplayHeaderItem: WillDisplayHeaderItem?
     public var willDisplayFooterItem: WillDisplayFooterItem?
 
-    public init(listDatasource: ListDatasource<ObservedValue, Item, Section>,
+    public init(listDatasource: Datasource<Value, P, E, Item, Section>,
                 itemViewAdapter: ItemViewAdapter,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
@@ -84,10 +85,10 @@ HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
 FooterItemView == UIView {
 
     static func base(
-        listDatasource: ListDatasource<ObservedValue, Item, Section>,
+        listDatasource: Datasource<Value, P, E, Item, Section>,
         itemViewAdapter: ListViewItemAdapter<Item, ItemView, ContainingView>)
         -> ListViewDatasourceCore
-        <ObservedValue, Item, ItemView, Section, NoSupplementaryItem, UIView,
+        <Value, P, E, Item, ItemView, Section, NoSupplementaryItem, UIView,
         NoSupplementaryItem, UIView, ContainingView> {
 
             return ListViewDatasourceCore(
@@ -108,9 +109,9 @@ FooterItemView == UIView {
     }
 }
 
-public struct ListValueAndSections<Value, Item: ListItem, Section: ListSection> {
-    let value: Value
-    let sections: ListSections<Item, Section>
+public struct ListStateAndSections<Value, Item: ListItem, Section: ListSection> {
+    public let value: Value
+    public let sections: ListSections<Item, Section>
 
     public init(value: Value, sections: ListSections<Item, Section>) {
         self.value = value
@@ -121,7 +122,7 @@ public struct ListValueAndSections<Value, Item: ListItem, Section: ListSection> 
 public extension ListViewDatasourceCore {
 
     var sections: ListSections<Item, Section> {
-        return listDatasource.valueAndSections.value.sections
+        return listDatasource.stateAndSections.value.sections
     }
 
     func section(at index: Int) -> SectionWithItems<Item, Section> {
@@ -134,7 +135,7 @@ public extension ListViewDatasourceCore {
     }
 
     func items(in section: Int) -> [Item] {
-        return listDatasource.valueAndSections.value.sections
+        return listDatasource.stateAndSections.value.sections
             .sectionedValues.sectionsAndValues[section].1
     }
 
@@ -182,16 +183,16 @@ public extension ListViewDatasourceCore {
 
 public extension ListViewDatasourceCore {
 
-    func idiomatic<Value, P: Parameters, E: StateError, ViewProducer: ListItemViewProducer>(
+    func idiomatic<ViewProducer: ListItemViewProducer>(
         noResultsText: String,
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer
         )
-        -> ListViewDatasourceCore<ObservedValue, IdiomaticListItem<Item>, ItemView, Section,
+        -> ListViewDatasourceCore<Value, P, E, IdiomaticListItem<Item>, ItemView, Section,
         HeaderItem, HeaderItemView, FooterItem, FooterItemView, ContainingView>
-        where ObservedValue == State<Value, P, E>,
-        ViewProducer.Item == IdiomaticListItem<Item>, ViewProducer.ProducedView == ItemView,
+        where ViewProducer.Item == IdiomaticListItem<Item>,
+        ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, Item.E == E {
 
             let idiomaticItemViewAdapter = self.itemViewAdapter.idiomatic(
@@ -201,7 +202,7 @@ public extension ListViewDatasourceCore {
             )
 
             return ListViewDatasourceCore
-                <ObservedValue, IdiomaticListItem<Item>, ItemView,
+                <Value, P, E, IdiomaticListItem<Item>, ItemView,
                 Section, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
                 ContainingView> (
                     listDatasource: self.listDatasource.idiomatic(),
@@ -216,7 +217,7 @@ public extension ListViewDatasourceCore {
                     indexPathForIndexTitle: indexPathForIndexTitle,
                     willDisplayItem: { itemView, item, indexPath in
                         switch item {
-                        case let .datasourceItem(datasourceItem):
+                        case let .baseItem(datasourceItem):
                             self.willDisplayItem?(itemView, datasourceItem, indexPath)
                         case .loading, .error, .noResults:
                             break
@@ -229,12 +230,12 @@ public extension ListViewDatasourceCore {
 }
 
 public typealias TableViewDatasourceCore
-    <ObservedValue, Cell: ListItem, CellView: UITableViewCell,
+    <Value, P: Parameters, E: StateError, Cell: ListItem, CellView: UITableViewCell,
     Section: ListSection, HeaderItem: SupplementaryItem, HeaderItemView: UIView,
     FooterItem: SupplementaryItem, FooterItemView: UIView>
     =
     ListViewDatasourceCore
-    <ObservedValue, Cell, CellView, Section, HeaderItem, HeaderItemView,
+    <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView,
     FooterItem, FooterItemView, UITableView>
 
 public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem,
@@ -242,12 +243,12 @@ public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem
     FooterItemView == UIView, ItemView == UITableViewCell {
 
     static func withBaseTableViewCell(
-        listDatasource: ListDatasource<ObservedValue, Item, Section>,
+        listDatasource: Datasource<Value, P, E, Item, Section>,
         cellClass `class`: ItemView.Type,
         reuseIdentifier: String,
         configure: @escaping (Item, ItemView) -> Void)
         -> TableViewDatasourceCore
-        <ObservedValue, Item, ItemView, Section, NoSupplementaryItem, UIView,
+        <Value, P, E, Item, ItemView, Section, NoSupplementaryItem, UIView,
         NoSupplementaryItem, UIView> {
 
             return TableViewDatasourceCore.base(

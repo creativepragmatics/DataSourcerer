@@ -2,11 +2,11 @@ import Foundation
 import UIKit
 
 open class SimpleTableViewDatasource
-    <Value, Cell: ListItem, Section: ListSection, HeaderItem: SupplementaryItem,
-    FooterItem: SupplementaryItem>: NSObject, UITableViewDelegate,
+    <Value, P: Parameters, E: StateError, Cell: ListItem, Section: ListSection,
+    HeaderItem: SupplementaryItem, FooterItem: SupplementaryItem>: NSObject, UITableViewDelegate,
     UITableViewDataSource where HeaderItem.E == FooterItem.E {
     public typealias Core = ListViewDatasourceCore
-        <Value, Cell, UITableViewCell, Section, HeaderItem,
+        <Value, P, E, Cell, UITableViewCell, Section, HeaderItem,
         UIView, FooterItem, UIView, UITableView>
 
     public let core: Core
@@ -114,7 +114,7 @@ public extension SimpleTableViewDatasource where Section == NoSection {
 
     var cellsProperty: ShareableValueStream<SingleSectionListItems<Cell>> {
 
-        return core.listDatasource.valueAndSections
+        return core.listDatasource.stateAndSections
             .map { SingleSectionListItems<Cell>(sections: $0.sections) }
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
@@ -131,9 +131,9 @@ public extension SimpleTableViewDatasource where Section == NoSection {
 ///// Configuration has to be done before the `cells`
 ///// property is accessed.
 //open class IdiomaticSingleSectionTableViewDatasource
-//    <Value, P: Parameters, E: StateError, DatasourceItem: Equatable>:
+//    <Value, P: Parameters, E: StateError, BaseItem: Equatable>:
 //    NSObject, UITableViewDelegate, UITableViewDataSource {
-//    public typealias Cell = IdiomaticListItem<DatasourceItem>
+//    public typealias Cell = IdiomaticListItem<BaseItem>
 //    public typealias Cells = SingleSectionListItems<Cell>
 //    public typealias CellViewProducer = SimpleTableViewCellProducer<Cell>
 //    public typealias StatesObservable = AnyObservable<State<Value, P, E>>

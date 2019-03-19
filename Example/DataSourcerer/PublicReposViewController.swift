@@ -85,7 +85,8 @@ class PublicReposRootViewController : UIViewController {
             self?.tableViewController.refreshControl?.beginRefreshing()
         }
 
-        viewModel.states
+        viewModel.listDatasource.stateAndSections
+            .map { $0.value }
             .loadingEnded()
             .observeOnUIThread()
             .observe { [weak self] _ in

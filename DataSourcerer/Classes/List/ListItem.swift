@@ -12,13 +12,13 @@ public protocol IdiomaticStateError: StateError {
     init(message: StateErrorMessage)
 }
 
-public enum IdiomaticListItem<DatasourceItem: ListItem> : ListItem {
-    case datasourceItem(DatasourceItem)
+public enum IdiomaticListItem<BaseItem: ListItem> : ListItem {
+    case baseItem(BaseItem)
     case loading
-    case error(DatasourceItem.E)
+    case error(BaseItem.E)
     case noResults(String)
 
-    public init(error: DatasourceItem.E) {
+    public init(error: BaseItem.E) {
         self = .error(error)
     }
 }

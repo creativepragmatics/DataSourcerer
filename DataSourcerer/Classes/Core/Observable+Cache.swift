@@ -59,8 +59,8 @@ public extension ObservableProtocol {
         where ObservedValue == State<Value, P, E> {
 
             let cacheObservable = ValueStream(loadStatesFromPersister: persister,
-                                             loadImpulseEmitter: loadImpulseEmitter,
-                                             cacheLoadError: cacheLoadError).any
+                                              loadImpulseEmitter: loadImpulseEmitter,
+                                              cacheLoadError: cacheLoadError).any
             let cached = cachedState(cacheObservable: cacheObservable, loadImpulseEmitter: loadImpulseEmitter)
             let persisted = cached.persistState(persister: persister, loadImpulseEmitter: loadImpulseEmitter)
             return persisted

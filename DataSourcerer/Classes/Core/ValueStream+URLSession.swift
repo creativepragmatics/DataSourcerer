@@ -8,7 +8,7 @@ public extension ValueStream {
     /// `errorMaker`.
     init<Value, P: Parameters, E: StateError>(
         loadStatesWithURLRequest URLRequestMaker: @escaping (LoadImpulse<P>) throws -> URLRequest,
-        errorMaker: @escaping (String) -> E,
+        mapErrorString: @escaping (String) -> E,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>
         ) where ObservedValue == State<Value, P, E>, Value: Codable {
 
@@ -27,7 +27,7 @@ public extension ValueStream {
                 }
 
                 guard let urlRequest = try? URLRequestMaker(loadImpulse) else {
-                    sendError(errorMaker("Request could not be generated"))
+                    sendError(mapErrorString("Request could not be generated"))
                     return
                 }
 
@@ -37,7 +37,7 @@ public extension ValueStream {
                 let task = session.dataTask(with: urlRequest) { data, _, error in
 
                     guard error == nil else {
-                        sendError(errorMaker("""
+                        sendError(mapErrorString("""
                         Request could not be loaded -
                         we are too lazy to parse the actual error yet ;)
                         """))
@@ -46,7 +46,7 @@ public extension ValueStream {
 
                     // make sure we got data
                     guard let responseData = data else {
-                        sendError(errorMaker("responseData is nil"))
+                        sendError(mapErrorString("responseData is nil"))
                         return
                     }
 
@@ -58,7 +58,7 @@ public extension ValueStream {
                                                           fallbackError: nil)
                         sendState(state)
                     } catch {
-                        sendError(errorMaker("""
+                        sendError(mapErrorString("""
                             Value cannot be parsed: \(String(describing: error))
                             """))
                         return

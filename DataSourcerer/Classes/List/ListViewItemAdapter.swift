@@ -53,8 +53,8 @@ public extension ListViewItemAdapter {
             return ListViewItemAdapter<IdiomaticListItem<Item>, ProducedView, ContainingView>(
                 produceView: { item, containingView, indexPath -> ProducedView in
                     switch item {
-                    case let .datasourceItem(datasourceItem):
-                        return self.produceView(datasourceItem, containingView, indexPath)
+                    case let .baseItem(baseItem):
+                        return self.produceView(baseItem, containingView, indexPath)
                     case let .error(error):
                         return errorViewProducer.view(containingView: containingView,
                                                       item: .error(error),

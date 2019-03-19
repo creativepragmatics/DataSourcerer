@@ -18,7 +18,7 @@ struct PublicReposPrimaryDatasourceBuilder {
 
                 return URLRequest(url: url)
             },
-            errorMaker: { APIError.unknown(.message($0)) },
+            mapErrorString: { APIError.unknown(.message($0)) },
             loadImpulseEmitter: loadImpulseEmitter
         )
     }
