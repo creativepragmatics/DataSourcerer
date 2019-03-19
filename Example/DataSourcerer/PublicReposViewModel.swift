@@ -11,7 +11,7 @@ class PublicReposViewModel {
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
-    lazy var states: ObservableProperty<State<Value, P, E>> = {
+    lazy var states: ShareableValueStream<State<Value, P, E>> = {
         return PublicReposPrimaryDatasourceBuilder()
             .datasource(with: loadImpulseEmitter.any)
             .retainLastResultState()
@@ -19,7 +19,7 @@ class PublicReposViewModel {
                                   loadImpulseEmitter: loadImpulseEmitter.any,
                                   cacheLoadError: APIError.cacheCouldNotLoad(.default))
             .skipRepeats()
-            .property(initialValue: .notReady)
+            .shareable(initialValue: .notReady)
     }()
 
     lazy var listDatasource: ListDatasource
@@ -37,7 +37,7 @@ class PublicReposViewModel {
                 )
                 return ListValueAndSections(value: state, sections: sections)
             }
-            .property(initialValue: ListValueAndSections(value: states.value, sections: .notReady))
+            .shareable(initialValue: ListValueAndSections(value: states.value, sections: .notReady))
         return ListDatasource(valueAndSections)
     }()
 

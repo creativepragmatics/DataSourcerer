@@ -10,7 +10,7 @@ import Foundation
 /// Datasource.init(_ observeHandler).
 ///
 /// Analogy to RxSwift/ReactiveX: Insert example :)
-public struct Datasource<Value>: ObservableProtocol {
+public struct ValueStream<Value>: ObservableProtocol {
     public typealias ObservedValue = Value
     public typealias ValuesOverTime = (ObservedValue) -> Void
     public typealias ObserveHandler = (@escaping ValuesOverTime, CompositeDisposable) -> Void
@@ -31,7 +31,7 @@ public struct Datasource<Value>: ObservableProtocol {
 
 // MARK: Closure support
 
-public extension Datasource {
+public extension ValueStream {
 
     /// Initializes a datasource with a closure that generates
     /// `State`s.
@@ -52,7 +52,7 @@ public extension Datasource {
 
 // MARK: Load from StatePersister
 
-public extension Datasource {
+public extension ValueStream {
 
     /// Sends a persisted state from `persister`, every time
     /// `loadImpulseEmitter` sends an impulse. If an error occurs

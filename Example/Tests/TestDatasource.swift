@@ -1,7 +1,7 @@
 import Foundation
 import DataSourcerer
 
-internal extension Datasource {
+internal extension ValueStream {
 
     internal init<Value, P: Parameters>(
         testStates states: [State<Value, P, TestStateError>],

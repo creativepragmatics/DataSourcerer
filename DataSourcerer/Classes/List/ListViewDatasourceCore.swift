@@ -236,3 +236,27 @@ public typealias TableViewDatasourceCore
     ListViewDatasourceCore
     <ObservedValue, Cell, CellView, Section, HeaderItem, HeaderItemView,
     FooterItem, FooterItemView, UITableView>
+
+public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem,
+    HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
+    FooterItemView == UIView, ItemView == UITableViewCell {
+
+    static func withBaseTableViewCell(
+        listDatasource: ListDatasource<ObservedValue, Item, Section>,
+        cellClass `class`: ItemView.Type,
+        reuseIdentifier: String,
+        configure: @escaping (Item, ItemView) -> Void)
+        -> TableViewDatasourceCore
+        <ObservedValue, Item, ItemView, Section, NoSupplementaryItem, UIView,
+        NoSupplementaryItem, UIView> {
+
+            return TableViewDatasourceCore.base(
+                listDatasource: listDatasource,
+                itemViewAdapter: TableViewCellAdapter<Item>.tableViewCell(
+                    withCellClass: ItemView.self,
+                    reuseIdentifier: reuseIdentifier, configure: configure
+                )
+            )
+    }
+
+}

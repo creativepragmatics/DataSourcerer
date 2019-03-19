@@ -12,9 +12,9 @@ class DatasourceOperationsSpec: QuickSpec {
     }
 
     private func testDatasource(_ loadImpulseEmitter: AnyLoadImpulseEmitter<String>)
-        -> Datasource<State<String, String, TestStateError>> {
+        -> ValueStream<State<String, String, TestStateError>> {
 
-        return Datasource.init(testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
+            return ValueStream(testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
                                testError: TestStateError.unknown(description: "Value unavailable"),
                                loadImpulseEmitter: loadImpulseEmitter)
     }

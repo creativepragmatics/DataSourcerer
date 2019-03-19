@@ -1,6 +1,6 @@
 import Foundation
 
-public extension Datasource {
+public extension ValueStream {
 
     /// Loads data with the URLRequests produced by `URLRequestMaker`,
     /// whenever `loadImpulseEmitter` emits a load impulse. If

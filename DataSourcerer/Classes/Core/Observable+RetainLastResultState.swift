@@ -20,7 +20,7 @@ public extension ObservableProtocol {
     func retainLastResultState<Value, P: Parameters, E: StateError>()
         -> AnyObservable<ObservedValue> where ObservedValue == State<Value, P, E> {
 
-            return Datasource { sendState, disposable in
+            return ValueStream { sendState, disposable in
 
                 let core = LastResultRetainingCore<Value, P, E>()
 

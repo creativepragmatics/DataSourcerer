@@ -107,7 +107,7 @@ public final class SynchronizedProperty<T_>: Property {
 /// After that, `sourceObservable`'s stream of values is forwarded.
 ///
 /// Similar to ReactiveSwift.Property.
-public final class ObservableProperty<T_>: ObservableProtocol, Property {
+public final class ShareableValueStream<T_>: ObservableProtocol, Property {
     public typealias T = T_
     public typealias ObservedValue = T
     public typealias ValuesOverTime = (ObservedValue) -> Void
@@ -152,8 +152,8 @@ public final class ObservableProperty<T_>: ObservableProtocol, Property {
 
 public extension ObservableProtocol {
 
-    func property(initialValue: ObservedValue) -> ObservableProperty<ObservedValue> {
-        return ObservableProperty(initialValue: initialValue, sourceObservable: self.any)
+    func shareable(initialValue: ObservedValue) -> ShareableValueStream<ObservedValue> {
+        return ShareableValueStream(initialValue: initialValue, sourceObservable: self.any)
     }
 }
 

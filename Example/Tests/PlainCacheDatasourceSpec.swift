@@ -18,14 +18,14 @@ class PlainCacheDatasourceSpec: QuickSpec {
 
     private func testDatasource(persistedState: State<String, String, TestStateError>,
                                 loadImpulseEmitter: SimpleLoadImpulseEmitter<String>)
-        -> Datasource<State<String, String, TestStateError>> {
+        -> ValueStream<State<String, String, TestStateError>> {
 
             let persister = TestStatePersister<String, String, TestStateError>()
             persister.persist(persistedState)
 
-            return Datasource.init(loadStatesFromPersister: persister.any,
-                                   loadImpulseEmitter: loadImpulseEmitter.any,
-                                   cacheLoadError: TestStateError.cacheCouldNotLoad(.default))
+            return ValueStream(loadStatesFromPersister: persister.any,
+                               loadImpulseEmitter: loadImpulseEmitter.any,
+                               cacheLoadError: TestStateError.cacheCouldNotLoad(.default))
     }
 
     override func spec() {

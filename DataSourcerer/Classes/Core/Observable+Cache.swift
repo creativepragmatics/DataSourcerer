@@ -11,7 +11,7 @@ public extension ObservableProtocol {
         -> AnyObservable<State<Value, P, E>>
         where ObservedValue == State<Value, P, E> {
 
-            return Datasource { sendState, disposable in
+            return ValueStream { sendState, disposable in
 
                 let core = CachedDatasourceCore<Value, P, E>()
 
@@ -38,7 +38,7 @@ public extension ObservableProtocol {
 
             let core = PersistStateCore(persister: persister)
 
-            return Datasource { sendState, disposable in
+            return ValueStream { sendState, disposable in
 
                 disposable += loadImpulseEmitter.observe {
                     core.tryPersist(latestLoadImpulse: $0, sendState: sendState)
@@ -58,7 +58,7 @@ public extension ObservableProtocol {
         -> AnyObservable<State<Value, P, E>>
         where ObservedValue == State<Value, P, E> {
 
-            let cacheObservable = Datasource(loadStatesFromPersister: persister,
+            let cacheObservable = ValueStream(loadStatesFromPersister: persister,
                                              loadImpulseEmitter: loadImpulseEmitter,
                                              cacheLoadError: cacheLoadError).any
             let cached = cachedState(cacheObservable: cacheObservable, loadImpulseEmitter: loadImpulseEmitter)

@@ -7,9 +7,9 @@ struct PublicReposPrimaryDatasourceBuilder {
     typealias E = APIError
 
     func datasource(with loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
-        -> Datasource<State<Value, P, E>> {
+        -> ValueStream<State<Value, P, E>> {
 
-        return Datasource(
+        return ValueStream(
             loadStatesWithURLRequest: { _ -> URLRequest in
                 let publicReposUrlString: String = "https://api.github.com/repositories"
                 guard let url = URL(string: publicReposUrlString) else {

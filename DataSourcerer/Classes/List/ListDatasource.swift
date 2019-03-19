@@ -3,9 +3,9 @@ import Foundation
 public struct ListDatasource<ObservedValue, Item: ListItem, Section: ListSection> {
     public typealias ValueAndSections = ListValueAndSections<ObservedValue, Item, Section>
 
-    public let valueAndSections: ObservableProperty<ValueAndSections>
+    public let valueAndSections: ShareableValueStream<ValueAndSections>
 
-    public init(_ valueAndSections: ObservableProperty<ValueAndSections>) {
+    public init(_ valueAndSections: ShareableValueStream<ValueAndSections>) {
         self.valueAndSections = valueAndSections
     }
 }
@@ -40,7 +40,7 @@ public extension ListDatasource {
 
         let idiomaticValueAndSectionsProperty = valueAndSections
             .map { idiomaticValueAndSections($0) }
-            .property(
+            .shareable(
                 initialValue: idiomaticValueAndSections(self.valueAndSections.value)
         )
 

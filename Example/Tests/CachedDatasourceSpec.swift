@@ -62,7 +62,7 @@ class CachedDatasourceSpec: QuickSpec {
                 let persister = TestStatePersister<String, String, TestStateError>()
                 persister.persist(OneTwoThreeStringTestStates.oneTwoThreeStringStates[0])
 
-                let datasource = Datasource(
+                let datasource = ValueStream(
                     testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
                     testError: TestStateError.unknown(description: "Value unavailable"),
                     loadImpulseEmitter: loadImpulseEmitter

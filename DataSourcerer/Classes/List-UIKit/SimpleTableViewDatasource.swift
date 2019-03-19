@@ -112,12 +112,12 @@ open class SimpleTableViewDatasource
 
 public extension SimpleTableViewDatasource where Section == NoSection {
 
-    var cellsProperty: ObservableProperty<SingleSectionListItems<Cell>> {
+    var cellsProperty: ShareableValueStream<SingleSectionListItems<Cell>> {
 
         return core.listDatasource.valueAndSections
             .map { SingleSectionListItems<Cell>(sections: $0.sections) }
             .observeOnUIThread()
-            .property(initialValue: .notReady)
+            .shareable(initialValue: .notReady)
     }
 
     var cells: SingleSectionListItems<Cell> {
