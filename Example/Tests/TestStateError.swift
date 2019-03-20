@@ -1,7 +1,7 @@
 import Foundation
 import DataSourcerer
 
-enum TestStateError : StateError, Codable {
+enum TestStateError : ResourceError, Codable {
     case unknown(description: String?)
     case unreachable
     case notConnectedToInternet

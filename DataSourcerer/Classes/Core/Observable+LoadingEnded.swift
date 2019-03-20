@@ -7,8 +7,8 @@ public extension ObservableProtocol {
     /// Returns AnyObservable because it does not necessarily,
     /// like Datasources, send an initial value synchronously
     /// when observe(_) is called.
-    func loadingEnded<Value, P: Parameters, E: StateError>()
-        -> AnyObservable<LoadingEnded> where ObservedValue == State<Value, P, E> {
+    func loadingEnded<Value, P: ResourceParams, E: ResourceError>()
+        -> AnyObservable<LoadingEnded> where ObservedValue == ResourceState<Value, P, E> {
 
             return self
                 .filter { state in

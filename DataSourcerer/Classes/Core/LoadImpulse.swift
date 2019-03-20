@@ -1,6 +1,6 @@
 import Foundation
 
-public struct LoadImpulse<P: Parameters>: Equatable {
+public struct LoadImpulse<P: ResourceParams>: Equatable {
 
     public var parameters: P
     public let skipIfResultAvailable: Bool

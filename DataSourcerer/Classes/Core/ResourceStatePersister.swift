@@ -1,23 +1,24 @@
 import Foundation
 
-public protocol StatePersister {
+public protocol ResourceStatePersister {
     associatedtype Value: Any
-    associatedtype P: Parameters
-    associatedtype E: StateError
-    typealias PersistedState = State<Value, P, E>
+    associatedtype P: ResourceParams
+    associatedtype E: ResourceError
+    typealias PersistedState = ResourceState<Value, P, E>
 
     func persist(_ state: PersistedState)
     func load(_ parameters: P) -> PersistedState?
     func purge()
 }
 
-public extension StatePersister {
-    var any: AnyStatePersister<Value, P, E> {
-        return AnyStatePersister(self)
+public extension ResourceStatePersister {
+    var any: AnyResourceStatePersister<Value, P, E> {
+        return AnyResourceStatePersister(self)
     }
 }
 
-public struct AnyStatePersister<Value_: Any, P_: Parameters, E_: StateError> : StatePersister {
+public struct AnyResourceStatePersister<Value_: Any, P_: ResourceParams, E_: ResourceError>
+: ResourceStatePersister {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
@@ -26,7 +27,7 @@ public struct AnyStatePersister<Value_: Any, P_: Parameters, E_: StateError> : S
     private let _load: (P) -> PersistedState?
     private let _purge: () -> Void
 
-    public init<SP: StatePersister>(_ persister: SP) where SP.PersistedState == PersistedState {
+    public init<SP: ResourceStatePersister>(_ persister: SP) where SP.PersistedState == PersistedState {
         self._persist = persister.persist
         self._load = persister.load
         self._purge = persister.purge

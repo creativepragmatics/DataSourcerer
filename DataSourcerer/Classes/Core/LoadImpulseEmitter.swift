@@ -1,7 +1,7 @@
 import Foundation
 
 public protocol LoadImpulseEmitterProtocol: ObservableProtocol where ObservedValue == LoadImpulse<P> {
-    associatedtype P: Parameters
+    associatedtype P: ResourceParams
     typealias LoadImpulsesOverTime = ValuesOverTime
 
     func emit(_ loadImpulse: LoadImpulse<P>)
@@ -13,7 +13,7 @@ public extension LoadImpulseEmitterProtocol {
     }
 }
 
-public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol {
+public struct AnyLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol {
     public typealias P = P_
 
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
@@ -33,7 +33,7 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     }
 }
 
-public class SimpleLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
+public class SimpleLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
@@ -59,7 +59,7 @@ public class SimpleLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoco
 
 }
 
-public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
+public class RecurringLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 

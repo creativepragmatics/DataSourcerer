@@ -1,7 +1,7 @@
 import Foundation
 import DataSourcerer
 
-public class TestStatePersister<Value_: Codable, P_: Parameters & Codable, E_: StateError & Codable>: StatePersister {
+public class TestResourceStatePersister<Value_: Codable, P_: ResourceParams & Codable, E_: ResourceError & Codable>: ResourceStatePersister {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_

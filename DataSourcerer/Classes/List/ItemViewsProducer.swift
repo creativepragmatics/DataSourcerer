@@ -1,25 +1,25 @@
 import Foundation
 
-public struct ListViewItemAdapter<Item: Equatable, ProducedView: UIView, ContainingView: UIView> {
+public struct ItemViewsProducer<ItemModelType: Equatable, ProducedView: UIView, ContainingView: UIView> {
     public typealias PreferredViewWidth = CGFloat
 
-    public let produceView: (Item, ContainingView, IndexPath) -> ProducedView
+    public let produceView: (ItemModelType, ContainingView, IndexPath) -> ProducedView
     public let registerAtContainingView: (ContainingView) -> Void
-    public let itemViewSize: ((Item, ContainingView) -> CGSize)?
+    public let itemViewSize: ((ItemModelType, ContainingView) -> CGSize)?
 
-    init(produceView: @escaping (Item, ContainingView, IndexPath) -> ProducedView,
+    init(produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
          registerAtContainingView: @escaping (ContainingView) -> Void,
-         itemViewSize: ((Item, ContainingView) -> CGSize)? = nil) {
+         itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil) {
         self.produceView = produceView
         self.registerAtContainingView = registerAtContainingView
         self.itemViewSize = itemViewSize
     }
 }
 
-public extension ListViewItemAdapter {
+public extension ItemViewsProducer {
 
-    init<ViewProducer: ListItemViewProducer>(simpleWithViewProducer viewProducer: ViewProducer)
-        where ViewProducer.Item == Item, ViewProducer.ContainingView == ContainingView,
+    init<ViewProducer: ItemViewProducer>(simpleWithViewProducer viewProducer: ViewProducer)
+        where ViewProducer.ItemModelType == ItemModelType, ViewProducer.ContainingView == ContainingView,
         ViewProducer.ProducedView == ProducedView {
 
         self.init(
@@ -32,25 +32,25 @@ public extension ListViewItemAdapter {
         )
     }
 
-    static var noSupplementaryTableViewAdapter: ListViewItemAdapter
-        <NoSupplementaryItem, UIView, UITableView> {
+    static var noSupplementaryTableViewAdapter: ItemViewsProducer
+        <NoSupplementaryItemModel, UIView, UITableView> {
 
-        return ListViewItemAdapter<NoSupplementaryItem, UIView, UITableView>(
+        return ItemViewsProducer<NoSupplementaryItemModel, UIView, UITableView>(
             produceView: { _, _, _ in UIView() },
             registerAtContainingView: { _ in }
         )
     }
 
-    func idiomatic<ViewProducer: ListItemViewProducer>(
+    func idiomatic<ViewProducer: ItemViewProducer>(
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer)
-        -> ListViewItemAdapter<IdiomaticListItem<Item>, ProducedView, ContainingView>
-        where ViewProducer.Item == IdiomaticListItem<Item>,
+        -> ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>
+        where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
         ViewProducer.ContainingView == ContainingView,
         ViewProducer.ProducedView == ProducedView {
 
-            return ListViewItemAdapter<IdiomaticListItem<Item>, ProducedView, ContainingView>(
+            return ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>(
                 produceView: { item, containingView, indexPath -> ProducedView in
                     switch item {
                     case let .baseItem(baseItem):
@@ -80,24 +80,24 @@ public extension ListViewItemAdapter {
 
 }
 
-extension ListViewItemAdapter where Item == NoSupplementaryItem {
+extension ItemViewsProducer where ItemModelType == NoSupplementaryItemModel {
 
-    static var noSupplementaryViewAdapter: ListViewItemAdapter
-        <NoSupplementaryItem, UIView, ContainingView> {
+    static var noSupplementaryViewAdapter: ItemViewsProducer
+        <NoSupplementaryItemModel, UIView, ContainingView> {
 
-            return ListViewItemAdapter<NoSupplementaryItem, UIView, ContainingView>(
+            return ItemViewsProducer<NoSupplementaryItemModel, UIView, ContainingView>(
                 produceView: { _, _, _ in UIView() },
                 registerAtContainingView: { _ in }
             )
     }
 }
 
-public typealias TableViewCellAdapter<Cell: ListItem>
-    = ListViewItemAdapter<Cell, UITableViewCell, UITableView>
+public typealias TableViewCellAdapter<Cell: ItemModel>
+    = ItemViewsProducer<Cell, UITableViewCell, UITableView>
 
 public extension TableViewCellAdapter {
 
-    static func tableViewCell<Cell: ListItem, CellView: UITableViewCell>(
+    static func tableViewCell<Cell: ItemModel, CellView: UITableViewCell>(
         withCellClass `class`: CellView.Type,
         reuseIdentifier: String,
         configure: @escaping (Cell, UITableViewCell) -> Void

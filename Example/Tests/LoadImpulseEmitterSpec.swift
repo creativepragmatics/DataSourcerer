@@ -86,7 +86,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
 
 }
 
-extension String : Parameters {
+extension String : ResourceParams {
 
     public func isCacheCompatible(_ candidate: String) -> Bool {
         return self.lowercased() == candidate.lowercased()

@@ -2,16 +2,16 @@ import Dwifft
 import Foundation
 
 open class SingleSectionTableViewController
-<Value: Equatable, P: Parameters, E, Cell: ListItem>: UIViewController
+<Value: Equatable, P: ResourceParams, E, Cell: ItemModel>: UIViewController
 where Cell.E == E {
 
     public typealias ValuesObservable = AnyObservable<Value>
     public typealias Cells = SingleSectionListViewState<Cell>
     public typealias TableViewDatasource = SimpleTableViewDatasource
-        <Value, P, E, Cell, NoSection, NoSupplementaryItem, NoSupplementaryItem>
+        <Value, P, E, Cell, NoSection, NoSupplementaryItemModel, NoSupplementaryItemModel>
     public typealias Core = ListViewDatasourceCore
-        <Value, P, E, Cell, UITableViewCell, NoSection, NoSupplementaryItem, UIView,
-        NoSupplementaryItem, UIView, UITableView>
+        <Value, P, E, Cell, UITableViewCell, NoSection, NoSupplementaryItemModel, UIView,
+        NoSupplementaryItemModel, UIView, UITableView>
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()

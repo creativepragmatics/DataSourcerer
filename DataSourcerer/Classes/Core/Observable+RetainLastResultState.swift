@@ -17,8 +17,8 @@ public extension ObservableProtocol {
     /// next state with a value is sent (same with errors).
     /// This struct helps with this by caching the last value and/or
     /// error.
-    func retainLastResultState<Value, P: Parameters, E: StateError>()
-        -> AnyObservable<ObservedValue> where ObservedValue == State<Value, P, E> {
+    func retainLastResultState<Value, P: ResourceParams, E: ResourceError>()
+        -> AnyObservable<ObservedValue> where ObservedValue == ResourceState<Value, P, E> {
 
             return ValueStream { sendState, disposable in
 
@@ -32,12 +32,12 @@ public extension ObservableProtocol {
 }
 
 public final class LastResultRetainingCore
-<Value_: Any, P_: Parameters, E_: StateError> {
+<Value_: Any, P_: ResourceParams, E_: ResourceError> {
 
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
-    public typealias DatasourceState = State<Value, P, E>
+    public typealias DatasourceState = ResourceState<Value, P, E>
     public typealias SendState = (DatasourceState) -> Void
 
     private let lastResult = SynchronizedMutableProperty<LastResult?>(nil)

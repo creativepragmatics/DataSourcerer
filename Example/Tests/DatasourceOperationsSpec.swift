@@ -12,7 +12,7 @@ class DatasourceOperationsSpec: QuickSpec {
     }
 
     private func testDatasource(_ loadImpulseEmitter: AnyLoadImpulseEmitter<String>)
-        -> ValueStream<State<String, String, TestStateError>> {
+        -> ValueStream<ResourceState<String, String, TestStateError>> {
 
             return ValueStream(testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
                                testError: TestStateError.unknown(description: "Value unavailable"),
@@ -26,7 +26,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let loadImpulseEmitter = self.stringLoadImpulseEmitter
                 let datasource = self.testDatasource(loadImpulseEmitter)
 
-                let transform: (State<String, String, TestStateError>) -> Int? = { state in
+                let transform: (ResourceState<String, String, TestStateError>) -> Int? = { state in
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
@@ -51,7 +51,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let loadImpulseEmitter = self.stringLoadImpulseEmitter
                 let datasource = self.testDatasource(loadImpulseEmitter)
 
-                let transform: (State<String, String, TestStateError>) -> Int? = { state in
+                let transform: (ResourceState<String, String, TestStateError>) -> Int? = { state in
                     return (state.value).flatMap({ Int($0.value) })
                 }
 

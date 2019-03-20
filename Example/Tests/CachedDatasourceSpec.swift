@@ -7,8 +7,8 @@ class CachedDatasourceSpec: QuickSpec {
 
     private let testStringLoadImpulse = LoadImpulse(parameters: "1")
 
-    private lazy var testStringState: State<String, String, TestStateError> = {
-        return State(
+    private lazy var testStringState: ResourceState<String, String, TestStateError> = {
+        return ResourceState(
             provisioningState: .result,
             loadImpulse: testStringLoadImpulse,
             value: EquatableBox("1"),
@@ -25,7 +25,7 @@ class CachedDatasourceSpec: QuickSpec {
 //            it("sends states to an observer") {
 //
 //                let loadImpulseEmitter = self.loadImpulseEmitter()
-//                let persister = TestStatePersister<String, String, TestStateError>()
+//                let persister = TestResourceStatePersister<String, String, TestStateError>()
 //                persister.persist(OneTwoThreeStringTestStates.oneTwoThreeStringStates[0])
 //
 //                let datasource = Datasource(
@@ -59,7 +59,7 @@ class CachedDatasourceSpec: QuickSpec {
             it("should release observer after disposal") {
 
                 let loadImpulseEmitter = self.loadImpulseEmitter()
-                let persister = TestStatePersister<String, String, TestStateError>()
+                let persister = TestResourceStatePersister<String, String, TestStateError>()
                 persister.persist(OneTwoThreeStringTestStates.oneTwoThreeStringStates[0])
 
                 let datasource = ValueStream(

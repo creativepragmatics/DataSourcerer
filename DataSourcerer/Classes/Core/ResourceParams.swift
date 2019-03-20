@@ -1,6 +1,6 @@
 import Foundation
 
-/// Datasource parameters, used in `LoadImpulse`. The most
+/// Resource parameters, used in `LoadImpulse`. The most
 /// likely use case is to provide data for an API or cache
 /// request. It should contain ALL data required for such a
 /// request (including authorization tokens, headers,
@@ -8,7 +8,7 @@ import Foundation
 /// However, Public APIs or locally loaded data might not
 /// require any parameters at all - in that case, `VoidParameters`
 /// might come in handy.
-public protocol Parameters : Equatable {
+public protocol ResourceParams : Equatable {
 
     /// Returns true if candidate can be used as a
     /// cache version of self, or vice versa.
@@ -32,7 +32,7 @@ public protocol Parameters : Equatable {
 
 /// Empty parameters for use cases without any parametrization
 /// needs.
-public struct VoidParameters : Parameters {
+public struct VoidParameters : ResourceParams {
     public func isCacheCompatible(_ candidate: VoidParameters) -> Bool { return true }
 
     static let initial = VoidParameters()

@@ -1,18 +1,18 @@
 import Foundation
 
-public protocol ListItem: Equatable {
-    associatedtype E: StateError
+public protocol ItemModel: Equatable {
+    associatedtype E: ResourceError
 
     // Required to display configuration or system errors
     // for easier debugging.
     init(error: E)
 }
 
-public protocol IdiomaticStateError: StateError {
+public protocol IdiomaticStateError: ResourceError {
     init(message: StateErrorMessage)
 }
 
-public enum IdiomaticListItem<BaseItem: ListItem> : ListItem {
+public enum IdiomaticItemModel<BaseItem: ItemModel> : ItemModel {
     case baseItem(BaseItem)
     case loading
     case error(BaseItem.E)
@@ -23,11 +23,11 @@ public enum IdiomaticListItem<BaseItem: ListItem> : ListItem {
     }
 }
 
-public protocol HashableListItem : ListItem, Hashable { }
+public protocol HashableItemModel : ItemModel, Hashable { }
 
 // MARK: SingleSectionListViewState
 
-public enum SingleSectionListViewState<LI: ListItem>: Equatable {
+public enum SingleSectionListViewState<LI: ItemModel>: Equatable {
     case notReady
     case readyToDisplay([LI])
 
@@ -48,7 +48,7 @@ public enum SingleSectionListViewState<LI: ListItem>: Equatable {
     }
 }
 
-public struct SectionWithItems<Item: ListItem, Section: ListSection>: Equatable {
+public struct SectionAndItems<Item: ItemModel, Section: SectionModel>: Equatable {
     public let section: Section
     public let items: [Item]
 
@@ -58,13 +58,12 @@ public struct SectionWithItems<Item: ListItem, Section: ListSection>: Equatable 
     }
 }
 
-public enum ListViewState<Item: ListItem, Section: ListSection>: Equatable {
-    public typealias SectionWithItemsConcrete = SectionWithItems<Item, Section>
+public enum ListViewState<ItemModelType: ItemModel, SectionModelType: SectionModel>: Equatable {
 
     case notReady
-    case readyToDisplay([SectionWithItemsConcrete])
+    case readyToDisplay([SectionAndItems<ItemModelType, SectionModelType>])
 
-    public var sectionsWithItems: [SectionWithItems<Item, Section>]? {
+    public var sectionsWithItems: [SectionAndItems<ItemModelType, SectionModelType>]? {
         switch self {
         case .notReady: return nil
         case let .readyToDisplay(sectionsWithItems): return sectionsWithItems

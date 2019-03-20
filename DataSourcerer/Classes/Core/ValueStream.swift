@@ -35,11 +35,11 @@ public extension ValueStream {
 
     /// Initializes a ValueStream with a closure that generates
     /// `State`s.
-    init<Value, P: Parameters, E: StateError>(
+    init<Value, P: ResourceParams, E: ResourceError>(
         makeStatesWithClosure
         generateState: @escaping (LoadImpulse<P>, @escaping ValuesOverTime) -> Disposable,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-        ) where ObservedValue == State<Value, P, E> {
+        ) where ObservedValue == ResourceState<Value, P, E> {
 
         self.init { sendState, disposable in
 
@@ -50,7 +50,7 @@ public extension ValueStream {
     }
 }
 
-// MARK: Load from StatePersister
+// MARK: Load from ResourceStatePersister
 
 public extension ValueStream {
 
@@ -58,19 +58,19 @@ public extension ValueStream {
     /// `loadImpulseEmitter` sends an impulse. If an error occurs
     /// while loading (e.g. deserialization error), `cacheLoadError`
     /// is sent instead.
-    init<Value, P: Parameters, E: StateError>(
-        loadStatesFromPersister persister: AnyStatePersister<Value, P, E>,
+    init<Value, P: ResourceParams, E: ResourceError>(
+        loadStatesFromPersister persister: AnyResourceStatePersister<Value, P, E>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
         cacheLoadError: E
-        ) where ObservedValue == State<Value, P, E> {
+        ) where ObservedValue == ResourceState<Value, P, E> {
 
         self.init { sendState, disposable in
 
             disposable += loadImpulseEmitter.observe { loadImpulse in
                 guard let cached = persister.load(loadImpulse.parameters) else {
-                    let error = State<Value, P, E>.error(error: cacheLoadError,
-                                                         loadImpulse: loadImpulse,
-                                                         fallbackValueBox: nil)
+                    let error = ResourceState<Value, P, E>.error(error: cacheLoadError,
+                                                                 loadImpulse: loadImpulse,
+                                                                 fallbackValueBox: nil)
                     sendState(error)
                     return
                 }

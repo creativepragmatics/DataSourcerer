@@ -6,11 +6,11 @@ public extension ValueStream {
     /// whenever `loadImpulseEmitter` emits a load impulse. If
     /// any error is encountered, an error is sent instead, using
     /// `errorMaker`.
-    init<Value, P: Parameters, E: StateError>(
+    init<Value, P: ResourceParams, E: ResourceError>(
         loadStatesWithURLRequest URLRequestMaker: @escaping (LoadImpulse<P>) throws -> URLRequest,
         mapErrorString: @escaping (String) -> E,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-        ) where ObservedValue == State<Value, P, E>, Value: Codable {
+        ) where ObservedValue == ResourceState<Value, P, E>, Value: Codable {
 
         typealias DatasourceState = ObservedValue
 

@@ -1,8 +1,8 @@
 import Foundation
 import UIKit
 
-public enum SimpleCollectionViewCellProducer<Cell: ListItem>: ListItemViewProducer {
-    public typealias Item = Cell
+public enum SimpleCollectionViewCellProducer<Cell: ItemModel>: ItemViewProducer {
+    public typealias ItemModel = Cell
     public typealias ProducedView = UICollectionViewCell
     public typealias ContainingView = UICollectionView
 

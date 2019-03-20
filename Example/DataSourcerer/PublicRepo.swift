@@ -52,7 +52,7 @@ struct PublicRepo : Codable, Equatable {
 
 typealias PublicReposResponse = [PublicRepo]
 
-enum PublicRepoCell : ListItem {
+enum PublicRepoCell : ItemModel {
     typealias E = APIError
 
     case repo(PublicRepo)

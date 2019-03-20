@@ -2,18 +2,18 @@ import Foundation
 import UIKit
 
 open class SimpleTableViewDatasource
-    <Value, P: Parameters, E, Cell: ListItem, Section: ListSection,
-    HeaderItem: SupplementaryItem, FooterItem: SupplementaryItem>: NSObject, UITableViewDelegate,
-    UITableViewDataSource where HeaderItem.E == FooterItem.E, Cell.E == E {
+    <Value, P: ResourceParams, E, CellModelType: ItemModel, SectionModelType: SectionModel,
+    HeaderItem: SupplementaryItemModel, FooterItem: SupplementaryItemModel>: NSObject, UITableViewDelegate,
+    UITableViewDataSource where HeaderItem.E == FooterItem.E, CellModelType.E == E {
     public typealias Core = ListViewDatasourceCore
-        <Value, P, E, Cell, UITableViewCell, Section, HeaderItem,
+        <Value, P, E, CellModelType, UITableViewCell, SectionModelType, HeaderItem,
         UIView, FooterItem, UIView, UITableView>
 
     public let core: Core
     public weak var delegate: UITableViewDelegate?
     public weak var datasource: UITableViewDataSource?
 
-    public var sections: ListViewState<Cell, Section> {
+    public var sections: ListViewState<CellModelType, SectionModelType> {
         return core.sections
     }
 
@@ -114,72 +114,17 @@ open class SimpleTableViewDatasource
 
 }
 
-public extension SimpleTableViewDatasource where Section == NoSection {
+public extension SimpleTableViewDatasource where SectionModelType == NoSection {
 
-    var cellsProperty: ShareableValueStream<SingleSectionListViewState<Cell>> {
+    var cellsProperty: ShareableValueStream<SingleSectionListViewState<CellModelType>> {
 
         return core.stateAndSections
-            .map { SingleSectionListViewState<Cell>(sections: $0.listViewState) }
+            .map { SingleSectionListViewState<CellModelType>(sections: $0.listViewState) }
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
     }
 
-    var cells: SingleSectionListViewState<Cell> {
-        return SingleSectionListViewState<Cell>(sections: core.sections)
+    var cells: SingleSectionListViewState<CellModelType> {
+        return SingleSectionListViewState<CellModelType>(sections: core.sections)
     }
 }
-
-///// Idiomatic implementation for a single section tableview
-///// with support for loading indicator, "no results" cell
-///// and error cell.
-///// Configuration has to be done before the `cells`
-///// property is accessed.
-//open class IdiomaticSingleSectionTableViewDatasource
-//    <Value, P: Parameters, E: StateError, BaseItem: Equatable>:
-//    NSObject, UITableViewDelegate, UITableViewDataSource {
-//    public typealias Cell = IdiomaticListItem<BaseItem>
-//    public typealias Cells = SingleSectionListViewState<Cell>
-//    public typealias CellViewProducer = SimpleTableViewCellProducer<Cell>
-//    public typealias StatesObservable = AnyObservable<State<Value, P, E>>
-//    public typealias Core = ListViewDatasourceCore<CellViewProducer, PlainListSection>
-//
-//    public private(set) var core = Core()
-//    private let statesObservable: StatesObservable
-//
-//    /// If true, use heightAtIndexPath to store item heights. Most likely
-//    /// only makes sense in TableViews with autolayouted cells.
-//    public var useFixedItemHeights = false
-//    public var heightAtIndexPath: [IndexPath: CGFloat] = [:]
-//
-//    public lazy var cells: ObservableProperty<Cells> = {
-//
-//        return self.statesObservable
-//            .map({ state -> (TransformedValue) in
-//                state.
-//            })
-//            .map(self.core.stateToItems)
-//            .observeOnUIThread()
-//            .property(initialValue: Core.Item.notReady)
-//    }()
-//
-//    public init(statesObservable: StatesObservable) {
-//        self.statesObservable = statesObservable
-//        super.init()
-//    }
-//
-//    public func configure(_ configureWithBuilder: (inout Configuration.Builder) -> Void,
-//                          tableView: UITableView) {
-//        var builder = Configuration.Builder()
-//        configureWithBuilder(&builder)
-//        _configuration = builder.configuration
-//        registerItemViews(with: tableView)
-//    }
-//
-//    private func registerItemViews(with tableView: UITableView) {
-//        configuration.idiomaticItemToViewMapping.forEach { itemViewType, producer in
-//            producer.register(itemViewType: itemViewType, at: tableView)
-//        }
-//    }
-//
-//
-//}

@@ -7,8 +7,8 @@ class PlainCacheDatasourceSpec: QuickSpec {
 
     private lazy var testStringLoadImpulse = LoadImpulse(parameters: "1")
 
-    private lazy var testStringState: State<String, String, TestStateError> = {
-        return State(
+    private lazy var testStringState: ResourceState<String, String, TestStateError> = {
+        return ResourceState(
             provisioningState: .result,
             loadImpulse: testStringLoadImpulse,
             value: EquatableBox("1"),
@@ -16,11 +16,11 @@ class PlainCacheDatasourceSpec: QuickSpec {
         )
     }()
 
-    private func testDatasource(persistedState: State<String, String, TestStateError>,
+    private func testDatasource(persistedState: ResourceState<String, String, TestStateError>,
                                 loadImpulseEmitter: SimpleLoadImpulseEmitter<String>)
-        -> ValueStream<State<String, String, TestStateError>> {
+        -> ValueStream<ResourceState<String, String, TestStateError>> {
 
-            let persister = TestStatePersister<String, String, TestStateError>()
+            let persister = TestResourceStatePersister<String, String, TestStateError>()
             persister.persist(persistedState)
 
             return ValueStream(loadStatesFromPersister: persister.any,
@@ -36,7 +36,7 @@ class PlainCacheDatasourceSpec: QuickSpec {
                 )
                 let datasource = self.testDatasource(persistedState: self.testStringState,
                                                      loadImpulseEmitter: loadImpulseEmitter)
-                var observedStates: [State<String, String, TestStateError>] = []
+                var observedStates: [ResourceState<String, String, TestStateError>] = []
 
                 let disposable = datasource.observe({ state in
                     observedStates.append(state)

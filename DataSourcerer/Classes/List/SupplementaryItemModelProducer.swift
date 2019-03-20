@@ -1,23 +1,25 @@
 import Foundation
 
-public protocol SupplementaryViewProducer {
-    associatedtype Item: SupplementaryItem
+public protocol SupplementaryItemModelProducer {
+    associatedtype SupplementaryItemModelType: SupplementaryItemModel
     associatedtype ProducedView: UIView
     associatedtype ContainingView: UIView
     func register(at containingView: ContainingView)
-    func view(containingView: ContainingView, item: Item, for indexPath: IndexPath) -> ProducedView
+    func view(containingView: ContainingView, item: SupplementaryItemModelType, for indexPath: IndexPath)
+        -> ProducedView
 
     var defaultView: ProducedView { get }
 }
 
-public extension SupplementaryViewProducer {
-    var any: AnySupplementaryViewProducer<Item, ProducedView, ContainingView> {
-        return AnySupplementaryViewProducer(self)
+public extension SupplementaryItemModelProducer {
+    var any: AnySupplementaryItemModelProducer<SupplementaryItemModelType, ProducedView, ContainingView> {
+        return AnySupplementaryItemModelProducer(self)
     }
 }
 
-public struct AnySupplementaryViewProducer
-<Item_: SupplementaryItem, ProducedView_: UIView, ContainingView_: UIView> : SupplementaryViewProducer {
+public struct AnySupplementaryItemModelProducer
+<Item_: SupplementaryItemModel, ProducedView_: UIView, ContainingView_: UIView>
+: SupplementaryItemModelProducer {
 
     public typealias Item = Item_
     public typealias ProducedView = ProducedView_
@@ -28,7 +30,7 @@ public struct AnySupplementaryViewProducer
 
     public let defaultView: ProducedView
 
-    public init<P: SupplementaryViewProducer>(_ producer: P) where P.Item == Item,
+    public init<P: SupplementaryItemModelProducer>(_ producer: P) where P.SupplementaryItemModelType == Item,
         P.ProducedView == ProducedView, P.ContainingView == ContainingView {
             self._view = producer.view
             self._register = producer.register

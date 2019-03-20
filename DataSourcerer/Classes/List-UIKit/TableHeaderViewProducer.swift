@@ -1,10 +1,10 @@
 import Foundation
 import UIKit
 
-public protocol TableHeaderViewProducer : SupplementaryViewProducer
+public protocol TableHeaderViewProducer : SupplementaryItemModelProducer
 where ProducedView == UIView, ContainingView == UITableView {}
 
-public struct SimpleTableHeaderViewProducer<Item_: SupplementaryItem>: TableHeaderViewProducer {
+public struct SimpleTableHeaderViewProducer<Item_: SupplementaryItemModel>: TableHeaderViewProducer {
     public typealias Item = Item_
     public typealias ProducedView = UIView
     public typealias ContainingView = UITableView

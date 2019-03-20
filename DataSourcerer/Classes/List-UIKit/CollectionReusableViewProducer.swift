@@ -1,7 +1,9 @@
 import Foundation
 import UIKit
 
-public enum SimpleCollectionReusableViewProducer<ReusableView: SupplementaryItem>: SupplementaryViewProducer {
+public enum SimpleCollectionReusableViewProducer
+<ReusableView: SupplementaryItemModel>: SupplementaryItemModelProducer {
+
     public typealias Item = ReusableView
     public typealias ProducedView = UICollectionReusableView
     public typealias ContainingView = UICollectionView

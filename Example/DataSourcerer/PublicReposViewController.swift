@@ -15,7 +15,7 @@ class PublicReposRootViewController : UIViewController {
     private lazy var tableViewDatasourceCore = TableViewDatasourceCore
         .base(
             datasource: self.viewModel.datasource,
-            listItemProducer: ListItemProducer
+            itemModelProducer: ItemModelsProducer
                 <PublicReposResponse, VoidParameters, APIError, PublicRepoCell, NoSection>
                 .withSingleSectionItems { response
                     -> [PublicRepoCell] in

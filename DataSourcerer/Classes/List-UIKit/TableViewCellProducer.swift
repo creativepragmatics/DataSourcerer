@@ -1,8 +1,8 @@
 import Foundation
 import UIKit
 
-public enum SimpleTableViewCellProducer<Cell: ListItem>: ListItemViewProducer {
-    public typealias Item = Cell
+public enum SimpleTableViewCellProducer<Cell: ItemModel>: ItemViewProducer {
+    public typealias ItemModel = Cell
     public typealias ProducedView = UITableViewCell
     public typealias ContainingView = UITableView
     public typealias TableViewCellDequeueIdentifier = String

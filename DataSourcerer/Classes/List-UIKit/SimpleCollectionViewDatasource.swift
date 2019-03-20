@@ -1,8 +1,8 @@
 import Foundation
 import UIKit
 
-//open class SimpleCollectionViewDatasource<Value, Item: ListItem, Section: ListSection,
-//    SuppItem: SupplementaryItem>: NSObject, UICollectionViewDataSource, UICollectionViewDelegate {
+//open class SimpleCollectionViewDatasource<Value, Item: ItemModel, Section: SectionModel,
+//    SuppItem: SupplementaryItemModel>: NSObject, UICollectionViewDataSource, UICollectionViewDelegate {
 //    public typealias Core = ListViewDatasourceCore<Value, Item, UICollectionViewCell, SuppItem,
 //    UICollectionReusableView, Section, UICollectionView>
 //
@@ -15,7 +15,7 @@ import UIKit
 //
 //    private func registerItemViews(with collectionView: UICollectionView) {
 //        core.itemViewAdapter.registerAtContainingView(collectionView)
-//        core.supplementaryItemViewAdapter.registerAtContainingView(collectionView)
+//        core.supplementaryItemModelViewAdapter.registerAtContainingView(collectionView)
 //    }
 //
 //    public func numberOfSections(in collectionView: UICollectionView) -> Int {
@@ -42,8 +42,8 @@ import UIKit
 // viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath)
 // -> UICollectionReusableView {
 //
-//        guard let view = core.supplementaryItemViews(at: indexPath, in: collectionView) else {
-//            assert(false, "set ListViewDatasourceCore.supplementaryItemAtIndexPath !")
+//        guard let view = core.supplementaryItemModelViews(at: indexPath, in: collectionView) else {
+//            assert(false, "set ListViewDatasourceCore.supplementaryItemModelAtIndexPath !")
 //            return UICollectionReusableView()
 //        }
 //

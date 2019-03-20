@@ -34,10 +34,10 @@ public extension Datasource {
 public extension ValueStream {
 
     /// Initializes a ValueStream with a ReactiveSwift.SignalProducer.
-    init<StateValue, P: Parameters, E: StateError>(
+    init<StateValue, P: ResourceParams, E: ResourceError>(
         signalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedValue, NoError>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-        ) where ObservedValue == State<StateValue, P, E> {
+        ) where ObservedValue == ResourceState<StateValue, P, E> {
 
         self.init { sendState, disposable in
 

@@ -6,15 +6,15 @@ import Foundation
 // If you think a closure is missing (and you can therefore not use this struct
 // for your own purposes), please create an issue at the Github page.
 public struct ListViewDatasourceCore
-    <Value, P: Parameters, E, Item: ListItem, ItemView: UIView,
-    Section: ListSection, HeaderItem: SupplementaryItem, HeaderItemView: UIView,
-    FooterItem: SupplementaryItem, FooterItemView: UIView,
-ContainingView: UIView> where Item.E == E {
-    public typealias ListState = State<Value, P, E>
-    public typealias ItemViewAdapter = ListViewItemAdapter<Item, ItemView, ContainingView>
-    public typealias HeaderItemViewAdapter = ListViewItemAdapter<HeaderItem, HeaderItemView, ContainingView>
-    public typealias FooterItemViewAdapter = ListViewItemAdapter<FooterItem, FooterItemView, ContainingView>
-    public typealias StateAndSections = ListStateAndSections<ListState, Item, Section>
+    <Value, P: ResourceParams, E, ItemModelType: ItemModel, ItemView: UIView,
+    SectionModelType: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
+    FooterItem: SupplementaryItemModel, FooterItemView: UIView,
+ContainingView: UIView> where ItemModelType.E == E {
+    public typealias ListState = ResourceState<Value, P, E>
+    public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
+    public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
+    public typealias FooterItemViewAdapter = ItemViewsProducer<FooterItem, FooterItemView, ContainingView>
+    public typealias StateAndSections = ListStateAndSections<ListState, ItemModelType, SectionModelType>
 
     // MARK: - Definitions based on UITableViewDatasource & UICollectionViewDatasource
     public typealias HeaderItemAtIndexPath = (IndexPath) -> HeaderItem?
@@ -25,14 +25,14 @@ ContainingView: UIView> where Item.E == E {
     public typealias IndexPathForIndexTitle = (_ title: String, _ index: Int) -> IndexPath
 
     // MARK: - Definitions based on UITableViewDelegate & UICollectionViewDelegate
-    public typealias WillDisplayItem = (ItemView, Item, IndexPath) -> Void
+    public typealias WillDisplayItem = (ItemView, ItemModelType, IndexPath) -> Void
     public typealias WillDisplayHeaderItem =
         (HeaderItemView, HeaderItem, IndexPath) -> Void
     public typealias WillDisplayFooterItem =
         (FooterItemView, FooterItem, IndexPath) -> Void
 
     public let datasource: Datasource<Value, P, E>
-    public let listItemProducer: ListItemProducer<Value, P, E, Item, Section>
+    public let itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
     public let stateAndSections: ShareableValueStream<StateAndSections>
     public let itemViewAdapter: ItemViewAdapter
     public let headerItemViewAdapter: HeaderItemViewAdapter
@@ -52,7 +52,7 @@ ContainingView: UIView> where Item.E == E {
     public var willDisplayFooterItem: WillDisplayFooterItem?
 
     public init(datasource: Datasource<Value, P, E>,
-                listItemProducer: ListItemProducer<Value, P, E, Item, Section>,
+                itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
                 itemViewAdapter: ItemViewAdapter,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
@@ -70,19 +70,19 @@ ContainingView: UIView> where Item.E == E {
             .map { state -> StateAndSections in
                 return StateAndSections(
                     value: state,
-                    listViewState: listItemProducer.listViewState(with: state)
+                    listViewState: itemModelProducer.listViewState(with: state)
                 )
             }
             .observeOnUIThread()
             .shareable(
                 initialValue: StateAndSections(
                     value: datasource.state.value,
-                    listViewState: listItemProducer.listViewState(with: datasource.state.value)
+                    listViewState: itemModelProducer.listViewState(with: datasource.state.value)
                 )
         )
 
         self.datasource = datasource
-        self.listItemProducer = listItemProducer
+        self.itemModelProducer = itemModelProducer
         self.itemViewAdapter = itemViewAdapter
         self.headerItemViewAdapter = headerItemViewAdapter
         self.footerItemViewAdapter = footerItemViewAdapter
@@ -99,21 +99,21 @@ ContainingView: UIView> where Item.E == E {
 
 }
 
-public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItem,
-    HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
+public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItemModel,
+    HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
 FooterItemView == UIView {
 
     static func base(
         datasource: Datasource<Value, P, E>,
-        listItemProducer: ListItemProducer<Value, P, E, Item, Section>,
-        itemViewAdapter: ListViewItemAdapter<Item, ItemView, ContainingView>)
+        itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
+        itemViewAdapter: ItemViewsProducer<ItemModelType, ItemView, ContainingView>)
         -> ListViewDatasourceCore
-        <Value, P, E, Item, ItemView, Section, NoSupplementaryItem, UIView,
-        NoSupplementaryItem, UIView, ContainingView> {
+        <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
+        NoSupplementaryItemModel, UIView, ContainingView> {
 
             return ListViewDatasourceCore(
                 datasource: datasource,
-                listItemProducer: listItemProducer,
+                itemModelProducer: itemModelProducer,
                 itemViewAdapter: itemViewAdapter,
                 headerItemViewAdapter: .noSupplementaryViewAdapter,
                 footerItemViewAdapter: .noSupplementaryViewAdapter,
@@ -130,11 +130,11 @@ FooterItemView == UIView {
     }
 }
 
-public struct ListStateAndSections<Value, Item: ListItem, Section: ListSection> {
+public struct ListStateAndSections<Value, ItemModelType: ItemModel, SectionModelType: SectionModel> {
     public let value: Value
-    public let listViewState: ListViewState<Item, Section>
+    public let listViewState: ListViewState<ItemModelType, SectionModelType>
 
-    public init(value: Value, listViewState: ListViewState<Item, Section>) {
+    public init(value: Value, listViewState: ListViewState<ItemModelType, SectionModelType>) {
         self.value = value
         self.listViewState = listViewState
     }
@@ -142,20 +142,20 @@ public struct ListStateAndSections<Value, Item: ListItem, Section: ListSection> 
 
 public extension ListViewDatasourceCore {
 
-    var sections: ListViewState<Item, Section> {
+    var sections: ListViewState<ItemModelType, SectionModelType> {
         return stateAndSections.value.listViewState
     }
 
-    func section(at index: Int) -> SectionWithItems<Item, Section> {
+    func section(at index: Int) -> SectionAndItems<ItemModelType, SectionModelType> {
         let rawSection = sections.sectionedValues.sectionsAndValues[index]
-        return SectionWithItems(rawSection.0, rawSection.1)
+        return SectionAndItems(rawSection.0, rawSection.1)
     }
 
-    func item(at indexPath: IndexPath) -> Item {
+    func item(at indexPath: IndexPath) -> ItemModelType {
         return items(in: indexPath.section)[indexPath.row]
     }
 
-    func items(in section: Int) -> [Item] {
+    func items(in section: Int) -> [ItemModelType] {
         return stateAndSections.value.listViewState
             .sectionedValues.sectionsAndValues[section].1
     }
@@ -204,19 +204,19 @@ public extension ListViewDatasourceCore {
 
 public extension ListViewDatasourceCore {
 
-    func idiomatic<ViewProducer: ListItemViewProducer>(
+    func idiomatic<ViewProducer: ItemViewProducer>(
         noResultsText: String,
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer
         )
-        -> ListViewDatasourceCore<Value, P, E, IdiomaticListItem<Item>, ItemView, Section,
+        -> ListViewDatasourceCore<Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
         HeaderItem, HeaderItemView, FooterItem, FooterItemView, ContainingView>
-        where ViewProducer.Item == IdiomaticListItem<Item>,
+        where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
         ViewProducer.ProducedView == ItemView,
-        ViewProducer.ContainingView == ContainingView, Item.E == E {
+        ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
 
-            let idiomaticListItemProducer = self.listItemProducer.idiomatic(
+            let idiomaticItemModelsProducer = self.itemModelProducer.idiomatic(
                 noResultsText: noResultsText
             )
 
@@ -227,11 +227,11 @@ public extension ListViewDatasourceCore {
             )
 
             return ListViewDatasourceCore
-                <Value, P, E, IdiomaticListItem<Item>, ItemView,
-                Section, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
+                <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView,
+                SectionModelType, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
                 ContainingView> (
                     datasource: datasource,
-                    listItemProducer: idiomaticListItemProducer,
+                    itemModelProducer: idiomaticItemModelsProducer,
                     itemViewAdapter: idiomaticItemViewAdapter,
                     headerItemViewAdapter: headerItemViewAdapter,
                     footerItemViewAdapter: footerItemViewAdapter,
@@ -256,32 +256,32 @@ public extension ListViewDatasourceCore {
 }
 
 public typealias TableViewDatasourceCore
-    <Value, P: Parameters, E, Cell: ListItem, CellView: UITableViewCell,
-    Section: ListSection, HeaderItem: SupplementaryItem, HeaderItemView: UIView,
-    FooterItem: SupplementaryItem, FooterItemView: UIView>
+    <Value, P: ResourceParams, E, Cell: ItemModel, CellView: UITableViewCell,
+    Section: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
+    FooterItem: SupplementaryItemModel, FooterItemView: UIView>
     =
     ListViewDatasourceCore
     <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView,
     FooterItem, FooterItemView, UITableView> where Cell.E == E
 
-public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem,
-    HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
+public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItemModel,
+    HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
     FooterItemView == UIView, ItemView == UITableViewCell {
 
     static func withBaseTableViewCell(
         datasource: Datasource<Value, P, E>,
-        listItemProducer: ListItemProducer<Value, P, E, Item, Section>,
+        itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
         cellClass `class`: ItemView.Type,
         reuseIdentifier: String,
-        configure: @escaping (Item, ItemView) -> Void)
+        configure: @escaping (ItemModelType, ItemView) -> Void)
         -> TableViewDatasourceCore
-        <Value, P, E, Item, ItemView, Section, NoSupplementaryItem, UIView,
-        NoSupplementaryItem, UIView> {
+        <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
+        NoSupplementaryItemModel, UIView> {
 
             return TableViewDatasourceCore.base(
                 datasource: datasource,
-                listItemProducer: listItemProducer,
-                itemViewAdapter: TableViewCellAdapter<Item>.tableViewCell(
+                itemModelProducer: itemModelProducer,
+                itemViewAdapter: TableViewCellAdapter<ItemModelType>.tableViewCell(
                     withCellClass: ItemView.self,
                     reuseIdentifier: reuseIdentifier, configure: configure
                 )

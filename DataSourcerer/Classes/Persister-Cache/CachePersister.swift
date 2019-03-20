@@ -1,8 +1,8 @@
 import Cache
 import Foundation
 
-public struct CachePersister<Value_: Codable, P_: Parameters & Codable, E_: StateError & Codable>
-: StatePersister {
+public struct CachePersister<Value_: Codable, P_: ResourceParams & Codable, E_: ResourceError & Codable>
+: ResourceStatePersister {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
@@ -31,13 +31,13 @@ public struct CachePersister<Value_: Codable, P_: Parameters & Codable, E_: Stat
             return Transformer(toData: { state -> Data in
                 return try JSONEncoder().encode(state)
             }, fromData: { data -> PersistedState in
-                return try JSONDecoder().decode(State.self, from: data)
+                return try JSONDecoder().decode(ResourceState.self, from: data)
             })
         }
 
-        let storage = try? Storage<State>(diskConfig: diskConfig ?? fallbackDiskConfig,
-                                          memoryConfig: memoryConfig ?? fallbackMemoryConfig,
-                                          transformer: transformer)
+        let storage = try? Storage<ResourceState>(diskConfig: diskConfig ?? fallbackDiskConfig,
+                                                  memoryConfig: memoryConfig ?? fallbackMemoryConfig,
+                                                  transformer: transformer)
 
         self.init(key: key, storage: storage)
     }

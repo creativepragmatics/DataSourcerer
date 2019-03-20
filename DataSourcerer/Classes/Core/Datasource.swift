@@ -2,8 +2,8 @@ import Foundation
 
 /// Provides the data for a sectioned or unsectioned list. Can be reused
 /// by multiple views displaying its data.
-public struct Datasource<Value, P: Parameters, E: StateError> {
-    public typealias ObservedState = State<Value, P, E>
+public struct Datasource<Value, P: ResourceParams, E: ResourceError> {
+    public typealias ObservedState = ResourceState<Value, P, E>
 
     public let state: ShareableValueStream<ObservedState>
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
@@ -17,13 +17,13 @@ public struct Datasource<Value, P: Parameters, E: StateError> {
 
 public extension Datasource {
 
-    enum CacheBehavior<Value, P: Parameters, E: StateError> {
+    enum CacheBehavior<Value, P: ResourceParams, E: ResourceError> {
         case none
-        case persist(persister: AnyStatePersister<Value, P, E>, cacheLoadError: E)
+        case persist(persister: AnyResourceStatePersister<Value, P, E>, cacheLoadError: E)
 
-        func apply(on observable: AnyObservable<State<Value, P, E>>,
+        func apply(on observable: AnyObservable<ResourceState<Value, P, E>>,
                    loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
-            -> AnyObservable<State<Value, P, E>> {
+            -> AnyObservable<ResourceState<Value, P, E>> {
                 switch self {
                 case .none:
                     return observable
@@ -40,7 +40,7 @@ public extension Datasource {
 
 public extension Datasource {
 
-    enum LoadImpulseBehavior<P: Parameters> {
+    enum LoadImpulseBehavior<P: ResourceParams> {
         case `default`(initialParameters: P?)
         case recurring(
             initialParameters: P?,
@@ -96,7 +96,7 @@ public extension Datasource where Value: Codable {
             .observeOnUIThread()
 
         let shareableCachedStates = cachedStates
-            .shareable(initialValue: State<Value, P, E>.notReady)
+            .shareable(initialValue: ResourceState<Value, P, E>.notReady)
 
         self.init(shareableCachedStates, loadImpulseEmitter: loadImpulseEmitter)
     }

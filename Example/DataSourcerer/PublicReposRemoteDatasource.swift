@@ -7,7 +7,7 @@ struct PublicReposPrimaryDatasourceBuilder {
     typealias E = APIError
 
     func datasource(with loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
-        -> ValueStream<State<Value, P, E>> {
+        -> ValueStream<ResourceState<Value, P, E>> {
 
         return ValueStream(
             loadStatesWithURLRequest: { _ -> URLRequest in
@@ -25,7 +25,7 @@ struct PublicReposPrimaryDatasourceBuilder {
 
 }
 
-struct VoidParameters: Parameters, Codable {
+struct VoidParameters: ResourceParams, Codable {
     func isCacheCompatible(_ candidate: VoidParameters) -> Bool {
         return true
     }

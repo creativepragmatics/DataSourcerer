@@ -40,7 +40,7 @@ You may ask, who needs another FRP framework, why reinvent the wheel? There are 
 
 Classes whose name starts with `Idiomatic` have behavior encoded that might or might not suit your needs. If an idiomatic class doesn't have the required behavior, it can be subclassed or just copy/pasted/changed.
 
-For example: The [IdiomaticCollectionViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift) expects its items to conform to `IdiomaticListItem` which has to implement `loadingCell`, `noResultsCell`, and `errorCell(_)`. Doing so, the CollectionViewDatasource itself is able to decide when it will show the loading state, or a "no results" text, taking that load off your shoulders. 
+For example: The [IdiomaticCollectionViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift) expects its items to conform to `IdiomaticItemModel` which has to implement `loadingCell`, `noResultsCell`, and `errorCell(_)`. Doing so, the CollectionViewDatasource itself is able to decide when it will show the loading state, or a "no results" text, taking that load off your shoulders. 
 
 If your use case is more complex than that, you will want to implement your own `UICollectionViewDataSource`. You might still be able to use [IdiomaticListViewDatasourceCore](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and profit from the builder pattern implemented there.
 
