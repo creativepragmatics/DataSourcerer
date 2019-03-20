@@ -4,6 +4,7 @@ import Foundation
 /// by multiple views displaying its data.
 public struct Datasource<Value, P: ResourceParams, E: ResourceError> {
     public typealias ObservedState = ResourceState<Value, P, E>
+    public typealias ErrorString = String
 
     public let state: ShareableValueStream<ObservedState>
     public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
@@ -17,7 +18,7 @@ public struct Datasource<Value, P: ResourceParams, E: ResourceError> {
 
 public extension Datasource {
 
-    enum CacheBehavior<Value, P: ResourceParams, E: ResourceError> {
+    enum CacheBehavior {
         case none
         case persist(persister: AnyResourceStatePersister<Value, P, E>, cacheLoadError: E)
 
@@ -40,7 +41,7 @@ public extension Datasource {
 
 public extension Datasource {
 
-    enum LoadImpulseBehavior<P: ResourceParams> {
+    enum LoadImpulseBehavior {
         case `default`(initialParameters: P?)
         case recurring(
             initialParameters: P?,
@@ -69,35 +70,33 @@ public extension Datasource {
 
 }
 
-public extension Datasource where Value: Codable {
-
-    typealias ErrorString = String
-
-    init(
-        urlRequest: @escaping (LoadImpulse<P>) throws -> URLRequest,
-        mapErrorString: @escaping (ErrorString) -> E,
-        cacheBehavior: CacheBehavior<Value, P, E>,
-        loadImpulseBehavior: LoadImpulseBehavior<P>
-        ) {
-
-        let loadImpulseEmitter = loadImpulseBehavior.loadImpulseEmitter
-
-        let states = ValueStream<ObservedState>(
-            loadStatesWithURLRequest: urlRequest,
-            mapErrorString: mapErrorString,
-            loadImpulseEmitter: loadImpulseEmitter
-            )
-            .retainLastResultState()
-
-        let cachedStates = cacheBehavior
-            .apply(on: states.any,
-                   loadImpulseEmitter: loadImpulseEmitter)
-            .skipRepeats()
-            .observeOnUIThread()
-
-        let shareableCachedStates = cachedStates
-            .shareable(initialValue: ResourceState<Value, P, E>.notReady)
-
-        self.init(shareableCachedStates, loadImpulseEmitter: loadImpulseEmitter)
-    }
-}
+//public extension Datasource where Value: Codable {
+//
+//    init(
+//        urlRequest: @escaping (LoadImpulse<P>) throws -> URLRequest,
+//        mapErrorString: @escaping (ErrorString) -> E,
+//        cacheBehavior: CacheBehavior,
+//        loadImpulseBehavior: LoadImpulseBehavior
+//        ) {
+//
+//        let loadImpulseEmitter = loadImpulseBehavior.loadImpulseEmitter
+//
+//        let states = ValueStream<ObservedState>(
+//            loadStatesWithURLRequest: urlRequest,
+//            mapErrorString: mapErrorString,
+//            loadImpulseEmitter: loadImpulseEmitter
+//            )
+//            .retainLastResultState()
+//
+//        let cachedStates = cacheBehavior
+//            .apply(on: states.any,
+//                   loadImpulseEmitter: loadImpulseEmitter)
+//            .skipRepeats()
+//            .observeOnUIThread()
+//
+//        let shareableCachedStates = cachedStates
+//            .shareable(initialValue: ResourceState<Value, P, E>.notReady)
+//
+//        self.init(shareableCachedStates, loadImpulseEmitter: loadImpulseEmitter)
+//    }
+//}

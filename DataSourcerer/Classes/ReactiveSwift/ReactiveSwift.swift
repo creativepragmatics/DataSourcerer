@@ -7,8 +7,8 @@ public extension Datasource {
     init(
         signalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedState, NoError>,
         mapErrorString: @escaping (ErrorString) -> E,
-        cacheBehavior: CacheBehavior<Value, P, E>,
-        loadImpulseBehavior: LoadImpulseBehavior<P>
+        cacheBehavior: CacheBehavior,
+        loadImpulseBehavior: LoadImpulseBehavior
         ) {
 
         let loadImpulseEmitter = loadImpulseBehavior.loadImpulseEmitter

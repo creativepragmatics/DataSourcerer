@@ -13,7 +13,8 @@ class PublicReposViewModel {
 
     lazy var datasource: Datasource<Value, P, E> = {
 
-            return Datasource(
+        return Datasource.Builder
+            .loadFromURL(
                 urlRequest: { _ -> URLRequest in
                     let publicReposUrlString: String = "https://api.github.com/repositories"
                     guard let url = URL(string: publicReposUrlString) else {
@@ -22,13 +23,19 @@ class PublicReposViewModel {
 
                     return URLRequest(url: url)
                 },
-                mapErrorString: { APIError.unknown(.message($0)) },
-                cacheBehavior: .persist(
+                withParameterType: VoidParameters.self,
+                expectResponseValueType: PublicReposResponse.self,
+                failWithError: APIError.self
+            )
+            .mapErrorToString { APIError.unknown(.message($0)) }
+            .loadImpulseBehavior(.instance(loadImpulseEmitter.any))
+            .cacheBehavior(
+                .persist(
                     persister: CachePersister<Value, P, E>(key: "public_repos").any,
                     cacheLoadError: E.cacheCouldNotLoad(.default)
-                ),
-                loadImpulseBehavior: .instance(loadImpulseEmitter.any)
+                )
             )
+            .datasource
     }()
 
     func refresh() {
