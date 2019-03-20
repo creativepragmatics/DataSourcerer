@@ -5,7 +5,7 @@ import Foundation
 //
 //    public typealias ObservedState = State<Value, P, E>
 //    public typealias Item = ItemViewProducer.Item
-//    public typealias Items = SingleSectionListItems<Item>
+//    public typealias Items = SingleSectionListViewState<Item>
 //    public typealias ItemToView = (Item.ViewType) -> ItemViewProducer
 //    public typealias ValueToItems = (Value) -> [Item]?
 //    public typealias ItemSelected = (Item) -> Void
@@ -14,7 +14,7 @@ import Foundation
 //        _ valueToItems: @escaping ValueToItems,
 //        _ loadingItem: ((ObservedState) -> Item)?,
 //        _ errorItem: ((E) -> Item)?,
-//        _ noResultsItem: ((ObservedState) -> Item)?) -> SingleSectionListItems<Item>
+//        _ noResultsItem: ((ObservedState) -> Item)?) -> SingleSectionListViewState<Item>
 //
 //    public var stateToItemsIncomplete: StateToItemsIncomplete
 //    public var valueToItems: ValueToItems?
@@ -40,7 +40,7 @@ import Foundation
 //                                           loadingItem: ((ObservedState) -> Item)?,
 //                                           errorItem: ((E) -> Item)?,
 //                                           noResultsItem: ((ObservedState) -> Item)?)
-//        -> SingleSectionListItems<Item> {
+//        -> SingleSectionListViewState<Item> {
 //
 //        return state.singleSectionListItems(valueToItems: valueToItems,
 //                                            loadingItem: loadingItem,

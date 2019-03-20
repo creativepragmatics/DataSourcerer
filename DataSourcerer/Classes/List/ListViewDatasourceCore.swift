@@ -6,10 +6,10 @@ import Foundation
 // If you think a closure is missing (and you can therefore not use this struct
 // for your own purposes), please create an issue at the Github page.
 public struct ListViewDatasourceCore
-    <Value, P: Parameters, E: StateError, Item: ListItem, ItemView: UIView,
+    <Value, P: Parameters, E, Item: ListItem, ItemView: UIView,
     Section: ListSection, HeaderItem: SupplementaryItem, HeaderItemView: UIView,
     FooterItem: SupplementaryItem, FooterItemView: UIView,
-    ContainingView: UIView> {
+ContainingView: UIView> where Item.E == E {
     public typealias ListState = State<Value, P, E>
     public typealias ItemViewAdapter = ListViewItemAdapter<Item, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ListViewItemAdapter<HeaderItem, HeaderItemView, ContainingView>
@@ -31,7 +31,9 @@ public struct ListViewDatasourceCore
     public typealias WillDisplayFooterItem =
         (FooterItemView, FooterItem, IndexPath) -> Void
 
-    public let listDatasource: Datasource<Value, P, E, Item, Section>
+    public let datasource: Datasource<Value, P, E>
+    public let listItemProducer: ListItemProducer<Value, P, E, Item, Section>
+    public let stateAndSections: ShareableValueStream<StateAndSections>
     public let itemViewAdapter: ItemViewAdapter
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
@@ -49,7 +51,8 @@ public struct ListViewDatasourceCore
     public var willDisplayHeaderItem: WillDisplayHeaderItem?
     public var willDisplayFooterItem: WillDisplayFooterItem?
 
-    public init(listDatasource: Datasource<Value, P, E, Item, Section>,
+    public init(datasource: Datasource<Value, P, E>,
+                listItemProducer: ListItemProducer<Value, P, E, Item, Section>,
                 itemViewAdapter: ItemViewAdapter,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
@@ -63,7 +66,23 @@ public struct ListViewDatasourceCore
                 willDisplayHeaderItem: WillDisplayHeaderItem?,
                 willDisplayFooterItem: WillDisplayFooterItem?) {
 
-        self.listDatasource = listDatasource
+        self.stateAndSections = datasource.state
+            .map { state -> StateAndSections in
+                return StateAndSections(
+                    value: state,
+                    listViewState: listItemProducer.listViewState(with: state)
+                )
+            }
+            .observeOnUIThread()
+            .shareable(
+                initialValue: StateAndSections(
+                    value: datasource.state.value,
+                    listViewState: listItemProducer.listViewState(with: datasource.state.value)
+                )
+        )
+
+        self.datasource = datasource
+        self.listItemProducer = listItemProducer
         self.itemViewAdapter = itemViewAdapter
         self.headerItemViewAdapter = headerItemViewAdapter
         self.footerItemViewAdapter = footerItemViewAdapter
@@ -81,48 +100,50 @@ public struct ListViewDatasourceCore
 }
 
 public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItem,
-HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
+    HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
 FooterItemView == UIView {
 
     static func base(
-        listDatasource: Datasource<Value, P, E, Item, Section>,
+        datasource: Datasource<Value, P, E>,
+        listItemProducer: ListItemProducer<Value, P, E, Item, Section>,
         itemViewAdapter: ListViewItemAdapter<Item, ItemView, ContainingView>)
         -> ListViewDatasourceCore
         <Value, P, E, Item, ItemView, Section, NoSupplementaryItem, UIView,
         NoSupplementaryItem, UIView, ContainingView> {
 
             return ListViewDatasourceCore(
-                    listDatasource: listDatasource,
-                    itemViewAdapter: itemViewAdapter,
-                    headerItemViewAdapter: .noSupplementaryViewAdapter,
-                    footerItemViewAdapter: .noSupplementaryViewAdapter,
-                    headerItemAtIndexPath: nil,
-                    footerItemAtIndexPath: nil,
-                    titleForHeaderInSection: nil,
-                    titleForFooterInSection: nil,
-                    sectionIndexTitles: nil,
-                    indexPathForIndexTitle: nil,
-                    willDisplayItem: nil,
-                    willDisplayHeaderItem: nil,
-                    willDisplayFooterItem: nil
+                datasource: datasource,
+                listItemProducer: listItemProducer,
+                itemViewAdapter: itemViewAdapter,
+                headerItemViewAdapter: .noSupplementaryViewAdapter,
+                footerItemViewAdapter: .noSupplementaryViewAdapter,
+                headerItemAtIndexPath: nil,
+                footerItemAtIndexPath: nil,
+                titleForHeaderInSection: nil,
+                titleForFooterInSection: nil,
+                sectionIndexTitles: nil,
+                indexPathForIndexTitle: nil,
+                willDisplayItem: nil,
+                willDisplayHeaderItem: nil,
+                willDisplayFooterItem: nil
             )
     }
 }
 
 public struct ListStateAndSections<Value, Item: ListItem, Section: ListSection> {
     public let value: Value
-    public let sections: ListSections<Item, Section>
+    public let listViewState: ListViewState<Item, Section>
 
-    public init(value: Value, sections: ListSections<Item, Section>) {
+    public init(value: Value, listViewState: ListViewState<Item, Section>) {
         self.value = value
-        self.sections = sections
+        self.listViewState = listViewState
     }
 }
 
 public extension ListViewDatasourceCore {
 
-    var sections: ListSections<Item, Section> {
-        return listDatasource.stateAndSections.value.sections
+    var sections: ListViewState<Item, Section> {
+        return stateAndSections.value.listViewState
     }
 
     func section(at index: Int) -> SectionWithItems<Item, Section> {
@@ -135,7 +156,7 @@ public extension ListViewDatasourceCore {
     }
 
     func items(in section: Int) -> [Item] {
-        return listDatasource.stateAndSections.value.sections
+        return stateAndSections.value.listViewState
             .sectionedValues.sectionsAndValues[section].1
     }
 
@@ -195,6 +216,10 @@ public extension ListViewDatasourceCore {
         ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, Item.E == E {
 
+            let idiomaticListItemProducer = self.listItemProducer.idiomatic(
+                noResultsText: noResultsText
+            )
+
             let idiomaticItemViewAdapter = self.itemViewAdapter.idiomatic(
                 loadingViewProducer: loadingViewProducer,
                 errorViewProducer: errorViewProducer,
@@ -205,7 +230,8 @@ public extension ListViewDatasourceCore {
                 <Value, P, E, IdiomaticListItem<Item>, ItemView,
                 Section, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
                 ContainingView> (
-                    listDatasource: self.listDatasource.idiomatic(),
+                    datasource: datasource,
+                    listItemProducer: idiomaticListItemProducer,
                     itemViewAdapter: idiomaticItemViewAdapter,
                     headerItemViewAdapter: headerItemViewAdapter,
                     footerItemViewAdapter: footerItemViewAdapter,
@@ -222,7 +248,7 @@ public extension ListViewDatasourceCore {
                         case .loading, .error, .noResults:
                             break
                         }
-                    },
+                },
                     willDisplayHeaderItem: willDisplayHeaderItem,
                     willDisplayFooterItem: willDisplayFooterItem
             )
@@ -230,20 +256,21 @@ public extension ListViewDatasourceCore {
 }
 
 public typealias TableViewDatasourceCore
-    <Value, P: Parameters, E: StateError, Cell: ListItem, CellView: UITableViewCell,
+    <Value, P: Parameters, E, Cell: ListItem, CellView: UITableViewCell,
     Section: ListSection, HeaderItem: SupplementaryItem, HeaderItemView: UIView,
     FooterItem: SupplementaryItem, FooterItemView: UIView>
     =
     ListViewDatasourceCore
     <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView,
-    FooterItem, FooterItemView, UITableView>
+    FooterItem, FooterItemView, UITableView> where Cell.E == E
 
 public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItem,
     FooterItemView == UIView, ItemView == UITableViewCell {
 
     static func withBaseTableViewCell(
-        listDatasource: Datasource<Value, P, E, Item, Section>,
+        datasource: Datasource<Value, P, E>,
+        listItemProducer: ListItemProducer<Value, P, E, Item, Section>,
         cellClass `class`: ItemView.Type,
         reuseIdentifier: String,
         configure: @escaping (Item, ItemView) -> Void)
@@ -252,7 +279,8 @@ public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem
         NoSupplementaryItem, UIView> {
 
             return TableViewDatasourceCore.base(
-                listDatasource: listDatasource,
+                datasource: datasource,
+                listItemProducer: listItemProducer,
                 itemViewAdapter: TableViewCellAdapter<Item>.tableViewCell(
                     withCellClass: ItemView.self,
                     reuseIdentifier: reuseIdentifier, configure: configure

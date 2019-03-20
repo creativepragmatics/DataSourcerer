@@ -2,9 +2,9 @@ import Foundation
 import UIKit
 
 open class SimpleTableViewDatasource
-    <Value, P: Parameters, E: StateError, Cell: ListItem, Section: ListSection,
+    <Value, P: Parameters, E, Cell: ListItem, Section: ListSection,
     HeaderItem: SupplementaryItem, FooterItem: SupplementaryItem>: NSObject, UITableViewDelegate,
-    UITableViewDataSource where HeaderItem.E == FooterItem.E {
+    UITableViewDataSource where HeaderItem.E == FooterItem.E, Cell.E == E {
     public typealias Core = ListViewDatasourceCore
         <Value, P, E, Cell, UITableViewCell, Section, HeaderItem,
         UIView, FooterItem, UIView, UITableView>
@@ -13,7 +13,7 @@ open class SimpleTableViewDatasource
     public weak var delegate: UITableViewDelegate?
     public weak var datasource: UITableViewDataSource?
 
-    public var sections: ListSections<Cell, Section> {
+    public var sections: ListViewState<Cell, Section> {
         return core.sections
     }
 
@@ -24,6 +24,10 @@ open class SimpleTableViewDatasource
         core.itemViewAdapter.registerAtContainingView(tableView)
         core.headerItemViewAdapter.registerAtContainingView(tableView)
         core.footerItemViewAdapter.registerAtContainingView(tableView)
+    }
+
+    public func numberOfSections(in tableView: UITableView) -> Int {
+        return core.sections.sectionsWithItems?.count ?? 0
     }
 
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -112,16 +116,16 @@ open class SimpleTableViewDatasource
 
 public extension SimpleTableViewDatasource where Section == NoSection {
 
-    var cellsProperty: ShareableValueStream<SingleSectionListItems<Cell>> {
+    var cellsProperty: ShareableValueStream<SingleSectionListViewState<Cell>> {
 
-        return core.listDatasource.stateAndSections
-            .map { SingleSectionListItems<Cell>(sections: $0.sections) }
+        return core.stateAndSections
+            .map { SingleSectionListViewState<Cell>(sections: $0.listViewState) }
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
     }
 
-    var cells: SingleSectionListItems<Cell> {
-        return SingleSectionListItems<Cell>(sections: core.sections)
+    var cells: SingleSectionListViewState<Cell> {
+        return SingleSectionListViewState<Cell>(sections: core.sections)
     }
 }
 
@@ -134,7 +138,7 @@ public extension SimpleTableViewDatasource where Section == NoSection {
 //    <Value, P: Parameters, E: StateError, BaseItem: Equatable>:
 //    NSObject, UITableViewDelegate, UITableViewDataSource {
 //    public typealias Cell = IdiomaticListItem<BaseItem>
-//    public typealias Cells = SingleSectionListItems<Cell>
+//    public typealias Cells = SingleSectionListViewState<Cell>
 //    public typealias CellViewProducer = SimpleTableViewCellProducer<Cell>
 //    public typealias StatesObservable = AnyObservable<State<Value, P, E>>
 //    public typealias Core = ListViewDatasourceCore<CellViewProducer, PlainListSection>

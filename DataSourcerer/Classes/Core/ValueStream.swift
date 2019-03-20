@@ -4,10 +4,10 @@ import Foundation
 ///
 /// Will only start work after `observe(_)` is first called.
 ///
-/// Analogy to ReactiveSwift: Datasources are like SignalProducers,
+/// Analogy to ReactiveSwift: ValueStreams are like SignalProducers,
 /// which are "cold" (no work performed) until they are started.
 /// SignalProducer.init(_ startHandler) is very similar to
-/// Datasource.init(_ observeHandler).
+/// ValueStream.init(_ observeHandler).
 ///
 /// Analogy to RxSwift/ReactiveX: Insert example :)
 public struct ValueStream<Value>: ObservableProtocol {
@@ -33,7 +33,7 @@ public struct ValueStream<Value>: ObservableProtocol {
 
 public extension ValueStream {
 
-    /// Initializes a datasource with a closure that generates
+    /// Initializes a ValueStream with a closure that generates
     /// `State`s.
     init<Value, P: Parameters, E: StateError>(
         makeStatesWithClosure

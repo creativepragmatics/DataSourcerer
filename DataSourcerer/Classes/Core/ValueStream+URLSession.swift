@@ -31,6 +31,14 @@ public extension ValueStream {
                     return
                 }
 
+                let loadingState = DatasourceState.loading(
+                    loadImpulse: loadImpulse,
+                    fallbackValueBox: nil,
+                    fallbackError: nil
+                )
+
+                sendState(loadingState)
+
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
 

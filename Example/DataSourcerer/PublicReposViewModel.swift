@@ -2,7 +2,7 @@ import DataSourcerer
 import Foundation
 
 class PublicReposViewModel {
-    typealias Value = PublicReposResponseContainer
+    typealias Value = PublicReposResponse
     typealias P = VoidParameters
     typealias E = APIError
 
@@ -11,8 +11,7 @@ class PublicReposViewModel {
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
-    lazy var listDatasource: Datasource
-        <Value, P, E, PublicRepoCell, NoSection> = {
+    lazy var datasource: Datasource<Value, P, E> = {
 
             return Datasource(
                 urlRequest: { _ -> URLRequest in
@@ -24,17 +23,11 @@ class PublicReposViewModel {
                     return URLRequest(url: url)
                 },
                 mapErrorString: { APIError.unknown(.message($0)) },
-                cacheBehavior: Datasource.CacheBehavior.persist(
+                cacheBehavior: .persist(
                     persister: CachePersister<Value, P, E>(key: "public_repos").any,
                     cacheLoadError: E.cacheCouldNotLoad(.default)
                 ),
-                listItemGeneration: Datasource.ListItemGeneration<Value, P, E, PublicRepoCell, NoSection>
-                    .singleSection(
-                    makeCells: { repos -> [PublicRepoCell] in
-                        return repos.map { PublicRepoCell.repo($0) }
-                    }
-                ),
-                loadImpulseBehavior: Datasource.LoadImpulseBehavior.instance(loadImpulseEmitter.any)
+                loadImpulseBehavior: .instance(loadImpulseEmitter.any)
             )
     }()
 

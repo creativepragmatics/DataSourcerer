@@ -2,7 +2,7 @@ import DataSourcerer
 import Foundation
 
 struct PublicReposPrimaryDatasourceBuilder {
-    typealias Value = PublicReposResponseContainer
+    typealias Value = PublicReposResponse
     typealias P = VoidParameters
     typealias E = APIError
 

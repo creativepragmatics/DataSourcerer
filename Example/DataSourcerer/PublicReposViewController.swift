@@ -14,7 +14,13 @@ class PublicReposRootViewController : UIViewController {
 
     private lazy var tableViewDatasourceCore = TableViewDatasourceCore
         .base(
-            listDatasource: self.viewModel.listDatasource,
+            datasource: self.viewModel.datasource,
+            listItemProducer: ListItemProducer
+                <PublicReposResponse, VoidParameters, APIError, PublicRepoCell, NoSection>
+                .withSingleSectionItems { response
+                    -> [PublicRepoCell] in
+                    return response.map { PublicRepoCell.repo($0) }
+                },
             itemViewAdapter: TableViewCellAdapter<PublicRepoCell>.tableViewCell(
                 withCellClass: UITableViewCell.self,
                 reuseIdentifier: "cell", configure: { repo, cellView in
@@ -85,8 +91,7 @@ class PublicReposRootViewController : UIViewController {
             self?.tableViewController.refreshControl?.beginRefreshing()
         }
 
-        viewModel.listDatasource.stateAndSections
-            .map { $0.value }
+        viewModel.datasource.state
             .loadingEnded()
             .observeOnUIThread()
             .observe { [weak self] _ in

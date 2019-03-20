@@ -50,7 +50,7 @@ struct PublicRepo : Codable, Equatable {
     let deployments_url: String?
 }
 
-typealias PublicReposResponseContainer = [PublicRepo]
+typealias PublicReposResponse = [PublicRepo]
 
 enum PublicRepoCell : ListItem {
     typealias E = APIError

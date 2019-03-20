@@ -2,10 +2,11 @@ import Dwifft
 import Foundation
 
 open class SingleSectionTableViewController
-<Value: Equatable, P: Parameters, E: StateError, Cell: ListItem>: UIViewController {
+<Value: Equatable, P: Parameters, E, Cell: ListItem>: UIViewController
+where Cell.E == E {
 
     public typealias ValuesObservable = AnyObservable<Value>
-    public typealias Cells = SingleSectionListItems<Cell>
+    public typealias Cells = SingleSectionListViewState<Cell>
     public typealias TableViewDatasource = SimpleTableViewDatasource
         <Value, P, E, Cell, NoSection, NoSupplementaryItem, NoSupplementaryItem>
     public typealias Core = ListViewDatasourceCore

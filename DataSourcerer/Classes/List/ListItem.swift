@@ -25,9 +25,9 @@ public enum IdiomaticListItem<BaseItem: ListItem> : ListItem {
 
 public protocol HashableListItem : ListItem, Hashable { }
 
-// MARK: SingleSectionListItems
+// MARK: SingleSectionListViewState
 
-public enum SingleSectionListItems<LI: ListItem>: Equatable {
+public enum SingleSectionListViewState<LI: ListItem>: Equatable {
     case notReady
     case readyToDisplay([LI])
 
@@ -38,7 +38,7 @@ public enum SingleSectionListItems<LI: ListItem>: Equatable {
         }
     }
 
-    init(sections: ListSections<LI, NoSection>) {
+    init(sections: ListViewState<LI, NoSection>) {
         switch sections {
         case .notReady:
             self = .notReady
@@ -58,7 +58,7 @@ public struct SectionWithItems<Item: ListItem, Section: ListSection>: Equatable 
     }
 }
 
-public enum ListSections<Item: ListItem, Section: ListSection>: Equatable {
+public enum ListViewState<Item: ListItem, Section: ListSection>: Equatable {
     public typealias SectionWithItemsConcrete = SectionWithItems<Item, Section>
 
     case notReady
