@@ -16,7 +16,7 @@ class PublicReposRootViewController : UIViewController {
         .base(
             datasource: self.viewModel.datasource,
             itemModelProducer: ItemModelsProducer
-                <PublicReposResponse, VoidParameters, APIError, PublicRepoCell, NoSection>
+                <PublicReposResponse, NoResourceParams, APIError, PublicRepoCell, NoSection>
                 .withSingleSectionItems { response
                     -> [PublicRepoCell] in
                     return response.map { PublicRepoCell.repo($0) }

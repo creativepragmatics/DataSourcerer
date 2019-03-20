@@ -6,7 +6,7 @@ import Foundation
 /// request (including authorization tokens, headers,
 /// pagination page number, etc).
 /// However, Public APIs or locally loaded data might not
-/// require any parameters at all - in that case, `VoidParameters`
+/// require any parameters at all - in that case, `NoResourceParams`
 /// might come in handy.
 public protocol ResourceParams : Equatable {
 
@@ -32,8 +32,8 @@ public protocol ResourceParams : Equatable {
 
 /// Empty parameters for use cases without any parametrization
 /// needs.
-public struct VoidParameters : ResourceParams {
-    public func isCacheCompatible(_ candidate: VoidParameters) -> Bool { return true }
+public struct NoResourceParams : ResourceParams {
+    public func isCacheCompatible(_ candidate: NoResourceParams) -> Bool { return true }
 
-    static let initial = VoidParameters()
+    static let initial = NoResourceParams()
 }

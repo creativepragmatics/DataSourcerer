@@ -3,7 +3,7 @@ import Foundation
 
 struct PublicReposPrimaryDatasourceBuilder {
     typealias Value = PublicReposResponse
-    typealias P = VoidParameters
+    typealias P = NoResourceParams
     typealias E = APIError
 
     func datasource(with loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
@@ -25,8 +25,8 @@ struct PublicReposPrimaryDatasourceBuilder {
 
 }
 
-struct VoidParameters: ResourceParams, Codable {
-    func isCacheCompatible(_ candidate: VoidParameters) -> Bool {
+struct NoResourceParams: ResourceParams, Codable {
+    func isCacheCompatible(_ candidate: NoResourceParams) -> Bool {
         return true
     }
 }

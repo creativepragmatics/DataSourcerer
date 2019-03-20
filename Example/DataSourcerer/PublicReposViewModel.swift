@@ -3,7 +3,7 @@ import Foundation
 
 class PublicReposViewModel {
     typealias Value = PublicReposResponse
-    typealias P = VoidParameters
+    typealias P = NoResourceParams
     typealias E = APIError
 
     lazy var loadImpulseEmitter: RecurringLoadImpulseEmitter<P> = {
@@ -23,7 +23,7 @@ class PublicReposViewModel {
 
                     return URLRequest(url: url)
                 },
-                withParameterType: VoidParameters.self,
+                withParameterType: NoResourceParams.self,
                 expectResponseValueType: PublicReposResponse.self,
                 failWithError: APIError.self
             )
@@ -39,7 +39,7 @@ class PublicReposViewModel {
     }()
 
     func refresh() {
-        let loadImpulse = LoadImpulse(parameters: VoidParameters())
+        let loadImpulse = LoadImpulse(parameters: NoResourceParams())
         DispatchQueue(label: "PublicReposViewModel.refresh").async { [weak self] in
             self?.loadImpulseEmitter.emit(loadImpulse)
         }
