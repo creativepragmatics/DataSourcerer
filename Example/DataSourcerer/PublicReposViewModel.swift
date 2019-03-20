@@ -2,16 +2,13 @@ import DataSourcerer
 import Foundation
 
 class PublicReposViewModel {
-    typealias Value = PublicReposResponse
-    typealias P = NoResourceParams
-    typealias E = APIError
 
-    lazy var loadImpulseEmitter: RecurringLoadImpulseEmitter<P> = {
-        let initialImpulse = LoadImpulse(parameters: P())
+    lazy var loadImpulseEmitter: RecurringLoadImpulseEmitter<NoResourceParams> = {
+        let initialImpulse = LoadImpulse(parameters: NoResourceParams())
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
-    lazy var datasource: Datasource<Value, P, E> = {
+    lazy var datasource: Datasource = {
 
         return Datasource.Builder
             .loadFromURL(
@@ -31,8 +28,8 @@ class PublicReposViewModel {
             .loadImpulseBehavior(.instance(loadImpulseEmitter.any))
             .cacheBehavior(
                 .persist(
-                    persister: CachePersister<Value, P, E>(key: "public_repos").any,
-                    cacheLoadError: E.cacheCouldNotLoad(.default)
+                    persister: CachePersister(key: "public_repos").any,
+                    cacheLoadError: APIError.cacheCouldNotLoad(.default)
                 )
             )
             .datasource

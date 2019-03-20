@@ -32,8 +32,9 @@ public protocol ResourceParams : Equatable {
 
 /// Empty parameters for use cases without any parametrization
 /// needs.
-public struct NoResourceParams : ResourceParams {
+public struct NoResourceParams : ResourceParams, Codable {
     public func isCacheCompatible(_ candidate: NoResourceParams) -> Bool { return true }
 
-    static let initial = NoResourceParams()
+    public init() {}
+    public static let initial = NoResourceParams()
 }
