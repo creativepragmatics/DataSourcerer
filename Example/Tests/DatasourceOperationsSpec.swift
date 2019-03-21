@@ -5,16 +5,16 @@ import Quick
 
 class DatasourceOperationsSpec: QuickSpec {
 
-    private lazy var testStringLoadImpulse = LoadImpulse(parameters: "1")
+    private lazy var testStringLoadImpulse = LoadImpulse(params: "1")
 
     var stringLoadImpulseEmitter: AnyLoadImpulseEmitter<String> {
         return SimpleLoadImpulseEmitter<String>(initialImpulse: testStringLoadImpulse).any
     }
 
     private func testDatasource(_ loadImpulseEmitter: AnyLoadImpulseEmitter<String>)
-        -> Datasource<State<String, String, TestStateError>> {
+        -> ValueStream<ResourceState<String, String, TestStateError>> {
 
-        return Datasource.init(testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
+            return ValueStream(testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
                                testError: TestStateError.unknown(description: "Value unavailable"),
                                loadImpulseEmitter: loadImpulseEmitter)
     }
@@ -26,7 +26,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let loadImpulseEmitter = self.stringLoadImpulseEmitter
                 let datasource = self.testDatasource(loadImpulseEmitter)
 
-                let transform: (State<String, String, TestStateError>) -> Int? = { state in
+                let transform: (ResourceState<String, String, TestStateError>) -> Int? = { state in
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
@@ -38,8 +38,8 @@ class DatasourceOperationsSpec: QuickSpec {
                     observedInts.append(value)
                 })
 
-                loadImpulseEmitter.emit(LoadImpulse(parameters: "2"))
-                loadImpulseEmitter.emit(LoadImpulse(parameters: "3"))
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "2"), on: .current)
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "3"), on: .current)
 
                 disposable.dispose()
 
@@ -51,7 +51,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let loadImpulseEmitter = self.stringLoadImpulseEmitter
                 let datasource = self.testDatasource(loadImpulseEmitter)
 
-                let transform: (State<String, String, TestStateError>) -> Int? = { state in
+                let transform: (ResourceState<String, String, TestStateError>) -> Int? = { state in
                     return (state.value).flatMap({ Int($0.value) })
                 }
 
@@ -73,7 +73,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let disposable = testScope()
                 expect(testStr) == "1"
 
-                loadImpulseEmitter.emit(LoadImpulse(parameters: "1"))
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "1"), on: .current)
                 expect(testStr) == "11"
 
                 disposable.dispose()

@@ -5,10 +5,10 @@ import Quick
 
 class CachedDatasourceSpec: QuickSpec {
 
-    private let testStringLoadImpulse = LoadImpulse(parameters: "1")
+    private let testStringLoadImpulse = LoadImpulse(params: "1")
 
-    private lazy var testStringState: State<String, String, TestStateError> = {
-        return State(
+    private lazy var testStringState: ResourceState<String, String, TestStateError> = {
+        return ResourceState(
             provisioningState: .result,
             loadImpulse: testStringLoadImpulse,
             value: EquatableBox("1"),
@@ -25,7 +25,7 @@ class CachedDatasourceSpec: QuickSpec {
 //            it("sends states to an observer") {
 //
 //                let loadImpulseEmitter = self.loadImpulseEmitter()
-//                let persister = TestStatePersister<String, String, TestStateError>()
+//                let persister = TestResourceStatePersister<String, String, TestStateError>()
 //                persister.persist(OneTwoThreeStringTestStates.oneTwoThreeStringStates[0])
 //
 //                let datasource = Datasource(
@@ -59,10 +59,10 @@ class CachedDatasourceSpec: QuickSpec {
             it("should release observer after disposal") {
 
                 let loadImpulseEmitter = self.loadImpulseEmitter()
-                let persister = TestStatePersister<String, String, TestStateError>()
+                let persister = TestResourceStatePersister<String, String, TestStateError>()
                 persister.persist(OneTwoThreeStringTestStates.oneTwoThreeStringStates[0])
 
-                let datasource = Datasource(
+                let datasource = ValueStream(
                     testStates: OneTwoThreeStringTestStates.oneTwoThreeStringStates,
                     testError: TestStateError.unknown(description: "Value unavailable"),
                     loadImpulseEmitter: loadImpulseEmitter
@@ -90,7 +90,7 @@ class CachedDatasourceSpec: QuickSpec {
                 let disposable = testScope()
                 expect(testStr) == "1"
 
-                loadImpulseEmitter.emit(LoadImpulse(parameters: "2"))
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "2"), on: .current)
                 expect(testStr) == "12"
 
                 disposable.dispose()

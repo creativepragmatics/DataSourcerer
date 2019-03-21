@@ -1,11 +1,8 @@
 import Foundation
 import UIKit
 
-public protocol TableViewCellProducer : ListItemViewProducer
-where ProducedView == UITableViewCell, ContainingView == UITableView {}
-
-public enum SimpleTableViewCellProducer<Cell: ListItem>: TableViewCellProducer {
-    public typealias Item = Cell
+public enum SimpleTableViewCellProducer<Cell: ItemModel>: ItemViewProducer {
+    public typealias ItemModel = Cell
     public typealias ProducedView = UITableViewCell
     public typealias ContainingView = UITableView
     public typealias TableViewCellDequeueIdentifier = String
@@ -37,7 +34,7 @@ public enum SimpleTableViewCellProducer<Cell: ListItem>: TableViewCellProducer {
         }
     }
 
-    public func register(itemViewType: Cell.ViewType, at containingView: UITableView) {
+    public func register(at containingView: UITableView) {
         switch self {
         case let .classAndIdentifier(clazz, identifier, _):
             containingView.register(clazz, forCellReuseIdentifier: identifier)

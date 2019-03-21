@@ -1,21 +1,20 @@
 import Foundation
 
-/// Originally an enum, State is a struct to provide maximal flexibility,
-/// and remove any semantic annotations of value and error.
-public struct State<Value, P: Parameters, E: StateError>: Equatable {
+/// ResourceState describes what state a resource (either loaded from an API,
+/// from memory, disk, computed on the fly,...) is in.
+public struct ResourceState<Value, P: ResourceParams, E: ResourceError>: Equatable {
 
     public var provisioningState: ProvisioningState
     public var loadImpulse: LoadImpulse<P>?
     public var value: EquatableBox<Value>?
     public var error: E?
-
 }
 
-public extension State {
+public extension ResourceState {
 
     /// Datasource is not ready to provide data.
-    static var notReady: State {
-        return State(provisioningState: .notReady, loadImpulse: nil, value: nil, error: nil)
+    static var notReady: ResourceState {
+        return ResourceState(provisioningState: .notReady, loadImpulse: nil, value: nil, error: nil)
     }
 
     /// An error has been encountered in a datasource (e.g. while loading).
@@ -23,33 +22,37 @@ public extension State {
     /// available).
     static func error(error: E,
                       loadImpulse: LoadImpulse<P>,
-                      fallbackValueBox: EquatableBox<Value>?) -> State {
-        return State(provisioningState: .result,
-                     loadImpulse: loadImpulse,
-                     value: fallbackValueBox,
-                     error: error)
+                      fallbackValueBox: EquatableBox<Value>?) -> ResourceState {
+        return ResourceState(provisioningState: .result,
+                             loadImpulse: loadImpulse,
+                             value: fallbackValueBox,
+                             error: error)
     }
 
     /// A value has been created in a datasource. An error can still be defined
     /// (e.g. a cached value has been found, but )
     static func value(valueBox: EquatableBox<Value>,
                       loadImpulse: LoadImpulse<P>,
-                      fallbackError: E?) -> State {
-        return State(provisioningState: .result,
-                     loadImpulse: loadImpulse,
-                     value: valueBox,
-                     error: fallbackError)
+                      fallbackError: E?) -> ResourceState {
+        return ResourceState(
+            provisioningState: .result,
+            loadImpulse: loadImpulse,
+            value: valueBox,
+            error: fallbackError
+        )
     }
 
     /// The emitting datasource is loading, and has a fallbackValue (e.g. from a cache), or
     /// a fallback error, or both.
     static func loading(loadImpulse: LoadImpulse<P>,
                         fallbackValueBox: EquatableBox<Value>?,
-                        fallbackError: E?) -> State {
-        return State(provisioningState: .loading,
-                     loadImpulse: loadImpulse,
-                     value: fallbackValueBox,
-                     error: fallbackError)
+                        fallbackError: E?) -> ResourceState {
+        return ResourceState(
+            provisioningState: .loading,
+            loadImpulse: loadImpulse,
+            value: fallbackValueBox,
+            error: fallbackError
+        )
     }
 
     func hasLoadedSuccessfully(for loadImpulse: LoadImpulse<P>) -> Bool {
@@ -92,11 +95,20 @@ public enum ProvisioningState: Int, Equatable, Codable {
     case result
 }
 
-extension State: Codable where Value: Codable, P: Codable, E: Codable {}
+extension ResourceState: Codable where Value: Codable, P: Codable, E: Codable {}
 
-public protocol StateError: Error, Equatable {
+public protocol ResourceError: Error, Equatable {
 
     var errorMessage: StateErrorMessage { get }
+
+    init(message: StateErrorMessage)
+}
+
+public struct NoResourceError: ResourceError {
+
+    public var errorMessage: StateErrorMessage { return .default }
+
+    public init(message: StateErrorMessage) {}
 }
 
 public enum StateErrorMessage: Equatable, Codable {
@@ -150,9 +162,4 @@ public enum StateErrorMessage: Equatable, Codable {
             try container.encode(CodingKeys.default.rawValue, forKey: .enumCaseKey)
         }
     }
-}
-
-public protocol CachedStateError: StateError {
-
-    init(cacheLoadError type: StateErrorMessage)
 }

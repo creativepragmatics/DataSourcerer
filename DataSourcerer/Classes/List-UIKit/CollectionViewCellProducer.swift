@@ -1,11 +1,8 @@
 import Foundation
 import UIKit
 
-public protocol CollectionViewCellProducer : ListItemViewProducer
-where ProducedView == UICollectionViewCell, ContainingView == UICollectionView {}
-
-public enum SimpleCollectionViewCellProducer<Cell: ListItem>: CollectionViewCellProducer {
-    public typealias Item = Cell
+public enum SimpleCollectionViewCellProducer<Cell: ItemModel>: ItemViewProducer {
+    public typealias ItemModel = Cell
     public typealias ProducedView = UICollectionViewCell
     public typealias ContainingView = UICollectionView
 
@@ -40,7 +37,7 @@ public enum SimpleCollectionViewCellProducer<Cell: ListItem>: CollectionViewCell
         }
     }
 
-    public func register(itemViewType: Cell.ViewType, at containingView: UICollectionView) {
+    public func register(at containingView: UICollectionView) {
         switch self {
         case let .classAndIdentifier(clazz, identifier, _):
             containingView.register(clazz, forCellWithReuseIdentifier: identifier)

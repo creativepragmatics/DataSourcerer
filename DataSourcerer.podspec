@@ -52,5 +52,11 @@ The missing link between API Calls (any data provider actually) and your UITable
     ss.dependency 'DataSourcerer/Core'
     ss.dependency 'Cache', '~> 5.2.0'
   end
+
+  s.subspec 'ReactiveSwift' do |ss|
+    ss.source_files = 'DataSourcerer/Classes/ReactiveSwift/**/*'
+    ss.dependency 'DataSourcerer/List'
+    ss.dependency 'ReactiveSwift', '~> 4.0'
+  end
   
 end

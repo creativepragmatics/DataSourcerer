@@ -6,7 +6,7 @@ import Foundation
 /// perform the request twice if it's observed twice.
 /// If you absolutely need shared state (e.g. each observation gets
 /// just the latest network request's result), consider using
-/// `ObservableProperty`.
+/// `ShareableValueStream`.
 public protocol ObservableProtocol {
     associatedtype ObservedValue
     typealias ValuesOverTime = (ObservedValue) -> Void

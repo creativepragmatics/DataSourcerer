@@ -5,7 +5,7 @@ public extension ObservableProtocol {
     func map<TransformedValue>(_ transform: @escaping (ObservedValue) -> (TransformedValue))
         -> AnyObservable<TransformedValue> {
 
-            return Datasource<TransformedValue> { sendValue, disposable in
+            return ValueStream<TransformedValue> { sendValue, disposable in
                 disposable += self.observe { value in
                     sendValue(transform(value))
                 }
@@ -16,7 +16,7 @@ public extension ObservableProtocol {
         @escaping (_ previous: ReducedValue?, _ next: ObservedValue) -> (ReducedValue))
         -> AnyObservable<ReducedValue> {
 
-            return Datasource<ReducedValue> { sendValue, disposable in
+            return ValueStream<ReducedValue> { sendValue, disposable in
 
                 let cumulativeValue = SynchronizedMutableProperty<ReducedValue?>(nil)
 
@@ -31,7 +31,7 @@ public extension ObservableProtocol {
     func filter(_ include: @escaping (ObservedValue) -> (Bool))
         -> AnyObservable<ObservedValue> {
 
-            return Datasource { sendValue, disposable in
+            return ValueStream { sendValue, disposable in
                 disposable += self.observe { value in
                     if include(value) {
                         sendValue(value)
@@ -41,10 +41,19 @@ public extension ObservableProtocol {
     }
 
     func observe(on queue: DispatchQueue) -> AnyObservable<ObservedValue> {
+        return observe(on: queue, if: { _ in true })
+    }
 
-        return Datasource<ObservedValue> { sendValue, disposable in
+    func observe(on queue: DispatchQueue,
+                 if: @escaping (ObservedValue) -> Bool) -> AnyObservable<ObservedValue> {
+
+        return ValueStream<ObservedValue> { sendValue, disposable in
             disposable += self.observe { value in
-                queue.async {
+                if `if`(value) {
+                    queue.async {
+                        sendValue(value)
+                    }
+                } else {
                     sendValue(value)
                 }
             }
@@ -55,7 +64,7 @@ public extension ObservableProtocol {
 
         let core = UIDatasourceCore<ObservedValue>()
 
-        return Datasource<ObservedValue> { sendValue, disposable in
+        return ValueStream<ObservedValue> { sendValue, disposable in
             disposable += self.observe { value in
                 core.emitNext(value: value, sendValue: sendValue)
             }
@@ -67,7 +76,7 @@ public extension ObservableProtocol {
 
             let core = SkipRepeatsCore(isEqual)
 
-            return Datasource<ObservedValue> { sendValue, disposable in
+            return ValueStream<ObservedValue> { sendValue, disposable in
                 disposable += self.observe { value in
                     core.emitNext(value: value, sendValue: sendValue)
                 }

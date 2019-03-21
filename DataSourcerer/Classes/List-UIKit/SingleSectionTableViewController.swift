@@ -1,12 +1,17 @@
 import Dwifft
 import Foundation
 
-open class IdiomaticSingleSectionTableViewController
-    <Value, P: Parameters, E, Cell: IdiomaticListItem>: UIViewController where Cell.E == E {
+open class SingleSectionTableViewController
+    <Value: Equatable, P: ResourceParams, E, CellModelType: ItemModel, HeaderItem: SupplementaryItemModel,
+    HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemError>
+    : UIViewController
+    where CellModelType.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError {
 
-    public typealias Cells = SingleSectionListItems<Cell>
-    public typealias TableViewDatasource =
-        IdiomaticSingleSectionTableViewDatasource<Value, P, E, Cell>
+    public typealias ValuesObservable = AnyObservable<Value>
+    public typealias Cells = SingleSectionListViewState<CellModelType>
+    public typealias Configuration = ListViewDatasourceConfiguration
+        <Value, P, E, CellModelType, UITableViewCell, NoSection, HeaderItem, UIView, HeaderItemError,
+        FooterItem, UIView, FooterItemError, UITableView>
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()
@@ -30,17 +35,22 @@ open class IdiomaticSingleSectionTableViewController
     public var estimatedRowHeight: CGFloat = 75
     public var supportPullToRefresh = true
     public var animateTableViewUpdates = true
-    public var onPullToRefresh: (() -> Void)?
+    public var pullToRefresh: (() -> Void)?
 
     open var isViewVisible: Bool {
         return viewIfLoaded?.window != nil && view.alpha > 0.001
     }
 
-    private let tableViewDatasource: TableViewDatasource
-    private var tableViewDiffCalculator: SingleSectionTableViewDiffCalculator<Cell>?
+    private let configuration: Configuration
+    public lazy var tableViewDatasource = TableViewDatasource(
+        configuration: configuration,
+        tableView: tableView
+    )
 
-    public init(tableViewDatasource: TableViewDatasource) {
-        self.tableViewDatasource = tableViewDatasource
+    private var tableViewDiffCalculator: SingleSectionTableViewDiffCalculator<CellModelType>?
+
+    public init(configuration: Configuration) {
+        self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -71,16 +81,17 @@ open class IdiomaticSingleSectionTableViewController
 
         if supportPullToRefresh {
             let refreshControl = UIRefreshControl()
-            refreshControl.addTarget(self, action: #selector(pullToRefresh), for: .valueChanged)
+            refreshControl.addTarget(self, action: #selector(doPullToRefresh), for: .valueChanged)
             tableView.addSubview(refreshControl)
             tableView.sendSubviewToBack(refreshControl)
             self.refreshControl = refreshControl
         }
 
-        var previousCells = tableViewDatasource.cells.value
+        let cellsProperty = tableViewDatasource.cellsProperty
+        var previousCells = cellsProperty.value
 
         // Update table with most current cells
-        tableViewDatasource.cells.observe({ [weak self] cells in
+        cellsProperty.observe({ [weak self] cells in
             self?.updateCells(previous: previousCells, next: cells)
             previousCells = cells
         }).disposed(by: disposeBag)
@@ -104,18 +115,27 @@ open class IdiomaticSingleSectionTableViewController
         }
     }
 
-    private func createTableViewDiffCalculator(initial: [Cell])
-        -> SingleSectionTableViewDiffCalculator<Cell> {
-        let calculator = SingleSectionTableViewDiffCalculator<Cell>(tableView: tableView,
-                                                                    initialRows: initial)
-        calculator.insertionAnimation = .fade
-        calculator.deletionAnimation = .fade
-        return calculator
+    private func createTableViewDiffCalculator(initial: [CellModelType])
+        -> SingleSectionTableViewDiffCalculator<CellModelType> {
+            let calculator = SingleSectionTableViewDiffCalculator<CellModelType>(
+                tableView: tableView,
+                initialRows: initial
+            )
+            calculator.insertionAnimation = .fade
+            calculator.deletionAnimation = .fade
+            return calculator
     }
 
     @objc
-    func pullToRefresh() {
-        onPullToRefresh?()
+    func doPullToRefresh() {
+        pullToRefresh?()
+    }
+
+    public func onPullToRefresh(_ pullToRefresh: @escaping () -> Void)
+        -> SingleSectionTableViewController {
+            
+        self.pullToRefresh = pullToRefresh
+        return self
     }
 
 }

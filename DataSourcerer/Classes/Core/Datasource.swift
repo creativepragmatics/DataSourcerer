@@ -1,82 +1,121 @@
 import Foundation
 
-/// Provides an observable stream of values.
-///
-/// Will only start work after `observe(_)` is first called.
-///
-/// Analogy to ReactiveSwift: Datasources are like SignalProducers,
-/// which are "cold" (no work performed) until they are started.
-/// SignalProducer.init(_ startHandler) is very similar to
-/// Datasource.init(_ observeHandler).
-///
-/// Analogy to RxSwift/ReactiveX: Insert example :)
-public struct Datasource<Value>: ObservableProtocol {
-    public typealias ObservedValue = Value
-    public typealias ValuesOverTime = (ObservedValue) -> Void
-    public typealias ObserveHandler = (@escaping ValuesOverTime, CompositeDisposable) -> Void
+/// Provides the data for a sectioned or unsectioned list. Can be reused
+/// by multiple views displaying its data.
+public struct Datasource<Value, P: ResourceParams, E: ResourceError> {
+    public typealias ObservedState = ResourceState<Value, P, E>
+    public typealias ErrorString = String
 
-    private let observeHandler: ObserveHandler
+    public let state: ShareableValueStream<ObservedState>
+    public let loadImpulseEmitter: AnyLoadImpulseEmitter<P>
 
-    public init(_ observeHandler: @escaping ObserveHandler) {
-        self.observeHandler = observeHandler
-    }
-
-    public func observe(_ valuesOverTime: @escaping ValuesOverTime) -> Disposable {
-
-        let disposable = CompositeDisposable()
-        observeHandler(valuesOverTime, disposable)
-        return disposable
+    public init(_ state: ShareableValueStream<ObservedState>,
+                loadImpulseEmitter: AnyLoadImpulseEmitter<P>) {
+        self.state = state
+        self.loadImpulseEmitter = loadImpulseEmitter
     }
 }
 
-// MARK: Closure support
-
 public extension Datasource {
 
-    /// Initializes a datasource with a closure that generates
-    /// `State`s.
-    init<Value, P: Parameters, E: StateError>(
-        makeStatesWithClosure
-        generateState: @escaping (LoadImpulse<P>, @escaping ValuesOverTime) -> Disposable,
-        loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-        ) where ObservedValue == State<Value, P, E> {
-
-        self.init { sendState, disposable in
-
-            disposable += loadImpulseEmitter.observe { loadImpulse in
-                disposable += generateState(loadImpulse, sendState)
-            }
-        }
+    func refresh(
+        params: P,
+        on queue: LoadImpulseEmitterQueue = .distinct(DispatchQueue(label: "PublicReposViewModel.refresh"))
+    ) {
+        loadImpulseEmitter.emit(params: params, on: queue)
     }
 }
 
-// MARK: Load from StatePersister
+public extension Datasource where P == NoResourceParams {
+
+    func refresh(
+        on queue: LoadImpulseEmitterQueue = .distinct(DispatchQueue(label: "PublicReposViewModel.refresh"))
+        ) {
+        refresh(params: NoResourceParams(), on: queue)
+    }
+}
 
 public extension Datasource {
 
-    /// Sends a persisted state from `persister`, every time
-    /// `loadImpulseEmitter` sends an impulse. If an error occurs
-    /// while loading (e.g. deserialization error), `cacheLoadError`
-    /// is sent instead.
-    init<Value, P: Parameters, E: StateError>(
-        loadStatesFromPersister persister: AnyStatePersister<Value, P, E>,
-        loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
-        cacheLoadError: E
-        ) where ObservedValue == State<Value, P, E> {
+    enum CacheBehavior {
+        case none
+        case persist(persister: AnyResourceStatePersister<Value, P, E>, cacheLoadError: E)
 
-        self.init { sendState, disposable in
-
-            disposable += loadImpulseEmitter.observe { loadImpulse in
-                guard let cached = persister.load(loadImpulse.parameters) else {
-                    let error = State<Value, P, E>.error(error: cacheLoadError,
-                                                         loadImpulse: loadImpulse,
-                                                         fallbackValueBox: nil)
-                    sendState(error)
-                    return
+        func apply(on observable: AnyObservable<ResourceState<Value, P, E>>,
+                   loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
+            -> AnyObservable<ResourceState<Value, P, E>> {
+                switch self {
+                case .none:
+                    return observable
+                case let .persist(persister, cacheLoadError):
+                    return observable.persistedCachedState(
+                        persister: persister,
+                        loadImpulseEmitter: loadImpulseEmitter,
+                        cacheLoadError: cacheLoadError
+                    )
                 }
-
-                sendState(cached)
-            }
         }
     }
 }
+
+public extension Datasource {
+
+    enum LoadImpulseBehavior {
+        case `default`(initialParameters: P?)
+        case recurring(
+            initialParameters: P?,
+            timerMode: RecurringLoadImpulseEmitter<P>.TimerMode,
+            timerEmitQueue: DispatchQueue?
+        )
+        case instance(AnyLoadImpulseEmitter<P>)
+
+        var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
+            switch self {
+            case let .default(initialParameters):
+                let initialImpulse = initialParameters.map { LoadImpulse<P>(params: $0) }
+                return SimpleLoadImpulseEmitter(initialImpulse: initialImpulse).any
+            case let .instance(loadImpulseEmitter):
+                return loadImpulseEmitter
+            case let .recurring(initialParameters,
+                                timerMode,
+                                timerEmitQueue):
+                let initialImpulse = initialParameters.map { LoadImpulse<P>(params: $0) }
+                return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse,
+                                                   timerMode: timerMode,
+                                                   timerEmitQueue: timerEmitQueue).any
+            }
+        }
+    }
+
+}
+
+//public extension Datasource where Value: Codable {
+//
+//    init(
+//        urlRequest: @escaping (LoadImpulse<P>) throws -> URLRequest,
+//        mapErrorString: @escaping (ErrorString) -> E,
+//        cacheBehavior: CacheBehavior,
+//        loadImpulseBehavior: LoadImpulseBehavior
+//        ) {
+//
+//        let loadImpulseEmitter = loadImpulseBehavior.loadImpulseEmitter
+//
+//        let states = ValueStream<ObservedState>(
+//            loadStatesWithURLRequest: urlRequest,
+//            mapErrorString: mapErrorString,
+//            loadImpulseEmitter: loadImpulseEmitter
+//            )
+//            .retainLastResultState()
+//
+//        let cachedStates = cacheBehavior
+//            .apply(on: states.any,
+//                   loadImpulseEmitter: loadImpulseEmitter)
+//            .skipRepeats()
+//            .observeOnUIThread()
+//
+//        let shareableCachedStates = cachedStates
+//            .shareable(initialValue: ResourceState<Value, P, E>.notReady)
+//
+//        self.init(shareableCachedStates, loadImpulseEmitter: loadImpulseEmitter)
+//    }
+//}

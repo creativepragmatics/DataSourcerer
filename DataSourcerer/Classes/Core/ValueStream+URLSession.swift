@@ -1,16 +1,16 @@
 import Foundation
 
-public extension Datasource {
+public extension ValueStream {
 
     /// Loads data with the URLRequests produced by `URLRequestMaker`,
     /// whenever `loadImpulseEmitter` emits a load impulse. If
     /// any error is encountered, an error is sent instead, using
     /// `errorMaker`.
-    init<Value, P: Parameters, E: StateError>(
+    init<Value, P: ResourceParams, E: ResourceError>(
         loadStatesWithURLRequest URLRequestMaker: @escaping (LoadImpulse<P>) throws -> URLRequest,
-        errorMaker: @escaping (String) -> E,
+        mapErrorString: @escaping (String) -> E,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>
-        ) where ObservedValue == State<Value, P, E>, Value: Codable {
+        ) where ObservedValue == ResourceState<Value, P, E>, Value: Codable {
 
         typealias DatasourceState = ObservedValue
 
@@ -27,9 +27,17 @@ public extension Datasource {
                 }
 
                 guard let urlRequest = try? URLRequestMaker(loadImpulse) else {
-                    sendError(errorMaker("Request could not be generated"))
+                    sendError(mapErrorString("Request could not be generated"))
                     return
                 }
+
+                let loadingState = DatasourceState.loading(
+                    loadImpulse: loadImpulse,
+                    fallbackValueBox: nil,
+                    fallbackError: nil
+                )
+
+                sendState(loadingState)
 
                 let config = URLSessionConfiguration.default
                 let session = URLSession(configuration: config)
@@ -37,7 +45,7 @@ public extension Datasource {
                 let task = session.dataTask(with: urlRequest) { data, _, error in
 
                     guard error == nil else {
-                        sendError(errorMaker("""
+                        sendError(mapErrorString("""
                         Request could not be loaded -
                         we are too lazy to parse the actual error yet ;)
                         """))
@@ -46,7 +54,7 @@ public extension Datasource {
 
                     // make sure we got data
                     guard let responseData = data else {
-                        sendError(errorMaker("responseData is nil"))
+                        sendError(mapErrorString("responseData is nil"))
                         return
                     }
 
@@ -58,7 +66,7 @@ public extension Datasource {
                                                           fallbackError: nil)
                         sendState(state)
                     } catch {
-                        sendError(errorMaker("""
+                        sendError(mapErrorString("""
                             Value cannot be parsed: \(String(describing: error))
                             """))
                         return

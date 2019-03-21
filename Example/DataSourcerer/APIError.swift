@@ -1,8 +1,8 @@
 import DataSourcerer
 import Foundation
 
-enum APIError : CachedStateError, Codable {
-    case unknown(description: String?)
+enum APIError : IdiomaticStateError, Codable {
+    case unknown(StateErrorMessage)
     case unreachable
     case notConnectedToInternet
     case deserializationFailed(path: String?, debugDescription: String?, responseSize: Int)
@@ -11,38 +11,33 @@ enum APIError : CachedStateError, Codable {
     case cacheCouldNotLoad(StateErrorMessage)
 
     var errorMessage: StateErrorMessage {
-        let defaultMessage =
+        let defaultMessage = StateErrorMessage.message(
             NSLocalizedString("An error occurred while loading.\nPlease try again!", comment: "")
-        let message: String = {
-            switch self {
-            case let .unknown(description):
-                return description ?? defaultMessage
-            case .unreachable:
-                return defaultMessage
-            case .deserializationFailed:
-                return NSLocalizedString("""
-                                         An error occurred while deserialization.
-                                         Please contact us!
-                                         """, comment: "")
-            case .requestTagsChanged:
-                return NSLocalizedString("No data could be loaded for your user.", comment: "")
-            case .notAuthenticated:
-                return NSLocalizedString("Please log in.", comment: "")
-            case .notConnectedToInternet:
-                return NSLocalizedString("Please connect to the internet.", comment: "")
-            case let .cacheCouldNotLoad(errorMessage):
-                switch errorMessage {
-                case .default: return "Cached data could not be loaded."
-                case let .message(message): return message
-                }
-            }
-        }()
+        )
 
-        return .message(message)
+        switch self {
+        case let .unknown(message):
+            return message
+        case .unreachable:
+            return defaultMessage
+        case .deserializationFailed:
+            return .message(NSLocalizedString("""
+            An error occurred while deserialization.
+            Please contact us!
+            """, comment: ""))
+        case .requestTagsChanged:
+            return .message(NSLocalizedString("No data could be loaded for your user.", comment: ""))
+        case .notAuthenticated:
+            return .message(NSLocalizedString("Please log in.", comment: ""))
+        case .notConnectedToInternet:
+            return .message(NSLocalizedString("Please connect to the internet.", comment: ""))
+        case let .cacheCouldNotLoad(errorMessage):
+            return errorMessage
+        }
     }
 
-    init(cacheLoadError type: StateErrorMessage) {
-        self = .cacheCouldNotLoad(type)
+    init(message: StateErrorMessage) {
+        self = .unknown(message)
     }
 }
 
@@ -86,7 +81,7 @@ extension APIError {
                                           responseSize: responseSize ?? 0)
         case .unknown:
             let unknownDecription = try? container.decode(String.self, forKey: .unknownDescription)
-            self = .unknown(description: unknownDecription)
+            self = .unknown(unknownDecription.map { StateErrorMessage.message($0) } ?? .default)
         case .notAuthenticated:
             self = .notAuthenticated
         case .requestTagsChanged:

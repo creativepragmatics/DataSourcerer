@@ -1,5 +1,7 @@
 import Foundation
 
+/// Broadcasts values to one or more observers. This observable
+/// is primarily used as a helper for ShareableValueStream.
 public final class BroadcastObservable<ObservedValue_>: ObservableProtocol {
     public typealias ObservedValue = ObservedValue_
 

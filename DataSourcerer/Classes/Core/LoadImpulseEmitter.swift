@@ -1,10 +1,30 @@
 import Foundation
 
 public protocol LoadImpulseEmitterProtocol: ObservableProtocol where ObservedValue == LoadImpulse<P> {
-    associatedtype P: Parameters
+    associatedtype P: ResourceParams
     typealias LoadImpulsesOverTime = ValuesOverTime
 
-    func emit(_ loadImpulse: LoadImpulse<P>)
+    func emit(loadImpulse: LoadImpulse<P>, on queue: LoadImpulseEmitterQueue)
+}
+
+public extension LoadImpulseEmitterProtocol {
+
+    public func emit(params: P, on queue: LoadImpulseEmitterQueue) {
+        let loadImpulse = LoadImpulse(params: params)
+        emit(loadImpulse: loadImpulse, on: queue)
+    }
+}
+
+public extension LoadImpulseEmitterProtocol where P == NoResourceParams {
+
+    public func emit(on queue: LoadImpulseEmitterQueue) {
+        emit(params: NoResourceParams(), on: queue)
+    }
+}
+
+public enum LoadImpulseEmitterQueue {
+    case current
+    case distinct(DispatchQueue)
 }
 
 public extension LoadImpulseEmitterProtocol {
@@ -13,19 +33,19 @@ public extension LoadImpulseEmitterProtocol {
     }
 }
 
-public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol {
+public struct AnyLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol {
     public typealias P = P_
 
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
-    private let _emit: (LoadImpulse<P>) -> Void
+    private let _emit: (LoadImpulse<P>, LoadImpulseEmitterQueue) -> Void
 
     init<Emitter: LoadImpulseEmitterProtocol>(_ emitter: Emitter) where Emitter.P == P {
         self._emit = emitter.emit
         self._observe = emitter.observe
     }
 
-    public func emit(_ loadImpulse: LoadImpulse<P_>) {
-        _emit(loadImpulse)
+    public func emit(loadImpulse: LoadImpulse<P_>, on queue: LoadImpulseEmitterQueue) {
+        _emit(loadImpulse, queue)
     }
 
     public func observe(_ loadImpulsesOverTime: @escaping LoadImpulsesOverTime) -> Disposable {
@@ -33,7 +53,7 @@ public struct AnyLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol 
     }
 }
 
-public class SimpleLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
+public class SimpleLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
@@ -53,13 +73,21 @@ public class SimpleLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtoco
         return broadcastObservable.observe(observe)
     }
 
-    public func emit(_ loadImpulse: LoadImpulse<P>) {
-        broadcastObservable.emit(loadImpulse)
+    public func emit(loadImpulse: LoadImpulse<P>, on queue: LoadImpulseEmitterQueue) {
+
+        switch queue {
+        case .current:
+            broadcastObservable.emit(loadImpulse)
+        case let .distinct(queue):
+            queue.async {
+                self.broadcastObservable.emit(loadImpulse)
+            }
+        }
     }
 
 }
 
-public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProtocol, ObservableProtocol {
+public class RecurringLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
 
@@ -105,7 +133,7 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
                                   leeway: .milliseconds(100))
                 newTimer.setEventHandler { [weak self] in
                     guard let lastLoadImpulse = self?.lastLoadImpulse else { return }
-                    self?.innerEmitter.emit(lastLoadImpulse)
+                    self?.innerEmitter.emit(loadImpulse: lastLoadImpulse, on: .current)
                 }
                 newTimer.resume()
                 timer = newTimer
@@ -125,8 +153,8 @@ public class RecurringLoadImpulseEmitter<P_: Parameters>: LoadImpulseEmitterProt
         return CompositeDisposable(innerDisposable, objectToRetain: self)
     }
 
-    public func emit(_ loadImpulse: LoadImpulse<P>) {
-        innerEmitter.emit(loadImpulse)
+    public func emit(loadImpulse: LoadImpulse<P>, on queue: LoadImpulseEmitterQueue) {
+        innerEmitter.emit(loadImpulse: loadImpulse, on: queue)
         resetTimer()
     }
 

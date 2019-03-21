@@ -1,7 +1,7 @@
 import Foundation
 import DataSourcerer
 
-enum TestStateError : CachedStateError, Codable {
+enum TestStateError : ResourceError, Codable {
     case unknown(description: String?)
     case unreachable
     case notConnectedToInternet
@@ -37,8 +37,8 @@ enum TestStateError : CachedStateError, Codable {
         return .message(message)
     }
 
-    init(cacheLoadError type: StateErrorMessage) {
-        self = .cacheCouldNotLoad(type)
+    init(message: StateErrorMessage) {
+        self = .cacheCouldNotLoad(message)
     }
 }
 

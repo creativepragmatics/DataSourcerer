@@ -1,7 +1,7 @@
 import Foundation
 import DataSourcerer
 
-public class TestStatePersister<Value_: Codable, P_: Parameters & Codable, E_: StateError & Codable>: StatePersister {
+public class TestResourceStatePersister<Value_: Codable, P_: ResourceParams & Codable, E_: ResourceError & Codable>: ResourceStatePersister {
     public typealias Value = Value_
     public typealias P = P_
     public typealias E = E_
@@ -16,7 +16,7 @@ public class TestStatePersister<Value_: Codable, P_: Parameters & Codable, E_: S
 
     public func load(_ parameters: P) -> PersistedState? {
         guard let state = self.state,
-            state.loadImpulse?.parameters.isCacheCompatible(parameters) ?? false else {
+            state.loadImpulse?.params.isCacheCompatible(parameters) ?? false else {
             return nil
         }
 

@@ -5,13 +5,13 @@ public extension ObservableProtocol {
     /// Maintains state coming from two sources (self and cacheObservable).
     /// State coming from the primary datasource (self) is treated as
     /// preferential over state from the cache datasource.
-    func cachedState<Value, P: Parameters, E: StateError>(
+    func cachedState<Value, P: ResourceParams, E: ResourceError>(
         cacheObservable: AnyObservable<ObservedValue>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
-        -> AnyObservable<State<Value, P, E>>
-        where ObservedValue == State<Value, P, E> {
+        -> AnyObservable<ResourceState<Value, P, E>>
+        where ObservedValue == ResourceState<Value, P, E> {
 
-            return Datasource { sendState, disposable in
+            return ValueStream { sendState, disposable in
 
                 let core = CachedDatasourceCore<Value, P, E>()
 
@@ -30,15 +30,15 @@ public extension ObservableProtocol {
     }
 
     /// Persists states sent by `self` and
-    func persistState<Value, P: Parameters, E: StateError>(
-        persister: AnyStatePersister<Value, P, E>,
+    func persistState<Value, P: ResourceParams, E: ResourceError>(
+        persister: AnyResourceStatePersister<Value, P, E>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
-        -> AnyObservable<State<Value, P, E>>
-        where ObservedValue == State<Value, P, E> {
+        -> AnyObservable<ResourceState<Value, P, E>>
+        where ObservedValue == ResourceState<Value, P, E> {
 
             let core = PersistStateCore(persister: persister)
 
-            return Datasource { sendState, disposable in
+            return ValueStream { sendState, disposable in
 
                 disposable += loadImpulseEmitter.observe {
                     core.tryPersist(latestLoadImpulse: $0, sendState: sendState)
@@ -51,16 +51,16 @@ public extension ObservableProtocol {
             }.any
     }
 
-    func persistedCachedState<Value, P: Parameters, E: StateError>(
-        persister: AnyStatePersister<Value, P, E>,
+    func persistedCachedState<Value, P: ResourceParams, E: ResourceError>(
+        persister: AnyResourceStatePersister<Value, P, E>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>,
         cacheLoadError: E)
-        -> AnyObservable<State<Value, P, E>>
-        where ObservedValue == State<Value, P, E> {
+        -> AnyObservable<ResourceState<Value, P, E>>
+        where ObservedValue == ResourceState<Value, P, E> {
 
-            let cacheObservable = Datasource(loadStatesFromPersister: persister,
-                                             loadImpulseEmitter: loadImpulseEmitter,
-                                             cacheLoadError: cacheLoadError).any
+            let cacheObservable = ValueStream(loadStatesFromPersister: persister,
+                                              loadImpulseEmitter: loadImpulseEmitter,
+                                              cacheLoadError: cacheLoadError).any
             let cached = cachedState(cacheObservable: cacheObservable, loadImpulseEmitter: loadImpulseEmitter)
             let persisted = cached.persistState(persister: persister, loadImpulseEmitter: loadImpulseEmitter)
             return persisted
@@ -68,8 +68,8 @@ public extension ObservableProtocol {
 
 }
 
-public struct CachedDatasourceCore<Value, P: Parameters, E: StateError> {
-    public typealias DatasourceState = State<Value, P, E>
+public struct CachedDatasourceCore<Value, P: ResourceParams, E: ResourceError> {
+    public typealias DatasourceState = ResourceState<Value, P, E>
     public typealias SendState = (DatasourceState) -> Void
 
     private let currentStateComponents = SynchronizedMutableProperty(StateComponents.initial)
@@ -111,43 +111,59 @@ public struct CachedDatasourceCore<Value, P: Parameters, E: StateError> {
         switch primary.provisioningState {
         case .notReady, .loading:
             if let primaryValueBox = primary.cacheCompatibleValue(for: loadImpulse) {
-                return State.loading(loadImpulse: loadImpulse,
-                                     fallbackValueBox: primaryValueBox,
-                                     fallbackError: primary.error)
+                return ResourceState.loading(
+                    loadImpulse: loadImpulse,
+                    fallbackValueBox: primaryValueBox,
+                    fallbackError: primary.error
+                )
             } else if let cacheValueBox = cache.cacheCompatibleValue(for: loadImpulse) {
-                return State.loading(loadImpulse: loadImpulse,
-                                     fallbackValueBox: cacheValueBox,
-                                     fallbackError: cache.error)
+                return ResourceState.loading(
+                    loadImpulse: loadImpulse,
+                    fallbackValueBox: cacheValueBox,
+                    fallbackError: cache.error
+                )
             } else {
                 // Neither remote success nor cached value
                 switch primary.provisioningState {
-                case .notReady, .result: return State.notReady
+                case .notReady, .result:
+                    return ResourceState.notReady
                 // Add primary as fallback so any errors are added
-                case .loading: return State.loading(loadImpulse: loadImpulse,
-                                                    fallbackValueBox: nil,
-                                                    fallbackError: primary.error)
+                case .loading:
+                    return ResourceState.loading(
+                        loadImpulse: loadImpulse,
+                        fallbackValueBox: nil,
+                        fallbackError: primary.error
+                    )
                 }
             }
         case .result:
             if let primaryValueBox = primary.cacheCompatibleValue(for: loadImpulse) {
                 if let error = primary.error {
-                    return State.error(error: error,
-                                       loadImpulse: loadImpulse,
-                                       fallbackValueBox: primaryValueBox)
+                    return ResourceState.error(
+                        error: error,
+                        loadImpulse: loadImpulse,
+                        fallbackValueBox: primaryValueBox
+                    )
                 } else {
-                    return State.value(valueBox: primaryValueBox,
-                                       loadImpulse: loadImpulse,
-                                       fallbackError: nil)
+                    return ResourceState.value(
+                        valueBox: primaryValueBox,
+                        loadImpulse: loadImpulse,
+                        fallbackError: nil
+                    )
                 }
             } else if let error = primary.error {
                 if let cachedValueBox = cache.cacheCompatibleValue(for: loadImpulse) {
-                    return State.error(error: error,
-                                       loadImpulse: loadImpulse,
-                                       fallbackValueBox: cachedValueBox)
+                    return ResourceState.error(
+                        error: error,
+                        loadImpulse: loadImpulse,
+                        fallbackValueBox: cachedValueBox
+                    )
                 } else {
-                    return State.error(error: error,
-                                       loadImpulse: loadImpulse,
-                                       fallbackValueBox: nil)
+                    return ResourceState.error(
+                        error: error,
+                        loadImpulse: loadImpulse,
+                        fallbackValueBox: nil
+                    )
                 }
             } else {
 
@@ -164,7 +180,7 @@ public struct CachedDatasourceCore<Value, P: Parameters, E: StateError> {
                 // to provide the current parameters is vital to ensure the provided state is
                 // cache-compatible at all times. Else, the view might display
                 // old/invalid/unauthorized data.
-                return State.notReady
+                return ResourceState.notReady
             }
         }
     }
@@ -183,15 +199,15 @@ public struct CachedDatasourceCore<Value, P: Parameters, E: StateError> {
 
 }
 
-public struct PersistStateCore<Value, P: Parameters, E: StateError> {
-    public typealias DatasourceState = State<Value, P, E>
+public struct PersistStateCore<Value, P: ResourceParams, E: ResourceError> {
+    public typealias DatasourceState = ResourceState<Value, P, E>
     public typealias SendState = (DatasourceState) -> Void
 
     private let currentComponents = SynchronizedMutableProperty(PersistComponents.initial)
-    private let persister: AnyStatePersister<Value, P, E>
+    private let persister: AnyResourceStatePersister<Value, P, E>
     private let lastPersistedState = SynchronizedMutableProperty<DatasourceState?>(nil)
 
-    public init(persister: AnyStatePersister<Value, P, E>) {
+    public init(persister: AnyResourceStatePersister<Value, P, E>) {
         self.persister = persister
     }
 
@@ -223,7 +239,7 @@ public struct PersistStateCore<Value, P: Parameters, E: StateError> {
     }
 
     private struct PersistComponents {
-        var latestState: State<Value, P, E>?
+        var latestState: ResourceState<Value, P, E>?
         var latestLoadImpulse: LoadImpulse<P>?
 
         static var initial: PersistComponents {

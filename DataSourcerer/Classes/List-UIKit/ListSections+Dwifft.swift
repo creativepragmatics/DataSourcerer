@@ -1,9 +1,9 @@
 import Dwifft
 import Foundation
 
-public extension ListSections {
+public extension ListViewState {
 
-    var sectionedValues: SectionedValues<Section, Item> {
+    var sectionedValues: SectionedValues<SectionModelType, ItemModelType> {
         return SectionedValues((sectionsWithItems ?? []).map({ ($0.section, $0.items) }))
     }
 }
