@@ -13,7 +13,7 @@ class PublicReposRootViewController : UIViewController {
     private let disposeBag = DisposeBag()
 
     private lazy var tableViewDatasourceCore =
-        ListViewDatasourceCore
+        ListViewDatasourceConfiguration
             .buildSingleSectionTableView(
                 datasource: viewModel.datasource,
                 withCellModelType: PublicRepoCell.self
@@ -33,7 +33,7 @@ class PublicReposRootViewController : UIViewController {
                     }()
                 }
             )
-            .core
+            .configuration
 
 //    private lazy var tableViewDatasourceCore = TableViewDatasourceCore
 //        .base(

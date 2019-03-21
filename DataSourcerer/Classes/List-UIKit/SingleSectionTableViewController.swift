@@ -7,7 +7,7 @@ where Cell.E == E {
 
     public typealias ValuesObservable = AnyObservable<Value>
     public typealias Cells = SingleSectionListViewState<Cell>
-    public typealias Core = ListViewDatasourceCore
+    public typealias Configuration = ListViewDatasourceConfiguration
         <Value, P, E, Cell, UITableViewCell, NoSection, NoSupplementaryItemModel, UIView,
         NoSupplementaryItemModel, UIView, UITableView>
 
@@ -39,13 +39,13 @@ where Cell.E == E {
         return viewIfLoaded?.window != nil && view.alpha > 0.001
     }
 
-    private let core: Core
-    public lazy var tableViewDatasource = TableViewDatasource(core: core, tableView: tableView)
+    private let configuration: Configuration
+    public lazy var tableViewDatasource = TableViewDatasource(configuration: configuration, tableView: tableView)
 
     private var tableViewDiffCalculator: SingleSectionTableViewDiffCalculator<Cell>?
 
-    public init(core: Core) {
-        self.core = core
+    public init(configuration: Configuration) {
+        self.configuration = configuration
         super.init(nibName: nil, bundle: nil)
     }
 

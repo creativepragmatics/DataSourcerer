@@ -3,47 +3,47 @@ import UIKit
 
 //open class SimpleCollectionViewDatasource<Value, Item: ItemModel, Section: SectionModel,
 //    SuppItem: SupplementaryItemModel>: NSObject, UICollectionViewDataSource, UICollectionViewDelegate {
-//    public typealias Core = ListViewDatasourceCore<Value, Item, UICollectionViewCell, SuppItem,
+//    public typealias Configuration = ListViewDatasourceConfiguration<Value, Item, UICollectionViewCell, SuppItem,
 //    UICollectionReusableView, Section, UICollectionView>
 //
-//    private let core: Core
+//    private let configuration: Configuration
 //
-//    public init(core: Core, collectionView: UICollectionView) {
-//        self.core = core
+//    public init(configuration: Configuration, collectionView: UICollectionView) {
+//        self.configuration = configuration
 //        registerItemViews(with: collectionView)
 //    }
 //
 //    private func registerItemViews(with collectionView: UICollectionView) {
-//        core.itemViewsProducer.registerAtContainingView(collectionView)
-//        core.supplementaryItemModelViewAdapter.registerAtContainingView(collectionView)
+//        configuration.itemViewsProducer.registerAtContainingView(collectionView)
+//        configuration.supplementaryItemModelViewAdapter.registerAtContainingView(collectionView)
 //    }
 //
 //    public func numberOfSections(in collectionView: UICollectionView) -> Int {
-//        return core.sections.sectionedValues.sectionsAndValues.count
+//        return configuration.sections.sectionedValues.sectionsAndValues.count
 //    }
 //
 //    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int)
 //        -> Int {
-//        return core.items(in: section).count
+//        return configuration.items(in: section).count
 //    }
 //
 //    public func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath)
 //        -> UICollectionViewCell {
 //
-//        return core.itemView(at: indexPath, in: collectionView)
+//        return configuration.itemView(at: indexPath, in: collectionView)
 //    }
 //
 //    public func indexTitles(for collectionView: UICollectionView) -> [String]? {
 //
-//        return core.sectionIndexTitles?()
+//        return configuration.sectionIndexTitles?()
 //    }
 //
 //    public func collectionView(_ collectionView: UICollectionView,
 // viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath)
 // -> UICollectionReusableView {
 //
-//        guard let view = core.supplementaryItemModelViews(at: indexPath, in: collectionView) else {
-//            assert(false, "set ListViewDatasourceCore.supplementaryItemModelAtIndexPath !")
+//        guard let view = configuration.supplementaryItemModelViews(at: indexPath, in: collectionView) else {
+//            assert(false, "set ListViewDatasourceConfiguration.supplementaryItemModelAtIndexPath !")
 //            return UICollectionReusableView()
 //        }
 //
@@ -53,7 +53,7 @@ import UIKit
 //    public func collectionView(_ collectionView: UICollectionView,
 // indexPathForIndexTitle title: String, at index: Int) -> IndexPath {
 //
-//        return core.indexPathForIndexTitle?(title, index) ?? IndexPath()
+//        return configuration.indexPathForIndexTitle?(title, index) ?? IndexPath()
 //    }
 //
 //}

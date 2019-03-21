@@ -24,10 +24,10 @@ can be setup with ~250 lines (see [Example](Example/DataSourcerer)).
 ## How does this work?
 
 DataSourcerer can be viewed as two parts:
-1. A very basic [FRP](https://en.wikipedia.org/wiki/Functional_reactive_programming) core
-2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They subscribe to the FRP core's structures to do work, like refreshing subviews.
+1. A very basic [FRP](https://en.wikipedia.org/wiki/Functional_reactive_programming) configuration
+2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They subscribe to the FRP configuration's structures to do work, like refreshing subviews.
 
-You may ask, who needs another FRP framework, why reinvent the wheel? There are various reasons this project has its own FRP core:
+You may ask, who needs another FRP framework, why reinvent the wheel? There are various reasons this project has its own FRP configuration:
 * Reducing references to projects that are not under our control
 * Keeping development cadence (e.g. with new Swift releases) independent of other projects
 * Avoid binding Datasourcerer users to a specific ReactiveSwift/RxSwift/ReactiveKit/... version (especially annoying for Cocoapods users)

@@ -5,7 +5,7 @@ import Foundation
 //
 // If you think a closure is missing (and you can therefore not use this struct
 // for your own purposes), please create an issue at the Github page.
-public struct ListViewDatasourceCore
+public struct ListViewDatasourceConfiguration
     <Value, P: ResourceParams, E, ItemModelType: ItemModel, ItemView: UIView,
     SectionModelType: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
     FooterItem: SupplementaryItemModel, FooterItemView: UIView,
@@ -99,10 +99,10 @@ ContainingView: UIView> where ItemModelType.E == E {
 
 }
 
-/// Initially, a ListViewDatasourceCore can do without headers and footers,
+/// Initially, a ListViewDatasourceConfiguration can do without headers and footers,
 /// because those can be added via functions.
 /// TODO: Add those functions
-public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItemModel,
+public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
     FooterItemView == UIView {
 
@@ -141,7 +141,7 @@ public struct ListStateAndSections<Value, ItemModelType: ItemModel, SectionModel
     }
 }
 
-public extension ListViewDatasourceCore {
+public extension ListViewDatasourceConfiguration {
 
     var sections: ListViewState<ItemModelType, SectionModelType> {
         return stateAndSections.value.listViewState
@@ -203,7 +203,7 @@ public extension ListViewDatasourceCore {
 
 }
 
-public extension ListViewDatasourceCore {
+public extension ListViewDatasourceConfiguration {
 
     func idiomatic<ViewProducer: ItemViewProducer>(
         noResultsText: String,
@@ -211,7 +211,7 @@ public extension ListViewDatasourceCore {
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer
         )
-        -> ListViewDatasourceCore<Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
+        -> ListViewDatasourceConfiguration<Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
         HeaderItem, HeaderItemView, FooterItem, FooterItemView, ContainingView>
         where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
         ViewProducer.ProducedView == ItemView,
@@ -227,7 +227,7 @@ public extension ListViewDatasourceCore {
                 noResultsViewProducer: noResultsViewProducer
             )
 
-            return ListViewDatasourceCore
+            return ListViewDatasourceConfiguration
                 <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView,
                 SectionModelType, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
                 ContainingView> (
@@ -256,16 +256,16 @@ public extension ListViewDatasourceCore {
     }
 }
 
-public typealias TableViewDatasourceCore
+public typealias TableViewDatasourceConfiguration
     <Value, P: ResourceParams, E, Cell: ItemModel, CellView: UITableViewCell,
     Section: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
     FooterItem: SupplementaryItemModel, FooterItemView: UIView>
     =
-    ListViewDatasourceCore
+    ListViewDatasourceConfiguration
     <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView,
     FooterItem, FooterItemView, UITableView> where Cell.E == E
 
-public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItemModel,
+public extension TableViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
     FooterItemView == UIView, ItemView == UITableViewCell {
 
@@ -275,11 +275,11 @@ public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem
         cellClass `class`: ItemView.Type,
         reuseIdentifier: String,
         configure: @escaping (ItemModelType, ItemView) -> Void)
-        -> TableViewDatasourceCore
+        -> TableViewDatasourceConfiguration
         <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
         NoSupplementaryItemModel, UIView> {
 
-            return TableViewDatasourceCore(
+            return TableViewDatasourceConfiguration(
                 datasource: datasource,
                 itemModelProducer: itemModelProducer,
                 itemViewsProducer: TableViewCellAdapter<ItemModelType>.tableViewCell(

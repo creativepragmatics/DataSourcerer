@@ -5,54 +5,54 @@ open class TableViewDatasource
     <Value, P: ResourceParams, E, CellModelType: ItemModel, SectionModelType: SectionModel,
     HeaderItem: SupplementaryItemModel, FooterItem: SupplementaryItemModel>: NSObject, UITableViewDelegate,
     UITableViewDataSource where HeaderItem.E == FooterItem.E, CellModelType.E == E {
-    public typealias Core = ListViewDatasourceCore
+    public typealias Configuration = ListViewDatasourceConfiguration
         <Value, P, E, CellModelType, UITableViewCell, SectionModelType, HeaderItem,
         UIView, FooterItem, UIView, UITableView>
 
-    public let core: Core
+    public let configuration: Configuration
     public weak var delegate: UITableViewDelegate?
     public weak var datasource: UITableViewDataSource?
 
     public var sections: ListViewState<CellModelType, SectionModelType> {
-        return core.sections
+        return configuration.sections
     }
 
-    public init(core: Core, tableView: UITableView) {
-        self.core = core
+    public init(configuration: Configuration, tableView: UITableView) {
+        self.configuration = configuration
         super.init()
 
-        core.itemViewsProducer.registerAtContainingView(tableView)
-        core.headerItemViewAdapter.registerAtContainingView(tableView)
-        core.footerItemViewAdapter.registerAtContainingView(tableView)
+        configuration.itemViewsProducer.registerAtContainingView(tableView)
+        configuration.headerItemViewAdapter.registerAtContainingView(tableView)
+        configuration.footerItemViewAdapter.registerAtContainingView(tableView)
     }
 
     public func numberOfSections(in tableView: UITableView) -> Int {
-        return core.sections.sectionsWithItems?.count ?? 0
+        return configuration.sections.sectionsWithItems?.count ?? 0
     }
 
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return core.section(at: section).items.count
+        return configuration.section(at: section).items.count
     }
 
     public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        return core.itemView(at: indexPath, in: tableView)
+        return configuration.itemView(at: indexPath, in: tableView)
     }
 
     public func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
-        return core.headerView(at: IndexPath(row: 0, section: section), in: tableView)
+        return configuration.headerView(at: IndexPath(row: 0, section: section), in: tableView)
     }
 
     public func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        return core.headerSize(at: IndexPath(row: 0, section: section),
+        return configuration.headerSize(at: IndexPath(row: 0, section: section),
                                in: tableView).height
     }
 
     public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return core.footerView(at: IndexPath(row: 0, section: section), in: tableView)
+        return configuration.footerView(at: IndexPath(row: 0, section: section), in: tableView)
     }
 
     public func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return core.footerSize(at: IndexPath(row: 0, section: section),
+        return configuration.footerSize(at: IndexPath(row: 0, section: section),
                                in: tableView).height
     }
 
@@ -60,7 +60,7 @@ open class TableViewDatasource
                           willDisplay cell: UITableViewCell,
                           forRowAt indexPath: IndexPath) {
 
-        core.willDisplayItem?(cell, core.item(at: indexPath), indexPath)
+        configuration.willDisplayItem?(cell, configuration.item(at: indexPath), indexPath)
 
         if let delegate = delegate,
             delegate.responds(to: #selector(tableView(_:willDisplay:forRowAt:))) {
@@ -72,8 +72,8 @@ open class TableViewDatasource
                           willDisplayHeaderView view: UIView,
                           forSection section: Int) {
         let indexPath = IndexPath(row: 0, section: section)
-        if let headerItem = core.headerItemAtIndexPath?(indexPath) {
-            core.willDisplayHeaderItem?(view, headerItem, indexPath)
+        if let headerItem = configuration.headerItemAtIndexPath?(indexPath) {
+            configuration.willDisplayHeaderItem?(view, headerItem, indexPath)
         }
 
         if let delegate = delegate,
@@ -86,8 +86,8 @@ open class TableViewDatasource
                           willDisplayFooterView view: UIView,
                           forSection section: Int) {
         let indexPath = IndexPath(row: 0, section: section)
-        if let footerItem = core.footerItemAtIndexPath?(indexPath) {
-                core.willDisplayFooterItem?(view, footerItem, indexPath)
+        if let footerItem = configuration.footerItemAtIndexPath?(indexPath) {
+                configuration.willDisplayFooterItem?(view, footerItem, indexPath)
         }
 
         if let delegate = delegate,
@@ -118,13 +118,13 @@ public extension TableViewDatasource where SectionModelType == NoSection {
 
     var cellsProperty: ShareableValueStream<SingleSectionListViewState<CellModelType>> {
 
-        return core.stateAndSections
+        return configuration.stateAndSections
             .map { SingleSectionListViewState<CellModelType>(sections: $0.listViewState) }
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
     }
 
     var cells: SingleSectionListViewState<CellModelType> {
-        return SingleSectionListViewState<CellModelType>(sections: core.sections)
+        return SingleSectionListViewState<CellModelType>(sections: configuration.sections)
     }
 }

@@ -1,6 +1,6 @@
 import Foundation
 
-public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItemModel,
+public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
     FooterItemView == UIView {
 
@@ -54,8 +54,8 @@ public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItemM
             let previous: ItemModelsProducerSelected
             let itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
 
-            public var core: ListViewDatasourceCore {
-                return ListViewDatasourceCore(
+            public var configuration: ListViewDatasourceConfiguration {
+                return ListViewDatasourceConfiguration(
                     datasource: previous.previous.datasource,
                     itemModelProducer: previous.itemModelsProducer,
                     itemViewsProducer: itemViewsProducer
@@ -68,14 +68,14 @@ public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItemM
 }
 
 /// Basic configuration for single section lists
-public extension ListViewDatasourceCore.Builder.DatasourceSelected
+public extension ListViewDatasourceConfiguration.Builder.DatasourceSelected
     where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
     FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
     SectionModelType == NoSection {
 
     func mapSingleSectionItemModels(
         _ itemModels: @escaping (Value) -> [ItemModelType]
-        ) -> ListViewDatasourceCore.Builder.ItemModelsProducerSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected {
         let itemModelsProducer = ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(
             baseValueToListViewStateTransformer:
             ValueToListViewStateTransformer<Value, ItemModelType, SectionModelType>(
@@ -83,7 +83,7 @@ public extension ListViewDatasourceCore.Builder.DatasourceSelected
             )
         )
 
-        return ListViewDatasourceCore<Value, P, E, ItemModelType, ItemView,
+        return ListViewDatasourceConfiguration<Value, P, E, ItemModelType, ItemView,
         SectionModelType, HeaderItem, HeaderItemView,
         FooterItem, FooterItemView,
         ContainingView>.Builder.ItemModelsProducerSelected(
@@ -94,7 +94,7 @@ public extension ListViewDatasourceCore.Builder.DatasourceSelected
 }
 
 /// Basic configuration for sectioned tableviews
-public extension ListViewDatasourceCore.Builder
+public extension ListViewDatasourceConfiguration.Builder
     where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
     FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
     ItemView == UITableViewCell, ContainingView == UITableView {
@@ -103,14 +103,14 @@ public extension ListViewDatasourceCore.Builder
         datasource: Datasource<Value, P, E>,
         withItemModelType: ItemModelType.Type,
         withSectionModelType: SectionModelType.Type
-        ) -> ListViewDatasourceCore.Builder.DatasourceSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.DatasourceSelected {
 
-        return ListViewDatasourceCore.Builder.DatasourceSelected(datasource: datasource)
+        return ListViewDatasourceConfiguration.Builder.DatasourceSelected(datasource: datasource)
     }
 
 }
 
-public extension ListViewDatasourceCore.Builder.ItemModelsProducerSelected
+public extension ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected
     where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
     FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
     ItemView == UITableViewCell, ContainingView == UITableView {
@@ -119,7 +119,7 @@ public extension ListViewDatasourceCore.Builder.ItemModelsProducerSelected
         cellType: UITableViewCell.Type,
         dequeueIdentifier: String,
         configure: @escaping (ItemModelType, UITableViewCell) -> Void
-        ) -> ListViewDatasourceCore.Builder.ItemViewsProducerSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected {
 
         let cellProducer = SimpleTableViewCellProducer.classAndIdentifier(
             class: cellType,
@@ -129,7 +129,7 @@ public extension ListViewDatasourceCore.Builder.ItemModelsProducerSelected
 
         let itemViewsProducer = ItemViewsProducer(simpleWithViewProducer: cellProducer)
 
-        return ListViewDatasourceCore.Builder.ItemViewsProducerSelected(
+        return ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected(
             previous: self,
             itemViewsProducer: itemViewsProducer
         )
@@ -139,7 +139,7 @@ public extension ListViewDatasourceCore.Builder.ItemModelsProducerSelected
         nib: UINib,
         dequeueIdentifier: String,
         configure: @escaping (ItemModelType, UITableViewCell) -> Void
-        ) -> ListViewDatasourceCore.Builder.ItemViewsProducerSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected {
 
         let cellProducer = SimpleTableViewCellProducer.nibAndIdentifier(
             nib: nib,
@@ -149,7 +149,7 @@ public extension ListViewDatasourceCore.Builder.ItemModelsProducerSelected
 
         let itemViewsProducer = ItemViewsProducer(simpleWithViewProducer: cellProducer)
 
-        return ListViewDatasourceCore.Builder.ItemViewsProducerSelected(
+        return ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected(
             previous: self,
             itemViewsProducer: itemViewsProducer
         )
@@ -163,7 +163,7 @@ public extension ListViewDatasourceCore.Builder.ItemModelsProducerSelected
 }
 
 /// Basic configuration for single section tableviews
-public extension ListViewDatasourceCore
+public extension ListViewDatasourceConfiguration
     where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
     FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
     ItemView == UITableViewCell, ContainingView == UITableView,
@@ -172,9 +172,9 @@ public extension ListViewDatasourceCore
     public static func buildSingleSectionTableView(
         datasource: Datasource<Value, P, E>,
         withCellModelType: ItemModelType.Type
-        ) -> ListViewDatasourceCore.Builder.DatasourceSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.DatasourceSelected {
 
-        return ListViewDatasourceCore.Builder.DatasourceSelected(datasource: datasource)
+        return ListViewDatasourceConfiguration.Builder.DatasourceSelected(datasource: datasource)
     }
 
 }
