@@ -7,8 +7,6 @@ where Cell.E == E {
 
     public typealias ValuesObservable = AnyObservable<Value>
     public typealias Cells = SingleSectionListViewState<Cell>
-    public typealias TableViewDatasource = SimpleTableViewDatasource
-        <Value, P, E, Cell, NoSection, NoSupplementaryItemModel, NoSupplementaryItemModel>
     public typealias Core = ListViewDatasourceCore
         <Value, P, E, Cell, UITableViewCell, NoSection, NoSupplementaryItemModel, UIView,
         NoSupplementaryItemModel, UIView, UITableView>

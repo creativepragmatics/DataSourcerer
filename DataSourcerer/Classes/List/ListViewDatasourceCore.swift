@@ -107,9 +107,7 @@ FooterItemView == UIView {
         datasource: Datasource<Value, P, E>,
         itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
         itemViewAdapter: ItemViewsProducer<ItemModelType, ItemView, ContainingView>)
-        -> ListViewDatasourceCore
-        <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
-        NoSupplementaryItemModel, UIView, ContainingView> {
+        -> ListViewDatasourceCore {
 
             return ListViewDatasourceCore(
                 datasource: datasource,

@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-open class SimpleTableViewDatasource
+open class TableViewDatasource
     <Value, P: ResourceParams, E, CellModelType: ItemModel, SectionModelType: SectionModel,
     HeaderItem: SupplementaryItemModel, FooterItem: SupplementaryItemModel>: NSObject, UITableViewDelegate,
     UITableViewDataSource where HeaderItem.E == FooterItem.E, CellModelType.E == E {
@@ -114,7 +114,7 @@ open class SimpleTableViewDatasource
 
 }
 
-public extension SimpleTableViewDatasource where SectionModelType == NoSection {
+public extension TableViewDatasource where SectionModelType == NoSection {
 
     var cellsProperty: ShareableValueStream<SingleSectionListViewState<CellModelType>> {
 
