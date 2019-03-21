@@ -34,6 +34,15 @@ class PublicReposRootViewController : UIViewController {
                 }
             )
             .configurationForFurtherCustomization
+            .onDidSelectItem { [weak self] itemSelection in
+                itemSelection.containingView.deselectRow(at: itemSelection.indexPath, animated: true)
+                switch itemSelection.itemModel {
+                case let .repo(repo):
+                    self?.repoSelected(repo: repo)
+                case .error:
+                    return
+                }
+            }
             .showLoadingAndErrorStates(
                 noResultsText: "No results",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },

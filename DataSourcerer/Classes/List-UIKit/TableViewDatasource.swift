@@ -98,6 +98,24 @@ open class TableViewDatasource
         }
     }
 
+    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+
+        guard let cellView = tableView.cellForRow(at: indexPath) else { return }
+
+        let itemSelection = Configuration.ItemSelection(
+            itemModel: configuration.item(at: indexPath),
+            view: cellView,
+            indexPath: indexPath,
+            containingView: tableView
+        )
+        configuration.didSelectItem?(itemSelection)
+
+        if let delegate = delegate,
+            delegate.responds(to: #selector(tableView(_:didSelectRowAt:))) {
+            delegate.tableView!(tableView, didSelectRowAt: indexPath)
+        }
+    }
+
     open override func responds(to aSelector: Selector!) -> Bool {
         return super.responds(to: aSelector)
             || delegate?.responds(to: aSelector) ?? false

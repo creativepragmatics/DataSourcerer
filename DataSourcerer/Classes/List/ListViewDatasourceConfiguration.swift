@@ -16,6 +16,12 @@ public struct ListViewDatasourceConfiguration
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
     public typealias FooterItemViewAdapter = ItemViewsProducer<FooterItem, FooterItemView, ContainingView>
     public typealias StateAndSections = ListStateAndSections<ListState, ItemModelType, SectionModelType>
+    public struct ItemSelection {
+        public let itemModel: ItemModelType
+        public let view: ItemView
+        public let indexPath: IndexPath
+        public let containingView: ContainingView
+    }
 
     // MARK: - Definitions based on UITableViewDatasource & UICollectionViewDatasource
     public typealias HeaderItemAtIndexPath = (IndexPath) -> HeaderItem?
@@ -24,6 +30,7 @@ public struct ListViewDatasourceConfiguration
     public typealias TitleForFooterInSection = (Int) -> String?
     public typealias IndexTitles = () -> [String]?
     public typealias IndexPathForIndexTitle = (_ title: String, _ index: Int) -> IndexPath
+    public typealias DidSelectItem = (ItemSelection) -> Void
 
     // MARK: - Definitions based on UITableViewDelegate & UICollectionViewDelegate
     public typealias WillDisplayItem = (ItemView, ItemModelType, IndexPath) -> Void
@@ -48,6 +55,7 @@ public struct ListViewDatasourceConfiguration
     public var indexPathForIndexTitle: IndexPathForIndexTitle?
 
     // MARK: - Vars based on UITableViewDelegate & UICollectionViewDelegate
+    public var didSelectItem: DidSelectItem?
     public var willDisplayItem: WillDisplayItem?
     public var willDisplayHeaderItem: WillDisplayHeaderItem?
     public var willDisplayFooterItem: WillDisplayFooterItem?
@@ -63,6 +71,7 @@ public struct ListViewDatasourceConfiguration
                 titleForFooterInSection: TitleForFooterInSection?,
                 sectionIndexTitles: IndexTitles?,
                 indexPathForIndexTitle: IndexPathForIndexTitle?,
+                didSelectItem: DidSelectItem?,
                 willDisplayItem: WillDisplayItem?,
                 willDisplayHeaderItem: WillDisplayHeaderItem?,
                 willDisplayFooterItem: WillDisplayFooterItem?) {
@@ -93,6 +102,7 @@ public struct ListViewDatasourceConfiguration
         self.titleForFooterInSection = titleForFooterInSection
         self.sectionIndexTitles = sectionIndexTitles
         self.indexPathForIndexTitle = indexPathForIndexTitle
+        self.didSelectItem = didSelectItem
         self.willDisplayItem = willDisplayItem
         self.willDisplayHeaderItem = willDisplayHeaderItem
         self.willDisplayFooterItem = willDisplayFooterItem
@@ -125,6 +135,7 @@ public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplemen
             titleForFooterInSection: nil,
             sectionIndexTitles: nil,
             indexPathForIndexTitle: nil,
+            didSelectItem: nil,
             willDisplayItem: nil,
             willDisplayHeaderItem: nil,
             willDisplayFooterItem: nil
@@ -206,19 +217,33 @@ public extension ListViewDatasourceConfiguration {
 
 public extension ListViewDatasourceConfiguration {
 
+    func onDidSelectItem(_ didSelectItem: @escaping DidSelectItem) -> ListViewDatasourceConfiguration {
+        var mutableSelf = self
+        mutableSelf.didSelectItem = didSelectItem
+        return mutableSelf
+    }
+}
+
+public extension ListViewDatasourceConfiguration {
+
+    public typealias ConfigurationWithLoadingAndErrorStates = ListViewDatasourceConfiguration
+        <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
+        HeaderItem, HeaderItemView, HeaderItemError, FooterItem, FooterItemView, FooterItemError,
+        ContainingView>
+
     func showLoadingAndErrorStates<ViewProducer: ItemViewProducer>(
         noResultsText: String,
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer
         )
-        -> ListViewDatasourceConfiguration
-        <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
-        HeaderItem, HeaderItemView, HeaderItemError, FooterItem, FooterItemView, FooterItemError,
-        ContainingView>
+        -> ConfigurationWithLoadingAndErrorStates
         where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
         ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
+
+
+
 
             let idiomaticItemModelsProducer = self.itemModelProducer.showLoadingAndErrorStates(
                 noResultsText: noResultsText
@@ -229,6 +254,27 @@ public extension ListViewDatasourceConfiguration {
                 errorViewProducer: errorViewProducer,
                 noResultsViewProducer: noResultsViewProducer
             )
+
+            let idiomaticDidSelectItem: (ConfigurationWithLoadingAndErrorStates.DidSelectItem)?
+            if let didSelectItem = self.didSelectItem {
+                idiomaticDidSelectItem = { itemSelection in
+                    switch itemSelection.itemModel {
+                    case let .baseItem(baseItem):
+                        let baseItemSelection = ItemSelection(
+                            itemModel: baseItem,
+                            view: itemSelection.view,
+                            indexPath: itemSelection.indexPath,
+                            containingView: itemSelection.containingView
+                        )
+                        didSelectItem(baseItemSelection)
+                    case .loading, .error, .noResults:
+                        // Currently, no click handling implemented.
+                        break
+                    }
+                }
+            } else {
+                idiomaticDidSelectItem = nil
+            }
 
             return ListViewDatasourceConfiguration
                 <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
@@ -245,6 +291,7 @@ public extension ListViewDatasourceConfiguration {
                     titleForFooterInSection: titleForFooterInSection,
                     sectionIndexTitles: sectionIndexTitles,
                     indexPathForIndexTitle: indexPathForIndexTitle,
+                    didSelectItem: idiomaticDidSelectItem,
                     willDisplayItem: { itemView, item, indexPath in
                         switch item {
                         case let .baseItem(datasourceItem):
@@ -252,7 +299,7 @@ public extension ListViewDatasourceConfiguration {
                         case .loading, .error, .noResults:
                             break
                         }
-                },
+                    },
                     willDisplayHeaderItem: willDisplayHeaderItem,
                     willDisplayFooterItem: willDisplayFooterItem
             )
