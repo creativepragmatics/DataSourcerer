@@ -60,6 +60,10 @@ class PublicReposRootViewController : UIViewController {
                 }
             )
             .singleSectionTableViewController
+            .onPullToRefresh { [weak self] in
+                self?.viewModel.datasource.refresh()
+                self?.tableViewController.refreshControl?.beginRefreshing()
+            }
 
     init() {
         super.init(nibName: nil, bundle: nil)
@@ -88,22 +92,9 @@ class PublicReposRootViewController : UIViewController {
 
         tableViewController.didMove(toParent: self)
 
-        setupObservers()
-    }
-
-    private func setupObservers() {
-
-        tableViewController.onPullToRefresh = { [weak self] in
-            self?.viewModel.datasource.refresh()
-            self?.tableViewController.refreshControl?.beginRefreshing()
-        }
-
-        viewModel.datasource.state
-            .loadingEnded()
-            .observeOnUIThread()
-            .observe { [weak self] _ in
-                self?.tableViewController.refreshControl?.endRefreshing()
-            }
+        // Hide pull to refresh when loading finishes
+        tableViewController.refreshControl?.sourcerer
+            .endRefreshingOnLoadingEnded(viewModel.datasource)
             .disposed(by: disposeBag)
     }
 

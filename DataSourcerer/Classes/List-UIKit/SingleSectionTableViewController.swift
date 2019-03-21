@@ -35,7 +35,7 @@ open class SingleSectionTableViewController
     public var estimatedRowHeight: CGFloat = 75
     public var supportPullToRefresh = true
     public var animateTableViewUpdates = true
-    public var onPullToRefresh: (() -> Void)?
+    public var pullToRefresh: (() -> Void)?
 
     open var isViewVisible: Bool {
         return viewIfLoaded?.window != nil && view.alpha > 0.001
@@ -81,7 +81,7 @@ open class SingleSectionTableViewController
 
         if supportPullToRefresh {
             let refreshControl = UIRefreshControl()
-            refreshControl.addTarget(self, action: #selector(pullToRefresh), for: .valueChanged)
+            refreshControl.addTarget(self, action: #selector(doPullToRefresh), for: .valueChanged)
             tableView.addSubview(refreshControl)
             tableView.sendSubviewToBack(refreshControl)
             self.refreshControl = refreshControl
@@ -127,8 +127,15 @@ open class SingleSectionTableViewController
     }
 
     @objc
-    func pullToRefresh() {
-        onPullToRefresh?()
+    func doPullToRefresh() {
+        pullToRefresh?()
+    }
+
+    public func onPullToRefresh(_ pullToRefresh: @escaping () -> Void)
+        -> SingleSectionTableViewController {
+            
+        self.pullToRefresh = pullToRefresh
+        return self
     }
 
 }
