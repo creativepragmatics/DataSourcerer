@@ -2,22 +2,22 @@ import Foundation
 
 public struct LoadImpulse<P: ResourceParams>: Equatable {
 
-    public var parameters: P
+    public var params: P
     public let skipIfResultAvailable: Bool
 
-    public init(parameters: P, skipIfResultAvailable: Bool = false) {
-        self.parameters = parameters
+    public init(params: P, skipIfResultAvailable: Bool = false) {
+        self.params = params
         self.skipIfResultAvailable = skipIfResultAvailable
     }
 
-    public func with(parameters: P) -> LoadImpulse<P> {
+    public func with(params: P) -> LoadImpulse<P> {
         var modified = self
-        modified.parameters = parameters
+        modified.params = params
         return modified
     }
 
     func isCacheCompatible(_ candidate: LoadImpulse<P>) -> Bool {
-        return parameters.isCacheCompatible(candidate.parameters)
+        return params.isCacheCompatible(candidate.params)
     }
 }
 

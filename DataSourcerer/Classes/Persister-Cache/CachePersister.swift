@@ -53,7 +53,7 @@ public struct CachePersister<Value_: Codable, P_: ResourceParams & Codable, E_: 
 
         do {
             let state = try storage.object(forKey: "latestValue")
-            if (state.loadImpulse?.parameters.isCacheCompatible(parameters) ?? false) {
+            if (state.loadImpulse?.params.isCacheCompatible(parameters) ?? false) {
                 return state
             } else {
                 return nil

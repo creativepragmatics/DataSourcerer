@@ -16,7 +16,7 @@ public class TestResourceStatePersister<Value_: Codable, P_: ResourceParams & Co
 
     public func load(_ parameters: P) -> PersistedState? {
         guard let state = self.state,
-            state.loadImpulse?.parameters.isCacheCompatible(parameters) ?? false else {
+            state.loadImpulse?.params.isCacheCompatible(parameters) ?? false else {
             return nil
         }
 

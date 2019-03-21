@@ -4,7 +4,7 @@ import Foundation
 class PublicReposViewModel {
 
     lazy var loadImpulseEmitter: RecurringLoadImpulseEmitter<NoResourceParams> = {
-        let initialImpulse = LoadImpulse(parameters: NoResourceParams())
+        let initialImpulse = LoadImpulse(params: NoResourceParams())
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
@@ -34,12 +34,5 @@ class PublicReposViewModel {
             )
             .datasource
     }()
-
-    func refresh() {
-        let loadImpulse = LoadImpulse(parameters: NoResourceParams())
-        DispatchQueue(label: "PublicReposViewModel.refresh").async { [weak self] in
-            self?.loadImpulseEmitter.emit(loadImpulse)
-        }
-    }
 
 }

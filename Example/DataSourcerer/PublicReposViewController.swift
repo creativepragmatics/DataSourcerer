@@ -94,7 +94,7 @@ class PublicReposRootViewController : UIViewController {
     private func setupObservers() {
 
         tableViewController.onPullToRefresh = { [weak self] in
-            self?.viewModel.refresh()
+            self?.viewModel.datasource.refresh()
             self?.tableViewController.refreshControl?.beginRefreshing()
         }
 

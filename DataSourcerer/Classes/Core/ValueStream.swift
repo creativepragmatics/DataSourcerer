@@ -67,7 +67,7 @@ public extension ValueStream {
         self.init { sendState, disposable in
 
             disposable += loadImpulseEmitter.observe { loadImpulse in
-                guard let cached = persister.load(loadImpulse.parameters) else {
+                guard let cached = persister.load(loadImpulse.params) else {
                     let error = ResourceState<Value, P, E>.error(error: cacheLoadError,
                                                                  loadImpulse: loadImpulse,
                                                                  fallbackValueBox: nil)

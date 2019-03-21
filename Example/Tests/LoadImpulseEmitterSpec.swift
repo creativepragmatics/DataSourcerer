@@ -9,7 +9,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
         describe("SimpleLoadImpulseEmitter") {
             it("should send initial load impulse to an observer") {
 
-                let initialImpulse = LoadImpulse(parameters: "1")
+                let initialImpulse = LoadImpulse(params: "1")
                 let emitter = SimpleLoadImpulseEmitter<String>(initialImpulse: initialImpulse)
 
                 var observedImpulses: [LoadImpulse<String>] = []
@@ -30,8 +30,8 @@ class LoadImpulseEmitterSpec: QuickSpec {
                     observedImpulses.append(loadImpulse)
                 })
 
-                let impulses = [LoadImpulse(parameters: "1"), LoadImpulse(parameters: "2")]
-                impulses.forEach({ emitter.emit($0) })
+                let impulses = [LoadImpulse(params: "1"), LoadImpulse(params: "2")]
+                impulses.forEach({ emitter.emit(loadImpulse: $0, on: .current) })
 
                 expect(observedImpulses) == impulses
             }
@@ -46,8 +46,8 @@ class LoadImpulseEmitterSpec: QuickSpec {
                 })
                 _ = emitter.observe({ _ in })
 
-                let impulses = [LoadImpulse(parameters: "1"), LoadImpulse(parameters: "2")]
-                impulses.forEach({ emitter.emit($0) })
+                let impulses = [LoadImpulse(params: "1"), LoadImpulse(params: "2")]
+                impulses.forEach({ emitter.emit(loadImpulse: $0, on: .current) })
 
                 expect(observedImpulses) == impulses
             }
@@ -59,7 +59,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
                 let testScope: () -> Disposable = {
                     let innerStr = NSMutableString(string: "")
                     let disposable = emitter.observe({ loadImpulse in
-                        innerStr.append("\(loadImpulse.parameters)")
+                        innerStr.append("\(loadImpulse.params)")
                     })
                     testStr = innerStr
                     return disposable
@@ -67,9 +67,9 @@ class LoadImpulseEmitterSpec: QuickSpec {
 
                 let disposable = testScope()
 
-                emitter.emit(LoadImpulse(parameters: "1"))
+                emitter.emit(loadImpulse: LoadImpulse(params: "1"), on: .current)
                 expect(testStr) == "1"
-                emitter.emit(LoadImpulse(parameters: "2"))
+                emitter.emit(loadImpulse: LoadImpulse(params: "2"), on: .current)
                 expect(testStr) == "12"
 
                 disposable.dispose()
