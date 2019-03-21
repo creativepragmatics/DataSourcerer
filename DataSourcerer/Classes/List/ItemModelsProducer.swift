@@ -57,19 +57,19 @@ where ItemModelType.E == E {
         return stateToListViewState(state, valueToListViewStateTransformer)
     }
 
-    public func idiomatic(noResultsText: String)
+    public func showLoadingAndErrorStates(noResultsText: String)
         -> ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
             return ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType>(
                 stateToListViewState: { state, valueToIdiomaticListViewStateTransformer
                     -> ListViewState<IdiomaticItemModel<ItemModelType>, SectionModelType> in
 
-                    return state.idiomaticListViewState(
+                    return state.addLoadingAndErrorStates(
                         valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
                         noResultsText: noResultsText
                     )
                 },
-                valueToListViewStateTransformer: valueToListViewStateTransformer.idiomatic()
+                valueToListViewStateTransformer: valueToListViewStateTransformer.showLoadingAndErrorStates()
             )
     }
 
@@ -94,7 +94,7 @@ public struct ValueToListViewStateTransformer
         }
     }
 
-    public func idiomatic()
+    public func showLoadingAndErrorStates()
         -> ValueToListViewStateTransformer<Value, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
             return ValueToListViewStateTransformer

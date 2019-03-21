@@ -58,7 +58,7 @@ public extension ListViewDatasourceConfiguration
             let previous: ItemModelsProducerSelected
             let itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
 
-            public var configuration: ListViewDatasourceConfiguration {
+            public var configurationForFurtherCustomization: ListViewDatasourceConfiguration {
                 return ListViewDatasourceConfiguration(
                     datasource: previous.previous.datasource,
                     itemModelProducer: previous.itemModelsProducer,
@@ -120,7 +120,7 @@ public extension ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelec
     ItemView == UITableViewCell,
     ContainingView == UITableView {
 
-    func cellWithClass(
+    func renderWithCellClass(
         cellType: UITableViewCell.Type,
         dequeueIdentifier: String,
         configure: @escaping (ItemModelType, UITableViewCell) -> Void
@@ -140,7 +140,7 @@ public extension ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelec
         )
     }
 
-    func cellWithNib(
+    func renderWithNib(
         nib: UINib,
         dequeueIdentifier: String,
         configure: @escaping (ItemModelType, UITableViewCell) -> Void
@@ -198,7 +198,7 @@ public extension ListViewDatasourceConfiguration.Builder.Complete
     var singleSectionTableViewController:
         SingleSectionTableViewController
         <Value, P, E, ItemModelType, HeaderItem, HeaderItemError, FooterItem, FooterItemError> {
-        return SingleSectionTableViewController(configuration: self.configuration)
+        return SingleSectionTableViewController(configuration: self.configurationForFurtherCustomization)
     }
 
 }

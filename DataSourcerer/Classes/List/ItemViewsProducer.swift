@@ -41,7 +41,7 @@ public extension ItemViewsProducer {
         )
     }
 
-    func idiomatic<ViewProducer: ItemViewProducer>(
+    func showLoadingAndErrorStates<ViewProducer: ItemViewProducer>(
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer)

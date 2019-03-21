@@ -15,36 +15,31 @@ An idiomatic tableview that displays data from an API call and supports:
 * pull-to-refresh, 
 * on-disk-caching, 
 * clear-view-on-logout,
-* a loading indicator, 
-* a "no results" cell, and 
-* an error cell 
+* a loading indicator if no cached data is shown (e.g. on first app start), 
+* displaying "no results" in a dedicated cell if there aren't any, 
+* displaying errors in a dedicated cell
 
-can be setup with ~250 lines (see [Example](Example/DataSourcerer)).
+can be setup with ~100 lines of code that you have to write (see [Example](Example/DataSourcerer)).
+
+## Usage
+
+The best way to use this library is to create a `Datasource`, and connect it to one or more 
+Table/CollectionViewControllers by using the builder pattern provided by  `ListViewDatasourceConfiguration`. 
+Features, like showing errors as items/cells, are added in this configuration before creating the actual Table/CollectionViewController.
+
+You can subscribe to changes in the `Datasource` e.g. for stopping the Pull to Refresh indicator after loading is done. 
 
 ## How does this work?
 
 DataSourcerer can be viewed as two parts:
-1. A very basic [FRP](https://en.wikipedia.org/wiki/Functional_reactive_programming) configuration
-2. View adapters like a generic [List Datsource Core](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and concrete [idiomatic](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift). [implementations](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionListViewDatasourceCore.swift). They subscribe to the FRP configuration's structures to do work, like refreshing subviews.
+1. A very basic [FRP](https://en.wikipedia.org/wiki/Functional_reactive_programming) framework
+2. View adapters that subscribe to the FRP framework's structures to do work, like refreshing subviews. The adapters are split into many structs and classes, but Builder patterns added at the crucial points should provide good usability for the most common usage scenarios. 
 
 You may ask, who needs another FRP framework, why reinvent the wheel? There are various reasons this project has its own FRP configuration:
 * Reducing references to projects that are not under our control
 * Keeping development cadence (e.g. with new Swift releases) independent of other projects
 * Avoid binding Datasourcerer users to a specific ReactiveSwift/RxSwift/ReactiveKit/... version (especially annoying for Cocoapods users)
-
-## Idiomatic
-
-> You keep using that word. I don't think you know what it means.
->
-> — Inigo Montoya, The Princess Bride, on Vizzini's use of the word ~"idiomatic"~ "inconceivable".
-
-Classes whose name starts with `Idiomatic` have behavior encoded that might or might not suit your needs. If an idiomatic class doesn't have the required behavior, it can be subclassed or just copy/pasted/changed.
-
-For example: The [IdiomaticCollectionViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticCollectionViewDatasource.swift) expects its items to conform to `IdiomaticItemModel` which has to implement `loadingCell`, `noResultsCell`, and `errorCell(_)`. Doing so, the CollectionViewDatasource itself is able to decide when it will show the loading state, or a "no results" text, taking that load off your shoulders. 
-
-If your use case is more complex than that, you will want to implement your own `UICollectionViewDataSource`. You might still be able to use [IdiomaticListViewDatasourceCore](DataSourcerer/Classes/List/IdiomaticListViewDatasourceCore.swift) and profit from the builder pattern implemented there.
-
-The same applies to the [IdiomaticSingleSectionTableViewDatasource](DataSourcerer/Classes/List-UIKit/IdiomaticSingleSectionTableViewDatasource.swift), of course, and other upcoming structures.
+* The self-built approach seems to be easier to debug, because it has way less levels of abstraction due to the reduced feature set.
 
 ## Is it tested?
 

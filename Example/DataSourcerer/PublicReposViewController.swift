@@ -21,7 +21,7 @@ class PublicReposRootViewController : UIViewController {
             .mapSingleSectionItemModels { response -> [PublicRepoCell] in
                 return response.map { PublicRepoCell.repo($0) }
             }
-            .cellWithClass(
+            .renderWithCellClass(
                 cellType: UITableViewCell.self,
                 dequeueIdentifier: "cell",
                 configure: { repo, cellView in
@@ -33,8 +33,8 @@ class PublicReposRootViewController : UIViewController {
                     }()
                 }
             )
-            .configuration
-            .idiomatic(
+            .configurationForFurtherCustomization
+            .showLoadingAndErrorStates(
                 noResultsText: "No results",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
                 errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in

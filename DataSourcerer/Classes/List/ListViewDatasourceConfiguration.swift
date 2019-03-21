@@ -206,7 +206,7 @@ public extension ListViewDatasourceConfiguration {
 
 public extension ListViewDatasourceConfiguration {
 
-    func idiomatic<ViewProducer: ItemViewProducer>(
+    func showLoadingAndErrorStates<ViewProducer: ItemViewProducer>(
         noResultsText: String,
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
@@ -220,11 +220,11 @@ public extension ListViewDatasourceConfiguration {
         ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
 
-            let idiomaticItemModelsProducer = self.itemModelProducer.idiomatic(
+            let idiomaticItemModelsProducer = self.itemModelProducer.showLoadingAndErrorStates(
                 noResultsText: noResultsText
             )
 
-            let idiomaticItemViewAdapter = self.itemViewsProducer.idiomatic(
+            let idiomaticItemViewAdapter = self.itemViewsProducer.showLoadingAndErrorStates(
                 loadingViewProducer: loadingViewProducer,
                 errorViewProducer: errorViewProducer,
                 noResultsViewProducer: noResultsViewProducer
