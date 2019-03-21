@@ -2,14 +2,16 @@ import Dwifft
 import Foundation
 
 open class SingleSectionTableViewController
-<Value: Equatable, P: ResourceParams, E, Cell: ItemModel>: UIViewController
-where Cell.E == E {
+    <Value: Equatable, P: ResourceParams, E, CellModelType: ItemModel, HeaderItem: SupplementaryItemModel,
+    HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemError>
+    : UIViewController
+    where CellModelType.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError {
 
     public typealias ValuesObservable = AnyObservable<Value>
-    public typealias Cells = SingleSectionListViewState<Cell>
+    public typealias Cells = SingleSectionListViewState<CellModelType>
     public typealias Configuration = ListViewDatasourceConfiguration
-        <Value, P, E, Cell, UITableViewCell, NoSection, NoSupplementaryItemModel, UIView,
-        NoSupplementaryItemModel, UIView, UITableView>
+        <Value, P, E, CellModelType, UITableViewCell, NoSection, HeaderItem, UIView, HeaderItemError,
+        FooterItem, UIView, FooterItemError, UITableView>
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()
@@ -40,9 +42,12 @@ where Cell.E == E {
     }
 
     private let configuration: Configuration
-    public lazy var tableViewDatasource = TableViewDatasource(configuration: configuration, tableView: tableView)
+    public lazy var tableViewDatasource = TableViewDatasource(
+        configuration: configuration,
+        tableView: tableView
+    )
 
-    private var tableViewDiffCalculator: SingleSectionTableViewDiffCalculator<Cell>?
+    private var tableViewDiffCalculator: SingleSectionTableViewDiffCalculator<CellModelType>?
 
     public init(configuration: Configuration) {
         self.configuration = configuration
@@ -110,13 +115,15 @@ where Cell.E == E {
         }
     }
 
-    private func createTableViewDiffCalculator(initial: [Cell])
-        -> SingleSectionTableViewDiffCalculator<Cell> {
-        let calculator = SingleSectionTableViewDiffCalculator<Cell>(tableView: tableView,
-                                                                    initialRows: initial)
-        calculator.insertionAnimation = .fade
-        calculator.deletionAnimation = .fade
-        return calculator
+    private func createTableViewDiffCalculator(initial: [CellModelType])
+        -> SingleSectionTableViewDiffCalculator<CellModelType> {
+            let calculator = SingleSectionTableViewDiffCalculator<CellModelType>(
+                tableView: tableView,
+                initialRows: initial
+            )
+            calculator.insertionAnimation = .fade
+            calculator.deletionAnimation = .fade
+            return calculator
     }
 
     @objc

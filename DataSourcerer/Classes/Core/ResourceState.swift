@@ -104,7 +104,7 @@ public protocol ResourceError: Error, Equatable {
     init(message: StateErrorMessage)
 }
 
-public struct NoStateError: ResourceError {
+public struct NoResourceError: ResourceError {
 
     public var errorMessage: StateErrorMessage { return .default }
 

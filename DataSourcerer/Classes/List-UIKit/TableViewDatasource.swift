@@ -3,11 +3,13 @@ import UIKit
 
 open class TableViewDatasource
     <Value, P: ResourceParams, E, CellModelType: ItemModel, SectionModelType: SectionModel,
-    HeaderItem: SupplementaryItemModel, FooterItem: SupplementaryItemModel>: NSObject, UITableViewDelegate,
-    UITableViewDataSource where HeaderItem.E == FooterItem.E, CellModelType.E == E {
+    HeaderItem: SupplementaryItemModel, HeaderItemError, FooterItem: SupplementaryItemModel,
+    FooterItemError>: NSObject, UITableViewDelegate,
+    UITableViewDataSource where HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError,
+    CellModelType.E == E {
     public typealias Configuration = ListViewDatasourceConfiguration
         <Value, P, E, CellModelType, UITableViewCell, SectionModelType, HeaderItem,
-        UIView, FooterItem, UIView, UITableView>
+        UIView, HeaderItemError, FooterItem, UIView, FooterItemError, UITableView>
 
     public let configuration: Configuration
     public weak var delegate: UITableViewDelegate?
@@ -44,7 +46,7 @@ open class TableViewDatasource
 
     public func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         return configuration.headerSize(at: IndexPath(row: 0, section: section),
-                               in: tableView).height
+                                        in: tableView).height
     }
 
     public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
@@ -53,7 +55,7 @@ open class TableViewDatasource
 
     public func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         return configuration.footerSize(at: IndexPath(row: 0, section: section),
-                               in: tableView).height
+                                        in: tableView).height
     }
 
     public func tableView(_ tableView: UITableView,

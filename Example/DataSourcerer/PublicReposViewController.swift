@@ -12,7 +12,7 @@ class PublicReposRootViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
-    private lazy var tableViewDatasourceCore =
+    private lazy var tableViewController =
         ListViewDatasourceConfiguration
             .buildSingleSectionTableView(
                 datasource: viewModel.datasource,
@@ -34,48 +34,23 @@ class PublicReposRootViewController : UIViewController {
                 }
             )
             .configuration
-
-//    private lazy var tableViewDatasourceCore = TableViewDatasourceCore
-//        .base(
-//            datasource: self.viewModel.datasource,
-//            itemModelProducer: ItemModelsProducer
-//                <PublicReposResponse, NoResourceParams, APIError, PublicRepoCell, NoSection>
-//                .withSingleSectionItems { response
-//                    -> [PublicRepoCell] in
-//                    return response.map { PublicRepoCell.repo($0) }
-//                },
-//            itemViewsProducer: TableViewCellAdapter<PublicRepoCell>.tableViewCell(
-//                withCellClass: UITableViewCell.self,
-//                reuseIdentifier: "cell", configure: { repo, cellView in
-//                    cellView.textLabel?.text = {
-//                        switch repo {
-//                        case let .repo(repo): return repo.name
-//                        case .error: return nil
-//                        }
-//                    }()
-//                }
-//            )
-//        )
-//        .idiomatic(
-//            noResultsText: "No results",
-//            loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
-//            errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in
-//                guard case let .error(error) = cell else { return ErrorTableViewCell() }
-//                let tableViewCell = ErrorTableViewCell()
-//                tableViewCell.content = error.errorMessage
-//                return tableViewCell
-//            },
-//            noResultsViewProducer: SimpleTableViewCellProducer.instantiate { _ in
-//                let tableViewCell = ErrorTableViewCell()
-//                tableViewCell.content = StateErrorMessage
-//                    .message("Strangely, there are no public repos on Github.")
-//                return tableViewCell
-//            }
-//        )
-
-    private lazy var tableViewController = SingleSectionTableViewController(
-        core: tableViewDatasourceCore
-    )
+            .idiomatic(
+                noResultsText: "No results",
+                loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
+                errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in
+                    guard case let .error(error) = cell else { return ErrorTableViewCell() }
+                    let tableViewCell = ErrorTableViewCell()
+                    tableViewCell.content = error.errorMessage
+                    return tableViewCell
+                },
+                noResultsViewProducer: SimpleTableViewCellProducer.instantiate { _ in
+                    let tableViewCell = ErrorTableViewCell()
+                    tableViewCell.content = StateErrorMessage
+                        .message("Strangely, there are no public repos on Github.")
+                    return tableViewCell
+                }
+            )
+            .singleSectionTableViewController
 
     init() {
         super.init(nibName: nil, bundle: nil)

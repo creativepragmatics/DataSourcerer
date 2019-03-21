@@ -19,7 +19,7 @@ public enum SupplementaryItemModelType {
 }
 
 public struct NoSupplementaryItemModel: SupplementaryItemModel {
-    public typealias E = NoStateError
+    public typealias E = NoResourceError
 
     public init(error: E) {}
 

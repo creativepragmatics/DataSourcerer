@@ -36,5 +36,6 @@ public struct NoResourceParams : ResourceParams, Codable {
     public func isCacheCompatible(_ candidate: NoResourceParams) -> Bool { return true }
 
     public init() {}
+
     public static let initial = NoResourceParams()
 }

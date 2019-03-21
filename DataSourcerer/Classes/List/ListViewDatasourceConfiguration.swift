@@ -8,8 +8,9 @@ import Foundation
 public struct ListViewDatasourceConfiguration
     <Value, P: ResourceParams, E, ItemModelType: ItemModel, ItemView: UIView,
     SectionModelType: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
-    FooterItem: SupplementaryItemModel, FooterItemView: UIView,
-ContainingView: UIView> where ItemModelType.E == E {
+    HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemView: UIView,
+    FooterItemError, ContainingView: UIView> where ItemModelType.E == E, HeaderItem.E == HeaderItemError,
+    FooterItem.E == FooterItemError {
     public typealias ListState = ResourceState<Value, P, E>
     public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
@@ -211,8 +212,10 @@ public extension ListViewDatasourceConfiguration {
         errorViewProducer: ViewProducer,
         noResultsViewProducer: ViewProducer
         )
-        -> ListViewDatasourceConfiguration<Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
-        HeaderItem, HeaderItemView, FooterItem, FooterItemView, ContainingView>
+        -> ListViewDatasourceConfiguration
+        <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
+        HeaderItem, HeaderItemView, HeaderItemError, FooterItem, FooterItemView, FooterItemError,
+        ContainingView>
         where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
         ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
@@ -228,9 +231,9 @@ public extension ListViewDatasourceConfiguration {
             )
 
             return ListViewDatasourceConfiguration
-                <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView,
-                SectionModelType, HeaderItem, HeaderItemView, FooterItem, FooterItemView,
-                ContainingView> (
+                <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
+                HeaderItem, HeaderItemView, HeaderItemError, FooterItem, FooterItemView,
+                FooterItemError, ContainingView> (
                     datasource: datasource,
                     itemModelProducer: idiomaticItemModelsProducer,
                     itemViewsProducer: idiomaticItemViewAdapter,
@@ -259,11 +262,13 @@ public extension ListViewDatasourceConfiguration {
 public typealias TableViewDatasourceConfiguration
     <Value, P: ResourceParams, E, Cell: ItemModel, CellView: UITableViewCell,
     Section: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
-    FooterItem: SupplementaryItemModel, FooterItemView: UIView>
+    HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemView: UIView,
+    FooterItemError>
     =
     ListViewDatasourceConfiguration
-    <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView,
-    FooterItem, FooterItemView, UITableView> where Cell.E == E
+    <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView, HeaderItemError,
+    FooterItem, FooterItemView, FooterItemError, UITableView>
+    where Cell.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError
 
 public extension TableViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
@@ -277,7 +282,7 @@ public extension TableViewDatasourceConfiguration where HeaderItem == NoSuppleme
         configure: @escaping (ItemModelType, ItemView) -> Void)
         -> TableViewDatasourceConfiguration
         <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
-        NoSupplementaryItemModel, UIView> {
+        NoResourceError, NoSupplementaryItemModel, UIView, NoResourceError> {
 
             return TableViewDatasourceConfiguration(
                 datasource: datasource,
@@ -287,6 +292,24 @@ public extension TableViewDatasourceConfiguration where HeaderItem == NoSuppleme
                     reuseIdentifier: reuseIdentifier, configure: configure
                 )
             )
+    }
+
+}
+
+// TODO: Move to List-UIKit folder as soon as XCode 10.2 is available:
+// https://github.com/apple/swift/pull/18168
+/// Builder.Complete for single section tableviews
+public extension ListViewDatasourceConfiguration
+    where Value: Equatable,
+    ItemView == UITableViewCell,
+    ContainingView == UITableView,
+    HeaderItemView == UIView,
+    FooterItemView == UIView,
+    SectionModelType == NoSection {
+
+    var singleSectionTableViewController: SingleSectionTableViewController
+        <Value, P, E, ItemModelType, HeaderItem, HeaderItemError, FooterItem, FooterItemError> {
+        return SingleSectionTableViewController(configuration: self)
     }
 
 }

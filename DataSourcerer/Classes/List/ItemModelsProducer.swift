@@ -43,7 +43,7 @@ where ItemModelType.E == E {
 
         let valueToListViewStateTransformer =
             ValueToListViewStateTransformer<Value, ItemModelType, NoSection>(
-                valueToSingleSectionItems:  { singleSectionItems($0) }
+                valueToSingleSectionItems: { singleSectionItems($0) }
             )
 
         return ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(

@@ -1,10 +1,14 @@
 import Foundation
 
-public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
-    HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
+public extension ListViewDatasourceConfiguration
+    where
+    Value: Equatable,
+    HeaderItem == NoSupplementaryItemModel,
+    HeaderItemView == UIView,
+    FooterItem == NoSupplementaryItemModel,
     FooterItemView == UIView {
 
-    public struct Builder {
+    struct Builder {
 
         public static func with(
             datasource: Datasource<Value, P, E>,
@@ -42,15 +46,15 @@ public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplemen
 
             public func setItemViewsProducer(
                 _ producer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
-            ) -> ItemViewsProducerSelected {
-                return ItemViewsProducerSelected(
+            ) -> Complete {
+                return Complete(
                     previous: self,
                     itemViewsProducer: producer
                 )
             }
         }
 
-        public struct ItemViewsProducerSelected {
+        public struct Complete {
             let previous: ItemModelsProducerSelected
             let itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
 
@@ -63,6 +67,23 @@ public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplemen
             }
         }
 
+    }
+
+}
+
+/// Builder for tableviews
+public extension ListViewDatasourceConfiguration.Builder
+    where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
+    FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
+    ItemView == UITableViewCell, ContainingView == UITableView {
+
+    static func forSectionedTableView(
+        datasource: Datasource<Value, P, E>,
+        withItemModelType: ItemModelType.Type,
+        withSectionModelType: SectionModelType.Type
+        ) -> ListViewDatasourceConfiguration.Builder.DatasourceSelected {
+
+        return ListViewDatasourceConfiguration.Builder.DatasourceSelected(datasource: datasource)
     }
 
 }
@@ -83,43 +104,27 @@ public extension ListViewDatasourceConfiguration.Builder.DatasourceSelected
             )
         )
 
-        return ListViewDatasourceConfiguration<Value, P, E, ItemModelType, ItemView,
-        SectionModelType, HeaderItem, HeaderItemView,
-        FooterItem, FooterItemView,
-        ContainingView>.Builder.ItemModelsProducerSelected(
+        return ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected(
             previous: self,
             itemModelsProducer: itemModelsProducer
         )
     }
 }
 
-/// Basic configuration for sectioned tableviews
-public extension ListViewDatasourceConfiguration.Builder
-    where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
-    FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
-    ItemView == UITableViewCell, ContainingView == UITableView {
-
-    public static func forSectionedTableView(
-        datasource: Datasource<Value, P, E>,
-        withItemModelType: ItemModelType.Type,
-        withSectionModelType: SectionModelType.Type
-        ) -> ListViewDatasourceConfiguration.Builder.DatasourceSelected {
-
-        return ListViewDatasourceConfiguration.Builder.DatasourceSelected(datasource: datasource)
-    }
-
-}
-
+/// Builder.ItemModelsProducerSelected for tableviews
 public extension ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected
-    where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
-    FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
-    ItemView == UITableViewCell, ContainingView == UITableView {
+    where HeaderItem == NoSupplementaryItemModel,
+    HeaderItemView == UIView,
+    FooterItem == NoSupplementaryItemModel,
+    FooterItemView == UIView,
+    ItemView == UITableViewCell,
+    ContainingView == UITableView {
 
-    public func cellWithClass(
+    func cellWithClass(
         cellType: UITableViewCell.Type,
         dequeueIdentifier: String,
         configure: @escaping (ItemModelType, UITableViewCell) -> Void
-        ) -> ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.Complete {
 
         let cellProducer = SimpleTableViewCellProducer.classAndIdentifier(
             class: cellType,
@@ -129,17 +134,17 @@ public extension ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelec
 
         let itemViewsProducer = ItemViewsProducer(simpleWithViewProducer: cellProducer)
 
-        return ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected(
+        return ListViewDatasourceConfiguration.Builder.Complete(
             previous: self,
             itemViewsProducer: itemViewsProducer
         )
     }
 
-    public func cellWithNib(
+    func cellWithNib(
         nib: UINib,
         dequeueIdentifier: String,
         configure: @escaping (ItemModelType, UITableViewCell) -> Void
-        ) -> ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected {
+        ) -> ListViewDatasourceConfiguration.Builder.Complete {
 
         let cellProducer = SimpleTableViewCellProducer.nibAndIdentifier(
             nib: nib,
@@ -149,32 +154,51 @@ public extension ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelec
 
         let itemViewsProducer = ItemViewsProducer(simpleWithViewProducer: cellProducer)
 
-        return ListViewDatasourceConfiguration.Builder.ItemViewsProducerSelected(
+        return ListViewDatasourceConfiguration.Builder.Complete(
             previous: self,
             itemViewsProducer: itemViewsProducer
         )
     }
 
-
-    //case nibAndIdentifier(nib: UINib,
-    //identifier: TableViewCellDequeueIdentifier,
-    //configure: (Cell, UITableViewCell) -> Void)
-
 }
 
 /// Basic configuration for single section tableviews
 public extension ListViewDatasourceConfiguration
-    where HeaderItem == NoSupplementaryItemModel, HeaderItemView == UIView,
-    FooterItem == NoSupplementaryItemModel, FooterItemView == UIView,
-    ItemView == UITableViewCell, ContainingView == UITableView,
+    where Value: Equatable,
+    HeaderItem == NoSupplementaryItemModel,
+    HeaderItemView == UIView,
+    FooterItem == NoSupplementaryItemModel,
+    FooterItemView == UIView,
+    ItemView == UITableViewCell,
+    ContainingView == UITableView,
     SectionModelType == NoSection {
 
-    public static func buildSingleSectionTableView(
+    static func buildSingleSectionTableView(
         datasource: Datasource<Value, P, E>,
         withCellModelType: ItemModelType.Type
         ) -> ListViewDatasourceConfiguration.Builder.DatasourceSelected {
 
         return ListViewDatasourceConfiguration.Builder.DatasourceSelected(datasource: datasource)
+    }
+
+}
+
+// TODO: Move to List-UIKit folder as soon as XCode 10.2 is available:
+// https://github.com/apple/swift/pull/18168
+/// Builder.Complete for single section tableviews
+public extension ListViewDatasourceConfiguration.Builder.Complete
+    where HeaderItemView == UIView,
+    FooterItemView == UIView,
+    ItemView == UITableViewCell,
+    SectionModelType == NoSection,
+    HeaderItem == NoSupplementaryItemModel,
+    FooterItem == NoSupplementaryItemModel,
+    ContainingView == UITableView {
+
+    var singleSectionTableViewController:
+        SingleSectionTableViewController
+        <Value, P, E, ItemModelType, HeaderItem, HeaderItemError, FooterItem, FooterItemError> {
+        return SingleSectionTableViewController(configuration: self.configuration)
     }
 
 }

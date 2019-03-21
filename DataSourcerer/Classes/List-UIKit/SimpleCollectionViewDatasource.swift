@@ -3,7 +3,8 @@ import UIKit
 
 //open class SimpleCollectionViewDatasource<Value, Item: ItemModel, Section: SectionModel,
 //    SuppItem: SupplementaryItemModel>: NSObject, UICollectionViewDataSource, UICollectionViewDelegate {
-//    public typealias Configuration = ListViewDatasourceConfiguration<Value, Item, UICollectionViewCell, SuppItem,
+//    public typealias Configuration = ListViewDatasourceConfiguration
+//    <Value, Item, UICollectionViewCell, SuppItem,
 //    UICollectionReusableView, Section, UICollectionView>
 //
 //    private let configuration: Configuration
