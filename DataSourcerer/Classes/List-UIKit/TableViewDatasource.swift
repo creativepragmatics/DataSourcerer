@@ -21,7 +21,7 @@ open class TableViewDatasource
         self.core = core
         super.init()
 
-        core.itemViewAdapter.registerAtContainingView(tableView)
+        core.itemViewsProducer.registerAtContainingView(tableView)
         core.headerItemViewAdapter.registerAtContainingView(tableView)
         core.footerItemViewAdapter.registerAtContainingView(tableView)
     }

@@ -14,7 +14,7 @@ import UIKit
 //    }
 //
 //    private func registerItemViews(with collectionView: UICollectionView) {
-//        core.itemViewAdapter.registerAtContainingView(collectionView)
+//        core.itemViewsProducer.registerAtContainingView(collectionView)
 //        core.supplementaryItemModelViewAdapter.registerAtContainingView(collectionView)
 //    }
 //

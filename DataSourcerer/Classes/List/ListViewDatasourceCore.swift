@@ -34,7 +34,7 @@ ContainingView: UIView> where ItemModelType.E == E {
     public let datasource: Datasource<Value, P, E>
     public let itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
     public let stateAndSections: ShareableValueStream<StateAndSections>
-    public let itemViewAdapter: ItemViewAdapter
+    public let itemViewsProducer: ItemViewAdapter
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
 
@@ -53,7 +53,7 @@ ContainingView: UIView> where ItemModelType.E == E {
 
     public init(datasource: Datasource<Value, P, E>,
                 itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
-                itemViewAdapter: ItemViewAdapter,
+                itemViewsProducer: ItemViewAdapter,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
                 headerItemAtIndexPath: HeaderItemAtIndexPath?,
@@ -83,7 +83,7 @@ ContainingView: UIView> where ItemModelType.E == E {
 
         self.datasource = datasource
         self.itemModelProducer = itemModelProducer
-        self.itemViewAdapter = itemViewAdapter
+        self.itemViewsProducer = itemViewsProducer
         self.headerItemViewAdapter = headerItemViewAdapter
         self.footerItemViewAdapter = footerItemViewAdapter
         self.headerItemAtIndexPath = headerItemAtIndexPath
@@ -99,32 +99,35 @@ ContainingView: UIView> where ItemModelType.E == E {
 
 }
 
+/// Initially, a ListViewDatasourceCore can do without headers and footers,
+/// because those can be added via functions.
+/// TODO: Add those functions
 public extension ListViewDatasourceCore where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
-FooterItemView == UIView {
+    FooterItemView == UIView {
 
-    static func base(
+    init(
         datasource: Datasource<Value, P, E>,
         itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
-        itemViewAdapter: ItemViewsProducer<ItemModelType, ItemView, ContainingView>)
-        -> ListViewDatasourceCore {
+        itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
+    ) {
 
-            return ListViewDatasourceCore(
-                datasource: datasource,
-                itemModelProducer: itemModelProducer,
-                itemViewAdapter: itemViewAdapter,
-                headerItemViewAdapter: .noSupplementaryViewAdapter,
-                footerItemViewAdapter: .noSupplementaryViewAdapter,
-                headerItemAtIndexPath: nil,
-                footerItemAtIndexPath: nil,
-                titleForHeaderInSection: nil,
-                titleForFooterInSection: nil,
-                sectionIndexTitles: nil,
-                indexPathForIndexTitle: nil,
-                willDisplayItem: nil,
-                willDisplayHeaderItem: nil,
-                willDisplayFooterItem: nil
-            )
+        self.init(
+            datasource: datasource,
+            itemModelProducer: itemModelProducer,
+            itemViewsProducer: itemViewsProducer,
+            headerItemViewAdapter: .noSupplementaryViewAdapter,
+            footerItemViewAdapter: .noSupplementaryViewAdapter,
+            headerItemAtIndexPath: nil,
+            footerItemAtIndexPath: nil,
+            titleForHeaderInSection: nil,
+            titleForFooterInSection: nil,
+            sectionIndexTitles: nil,
+            indexPathForIndexTitle: nil,
+            willDisplayItem: nil,
+            willDisplayHeaderItem: nil,
+            willDisplayFooterItem: nil
+        )
     }
 }
 
@@ -159,7 +162,7 @@ public extension ListViewDatasourceCore {
     }
 
     func itemView(at indexPath: IndexPath, in containingView: ContainingView) -> ItemView {
-        return itemViewAdapter.produceView(item(at: indexPath), containingView, indexPath)
+        return itemViewsProducer.produceView(item(at: indexPath), containingView, indexPath)
     }
 
     func headerView(at indexPath: IndexPath,
@@ -218,7 +221,7 @@ public extension ListViewDatasourceCore {
                 noResultsText: noResultsText
             )
 
-            let idiomaticItemViewAdapter = self.itemViewAdapter.idiomatic(
+            let idiomaticItemViewAdapter = self.itemViewsProducer.idiomatic(
                 loadingViewProducer: loadingViewProducer,
                 errorViewProducer: errorViewProducer,
                 noResultsViewProducer: noResultsViewProducer
@@ -230,7 +233,7 @@ public extension ListViewDatasourceCore {
                 ContainingView> (
                     datasource: datasource,
                     itemModelProducer: idiomaticItemModelsProducer,
-                    itemViewAdapter: idiomaticItemViewAdapter,
+                    itemViewsProducer: idiomaticItemViewAdapter,
                     headerItemViewAdapter: headerItemViewAdapter,
                     footerItemViewAdapter: footerItemViewAdapter,
                     headerItemAtIndexPath: headerItemAtIndexPath,
@@ -276,10 +279,10 @@ public extension TableViewDatasourceCore where HeaderItem == NoSupplementaryItem
         <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
         NoSupplementaryItemModel, UIView> {
 
-            return TableViewDatasourceCore.base(
+            return TableViewDatasourceCore(
                 datasource: datasource,
                 itemModelProducer: itemModelProducer,
-                itemViewAdapter: TableViewCellAdapter<ItemModelType>.tableViewCell(
+                itemViewsProducer: TableViewCellAdapter<ItemModelType>.tableViewCell(
                     withCellClass: ItemView.self,
                     reuseIdentifier: reuseIdentifier, configure: configure
                 )

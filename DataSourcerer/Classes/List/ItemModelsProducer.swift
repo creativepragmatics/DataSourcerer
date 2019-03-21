@@ -42,13 +42,9 @@ where ItemModelType.E == E {
         ) -> ItemModelsProducer<Value, P, E, ItemModelType, NoSection> where ItemModelType.E == E {
 
         let valueToListViewStateTransformer =
-            ValueToListViewStateTransformer<Value, ItemModelType, NoSection> { value in
-                let section = SectionAndItems<ItemModelType, NoSection>(
-                    NoSection(),
-                    singleSectionItems(value)
-                )
-                return ListViewState<ItemModelType, NoSection>.readyToDisplay([section])
-            }
+            ValueToListViewStateTransformer<Value, ItemModelType, NoSection>(
+                valueToSingleSectionItems:  { singleSectionItems($0) }
+            )
 
         return ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(
             baseValueToListViewStateTransformer: valueToListViewStateTransformer
@@ -90,6 +86,14 @@ public struct ValueToListViewStateTransformer
         self.valueToListViewState = valueToListViewState
     }
 
+    public init(
+        valueToSections: @escaping (Value) -> [SectionAndItems<ItemModelType, SectionModelType>]
+    ) {
+        self.valueToListViewState = { value in
+            return ListViewState.readyToDisplay(valueToSections(value))
+        }
+    }
+
     public func idiomatic()
         -> ValueToListViewStateTransformer<Value, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
@@ -110,5 +114,15 @@ public struct ValueToListViewStateTransformer
                     return .notReady
                 }
             }
+    }
+}
+
+public extension ValueToListViewStateTransformer where SectionModelType == NoSection {
+
+    init(valueToSingleSectionItems: @escaping (Value) -> [ItemModelType]) {
+        self.valueToListViewState = { value in
+            let sectionAndItems = SectionAndItems(NoSection(), valueToSingleSectionItems(value))
+            return ListViewState.readyToDisplay([sectionAndItems])
+        }
     }
 }
