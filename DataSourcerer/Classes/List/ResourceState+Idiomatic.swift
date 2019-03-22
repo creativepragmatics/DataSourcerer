@@ -17,85 +17,106 @@ public extension ResourceState {
                 -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         noResultsSection:
             @escaping (ResourceState)
-                -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
+                -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+        hideLoadingSectionWhenReloading: Bool
     ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
-        func boxedValueToSections(_ box: EquatableBox<Value>?)
-            -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? {
+            func boxedValueToSections(_ box: EquatableBox<Value>?)
+                -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? {
 
-            return (box?.value).flatMap { value
-                -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? in
+                    return (box?.value).flatMap { value
+                        -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? in
 
-                return valueToIdiomaticListViewStateTransformer.valueToListViewState(value).sectionsWithItems
+                        return valueToIdiomaticListViewStateTransformer.valueToListViewState(value).sectionsWithItems
+                    }
             }
-        }
 
-        func noResultsOrErrorSection()
-            -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+            func numberOfItems(
+                _ sections: [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]
+                ) -> Int {
+                return sections.map({ $0.items.count }).reduce(0, +)
+            }
 
-            if let error = self.error {
-                return ListViewState.readyToDisplay([errorSection(error)])
-            } else {
+            var noResults: ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
                 return ListViewState.readyToDisplay([noResultsSection(self)])
             }
-        }
 
-        func numberOfItems(
-            _ sections: [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]
-        ) -> Int {
-            return sections.map({ $0.items.count }).reduce(0, +)
-        }
-
-        switch provisioningState {
-        case .notReady:
-            return ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>.notReady
-        case .loading:
-            if let sections = boxedValueToSections(value), numberOfItems(sections) > 0 {
-                // Loading and there are cached items, return them
-                return ListViewState.readyToDisplay(sections)
-            } else if let error = self.error {
-                // Loading, error, and there are empty cached items, return error item
-                return ListViewState.readyToDisplay([errorSection(error)])
-            } else if value != nil {
-                // Loading and there are empty cached items, return error or noResults item
-                return noResultsOrErrorSection()
-            } else {
-                // Loading and there is no cached value, return loading item
-                return ListViewState.readyToDisplay([loadingSection(self)])
+            var empty: ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                return ListViewState.readyToDisplay([
+                    SectionAndItems(SectionModelType(), [])
+                ])
             }
-        case .result:
-            if let value = self.value {
+
+            func showError(_ error: E)
+                -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                    return ListViewState.readyToDisplay([errorSection(error)])
+            }
+
+            switch provisioningState {
+            case .notReady:
+                return ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>.notReady
+            case .loading:
                 if let sections = boxedValueToSections(value), numberOfItems(sections) > 0 {
-                    // Success, return items
+                    // Loading and there are fallback items, return them
                     return ListViewState.readyToDisplay(sections)
+                } else if let error = self.error {
+                    // Loading, error, and there are no fallback items, return just loading item
+                    if hideLoadingSectionWhenReloading {
+                        return empty
+                    } else {
+                        return ListViewState.readyToDisplay([loadingSection(self)])
+                    }
+                } else if value != nil {
+                    // Loading and there is an empty fallback balue, return noResults item.
+                    // We could also just display only the loadingSection instead, but then the view
+                    // would e.g. jump from noResults to loading-only to noResults. While technically
+                    // correct, keeping noResults is less irritating.
+                    return noResults
                 } else {
-                    // Success without items, return error or noResults item
-                    return noResultsOrErrorSection()
+                    // Loading and there are no fallback items, return loading item
+                    if hideLoadingSectionWhenReloading {
+                        return empty
+                    } else {
+                        return ListViewState.readyToDisplay([loadingSection(self)])
+                    }
                 }
-            } else {
-                // Error and no cached items, return error item (or noResults item as fallback)
-                return noResultsOrErrorSection()
+            case .result:
+                if let error = self.error {
+                    return showError(error)
+                } else if let value = self.value {
+                    if let sections = boxedValueToSections(value), numberOfItems(sections) > 0 {
+                        // Success, return items
+                        return ListViewState.readyToDisplay(sections)
+                    } else {
+                        // Success without items, return noResults
+                        return noResults
+                    }
+                } else {
+                    // No error and no value, return noResults
+                    return noResults
+                }
             }
-        }
     }
 
     /// Convenience
     func addLoadingAndErrorStates<BaseItemModelType, SectionModelType: SectionModel>(
         valueToIdiomaticListViewStateTransformer: ValueToListViewStateTransformer
         <Value, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
-        noResultsText: String
+        noResultsText: String,
+        hideLoadingSectionWhenReloading: Bool
         ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
-        return addLoadingAndErrorStates(
-            valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
-            loadingSection: { _ in SectionAndItems(SectionModelType(), [IdiomaticItemModel.loading]) },
-            errorSection: { SectionAndItems(SectionModelType(), [IdiomaticItemModel.error($0)]) },
-            noResultsSection: { _ in
-                SectionAndItems(SectionModelType(), [IdiomaticItemModel.noResults(noResultsText)])
-            }
-        )
+            return addLoadingAndErrorStates(
+                valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
+                loadingSection: { _ in SectionAndItems(SectionModelType(), [IdiomaticItemModel.loading]) },
+                errorSection: { SectionAndItems(SectionModelType(), [IdiomaticItemModel.error($0)]) },
+                noResultsSection: { _ in
+                    SectionAndItems(SectionModelType(), [IdiomaticItemModel.noResults(noResultsText)])
+                },
+                hideLoadingSectionWhenReloading: hideLoadingSectionWhenReloading
+            )
     }
 
 }

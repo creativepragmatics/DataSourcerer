@@ -57,7 +57,7 @@ where ItemModelType.E == E {
         return stateToListViewState(state, valueToListViewStateTransformer)
     }
 
-    public func showLoadingAndErrorStates(noResultsText: String)
+    public func showLoadingAndErrorStates(noResultsText: String, hideLoadingSectionWhenReloading: Bool)
         -> ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
             return ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType>(
@@ -66,7 +66,8 @@ where ItemModelType.E == E {
 
                     return state.addLoadingAndErrorStates(
                         valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
-                        noResultsText: noResultsText
+                        noResultsText: noResultsText,
+                        hideLoadingSectionWhenReloading: hideLoadingSectionWhenReloading
                     )
                 },
                 valueToListViewStateTransformer: valueToListViewStateTransformer.showLoadingAndErrorStates()

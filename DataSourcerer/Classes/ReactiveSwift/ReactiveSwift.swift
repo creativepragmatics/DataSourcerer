@@ -5,7 +5,7 @@ import Result
 public extension Datasource {
 
     init(
-        signalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedState, NoError>,
+        stateSignalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedState, NoError>,
         mapErrorString: @escaping (ErrorString) -> E,
         cacheBehavior: CacheBehavior,
         loadImpulseBehavior: LoadImpulseBehavior
@@ -14,10 +14,10 @@ public extension Datasource {
         let loadImpulseEmitter = loadImpulseBehavior.loadImpulseEmitter
 
         let states = ValueStream<ObservedState>(
-            signalProducer: signalProducer,
+            signalProducer: stateSignalProducer,
             loadImpulseEmitter: loadImpulseEmitter.any
             )
-            .retainLastResultState()
+            .rememberLatestSuccessAndError()
 
         let cachedStates = cacheBehavior
             .apply(on: states.any,
@@ -29,6 +29,55 @@ public extension Datasource {
 
         self.init(shareableCachedStates, loadImpulseEmitter: loadImpulseEmitter)
     }
+
+    /// `valueSignalProducer` sends LoadImpulse<P> besides the Value because
+    /// the impulse or parameters can change while a request is being made,
+    /// e.g. when a token which is part of parameters is refreshed.
+    init(
+        valueSignalProducer: @escaping (LoadImpulse<P>)
+            -> SignalProducer<(Value, LoadImpulse<P>), E>,
+        mapErrorString: @escaping (ErrorString) -> E,
+        cacheBehavior: CacheBehavior,
+        loadImpulseBehavior: LoadImpulseBehavior
+        ) {
+
+        self.init(
+            stateSignalProducer: { loadImpulse
+                -> SignalProducer<ResourceState<Value, P, E>, NoError> in
+
+                let initial = SignalProducer<ResourceState<Value, P, E>, NoError>(
+                    value: ResourceState.loading(
+                        loadImpulse: loadImpulse,
+                        fallbackValueBox: nil,
+                        fallbackError: nil
+                    )
+                )
+
+                let producer = valueSignalProducer(loadImpulse)
+                let successOrError = producer
+                    .map { value, loadImpulse in
+                        return ResourceState<Value, P, E>
+                            .value(
+                                valueBox: EquatableBox<Value>(value),
+                                loadImpulse: loadImpulse,
+                                fallbackError: nil
+                            )
+                    }
+                    .flatMapError { error -> SignalProducer<ResourceState<Value, P, E>, NoError> in
+                        return SignalProducer(
+                            value: ResourceState<Value, P, E>
+                                .error(error: error, loadImpulse: loadImpulse, fallbackValueBox: nil
+                            )
+                        )
+                    }
+                return initial.concat(successOrError)
+            },
+            mapErrorString: mapErrorString,
+            cacheBehavior: cacheBehavior,
+            loadImpulseBehavior: loadImpulseBehavior
+        )
+    }
+    
 }
 
 public extension ValueStream {
@@ -58,6 +107,28 @@ public extension ValueStream {
                 }
             }
         }
+    }
+
+}
+
+public extension ShareableValueStream {
+
+    /// Initializes a ValueStream with a ReactiveSwift.SignalProducer.
+    var reactiveSwiftProperty: ReactiveSwift.Property<ObservedValue> {
+
+        let signalProducer = SignalProducer<ObservedValue, NoError> { observer, lifetime in
+
+            let dataSourcererDisposable = self.skip(first: 1)
+                .observe { value in
+                    observer.send(value: value)
+            }
+
+            lifetime += ReactiveSwift.AnyDisposable {
+                dataSourcererDisposable.dispose()
+            }
+        }
+
+        return ReactiveSwift.Property(initial: self.value, then: signalProducer)
     }
 
 }

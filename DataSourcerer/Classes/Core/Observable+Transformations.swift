@@ -83,6 +83,21 @@ public extension ObservableProtocol {
             }.any
     }
 
+    func skip(first count: Int) -> AnyObservable<ObservedValue> {
+        guard count > 0 else { return self.any }
+
+        return ValueStream { sendValue, disposable in
+            var skipped = 0
+            disposable += self.observe { value in
+                if skipped < count {
+                    skipped += 1
+                } else {
+                    sendValue(value)
+                }
+            }
+        }.any
+    }
+
 }
 
 public extension ObservableProtocol where ObservedValue: Equatable {

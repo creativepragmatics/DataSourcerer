@@ -10,7 +10,6 @@ opt_in_rules: # some rules are only opt-in
   - closure_spacing
   - collection_alignment
   - contains_over_first_not_nil
-  - empty_count
   - empty_string
   - empty_xctest_method
   - explicit_init

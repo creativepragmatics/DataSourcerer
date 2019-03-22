@@ -14,18 +14,33 @@ open class TableViewDatasource
     public let configuration: Configuration
     public weak var delegate: UITableViewDelegate?
     public weak var datasource: UITableViewDataSource?
+    public let hideBottomMostSeparatorWithHack: Bool
 
     public var sections: ListViewState<CellModelType, SectionModelType> {
         return configuration.sections
     }
 
-    public init(configuration: Configuration, tableView: UITableView) {
+    private var numberOfSections: Int {
+        return sections.sectionsWithItems?.count ?? 0
+    }
+
+
+    public init(
+        configuration: Configuration,
+        tableView: UITableView,
+        hideBottomMostSeparatorWithHack: Bool = true
+    ) {
         self.configuration = configuration
+        self.hideBottomMostSeparatorWithHack = hideBottomMostSeparatorWithHack
         super.init()
 
         configuration.itemViewsProducer.registerAtContainingView(tableView)
         configuration.headerItemViewAdapter.registerAtContainingView(tableView)
         configuration.footerItemViewAdapter.registerAtContainingView(tableView)
+
+        if hideBottomMostSeparatorWithHack {
+            tableView.tableFooterView = UIView()
+        }
     }
 
     public func numberOfSections(in tableView: UITableView) -> Int {
@@ -50,12 +65,27 @@ open class TableViewDatasource
     }
 
     public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return configuration.footerView(at: IndexPath(row: 0, section: section), in: tableView)
+        let footerView = configuration.footerView(at: IndexPath(row: 0, section: section), in: tableView)
+
+        if footerView == nil, hideBottomMostSeparatorWithHack, section == numberOfSections - 1 {
+            return UIView()
+        } else {
+            return footerView
+        }
     }
 
     public func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return configuration.footerSize(at: IndexPath(row: 0, section: section),
-                                        in: tableView).height
+
+        let height = configuration.footerSize(
+            at: IndexPath(row: 0, section: section),
+            in: tableView
+        ).height
+
+        if height == 0, hideBottomMostSeparatorWithHack, section == numberOfSections - 1 {
+            return 0.001
+        } else {
+            return height
+        }
     }
 
     public func tableView(_ tableView: UITableView,

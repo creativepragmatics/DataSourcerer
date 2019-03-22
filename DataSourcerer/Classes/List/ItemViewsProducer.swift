@@ -7,11 +7,40 @@ public struct ItemViewsProducer<ItemModelType: Equatable, ProducedView: UIView, 
     public let registerAtContainingView: (ContainingView) -> Void
     public let itemViewSize: ((ItemModelType, ContainingView) -> CGSize)?
 
-    init(produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
+    public init(produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
          registerAtContainingView: @escaping (ContainingView) -> Void,
          itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil) {
         self.produceView = produceView
         self.registerAtContainingView = registerAtContainingView
+        self.itemViewSize = itemViewSize
+    }
+}
+
+public protocol MultiViewTypeItemModel: ItemModel {
+    associatedtype ItemViewType: CaseIterable
+
+    var itemViewType: ItemViewType { get }
+}
+
+public extension ItemViewsProducer where ItemModelType: MultiViewTypeItemModel {
+
+    init<ViewProducer: ItemViewProducer>(
+        viewProducerForViewType: @escaping (ItemModelType.ItemViewType) -> ViewProducer,
+        itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil
+        ) where ViewProducer.ContainingView == ContainingView,
+        ViewProducer.ItemModelType == ItemModelType,
+        ViewProducer.ProducedView == ProducedView {
+
+        self.produceView = { itemModel, containingView, indexPath -> ProducedView in
+            let viewProducer = viewProducerForViewType(itemModel.itemViewType)
+            return viewProducer.view(containingView: containingView, item: itemModel, for: indexPath)
+        }
+        self.registerAtContainingView = { containingView in
+            ItemModelType.ItemViewType.allCases.forEach {
+                let viewProducer = viewProducerForViewType($0)
+                viewProducer.register(at: containingView)
+            }
+        }
         self.itemViewSize = itemViewSize
     }
 }

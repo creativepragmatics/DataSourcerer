@@ -57,7 +57,8 @@ class PublicReposRootViewController : UIViewController {
                     tableViewCell.content = StateErrorMessage
                         .message("Strangely, there are no public repos on Github.")
                     return tableViewCell
-                }
+                },
+                hideLoadingSectionWhenReloading: true
             )
             .singleSectionTableViewController
             .onPullToRefresh { [weak self] in

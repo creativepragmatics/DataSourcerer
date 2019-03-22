@@ -10,7 +10,7 @@ class PublicReposViewModel {
 
     lazy var datasource: Datasource = {
 
-        return Datasource.Builder
+        return Datasource
             .loadFromURL(
                 urlRequest: { _ -> URLRequest in
                     let publicReposUrlString: String = "https://api.github.com/repositories"

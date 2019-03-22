@@ -235,18 +235,17 @@ public extension ListViewDatasourceConfiguration {
         noResultsText: String,
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
-        noResultsViewProducer: ViewProducer
+        noResultsViewProducer: ViewProducer,
+        hideLoadingSectionWhenReloading: Bool
         )
         -> ConfigurationWithLoadingAndErrorStates
         where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
         ViewProducer.ProducedView == ItemView,
         ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
 
-
-
-
             let idiomaticItemModelsProducer = self.itemModelProducer.showLoadingAndErrorStates(
-                noResultsText: noResultsText
+                noResultsText: noResultsText,
+                hideLoadingSectionWhenReloading: true
             )
 
             let idiomaticItemViewAdapter = self.itemViewsProducer.showLoadingAndErrorStates(

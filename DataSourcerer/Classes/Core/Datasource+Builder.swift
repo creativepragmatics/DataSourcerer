@@ -46,15 +46,6 @@ public extension Datasource {
 
 public extension Datasource.Builder where Value: Codable {
 
-    static func loadFromURL(
-        urlRequest: @escaping (LoadImpulse<P>) throws -> URLRequest,
-        withParameterType: P.Type,
-        expectResponseValueType: Value.Type,
-        failWithError: E.Type
-        ) -> LoadFromURLRequestSelected {
-        return LoadFromURLRequestSelected(urlRequest: urlRequest)
-    }
-
     struct LoadFromURLRequestSelected {
         let urlRequest: (LoadImpulse<P>) throws -> URLRequest
 
@@ -79,7 +70,7 @@ public extension Datasource.Builder where Value: Codable {
                     mapErrorString: mapErrorString,
                     loadImpulseEmitter: loadImpulseBehavior.loadImpulseEmitter
                     )
-                    .retainLastResultState()
+                    .rememberLatestSuccessAndError()
 
                 return ResourceStateAndLoadImpulseEmitterSelected(
                     resourceState: resourceState,
@@ -87,5 +78,17 @@ public extension Datasource.Builder where Value: Codable {
                 )
         }
 
+    }
+}
+
+public extension Datasource where Value: Codable {
+
+    static func loadFromURL(
+        urlRequest: @escaping (LoadImpulse<P>) throws -> URLRequest,
+        withParameterType: P.Type,
+        expectResponseValueType: Value.Type,
+        failWithError: E.Type
+        ) -> Builder.LoadFromURLRequestSelected {
+        return Builder.LoadFromURLRequestSelected(urlRequest: urlRequest)
     }
 }
