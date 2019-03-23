@@ -12,6 +12,29 @@ public extension ObservableProtocol {
             }.any
     }
 
+    /// Acts like RxSwift's flatMapLatest or ReactiveSwift's flatMap(.latest):
+    func flatMapLatest<TransformedValue>(
+        _ transform: @escaping (ObservedValue) -> (AnyObservable<TransformedValue>)
+    ) -> AnyObservable<TransformedValue> {
+
+        var latestInnerDisposable: Disposable?
+
+        return ValueStream<TransformedValue> { sendValue, disposable in
+
+            disposable += self.observe { nextValue in
+
+                latestInnerDisposable?.dispose()
+
+                let nextObservable = transform(nextValue)
+                let nextInnerDisposable = nextObservable.observe { transformedValue in
+                    sendValue(transformedValue)
+                }
+                latestInnerDisposable = nextInnerDisposable
+                disposable += nextInnerDisposable
+            }
+            }.any
+    }
+
     func reduce<ReducedValue>(_ reduce:
         @escaping (_ previous: ReducedValue?, _ next: ObservedValue) -> (ReducedValue))
         -> AnyObservable<ReducedValue> {

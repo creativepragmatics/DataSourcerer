@@ -30,11 +30,11 @@ public extension Datasource {
         self.init(shareableCachedStates, loadImpulseEmitter: loadImpulseEmitter)
     }
 
-    /// `valueSignalProducer` sends LoadImpulse<P> besides the Value because
+    /// `valueSignalAndLoadImpulseProducer` sends LoadImpulse<P> besides the Value because
     /// the impulse or parameters can change while a request is being made,
     /// e.g. when a token which is part of parameters is refreshed.
     init(
-        valueSignalProducer: @escaping (LoadImpulse<P>)
+        valueSignalAndLoadImpulseProducer: @escaping (LoadImpulse<P>)
             -> SignalProducer<(Value, LoadImpulse<P>), E>,
         mapErrorString: @escaping (ErrorString) -> E,
         cacheBehavior: CacheBehavior,
@@ -53,7 +53,7 @@ public extension Datasource {
                     )
                 )
 
-                let producer = valueSignalProducer(loadImpulse)
+                let producer = valueSignalAndLoadImpulseProducer(loadImpulse)
                 let successOrError = producer
                     .map { value, loadImpulse in
                         return ResourceState<Value, P, E>
@@ -82,6 +82,19 @@ public extension Datasource {
 
 public extension ValueStream {
 
+    init(signalProducer: SignalProducer<ObservedValue, NoError>) {
+
+        self.init { sendValue, disposable in
+            let reactiveSwiftDisposable = signalProducer.startWithValues { value in
+                sendValue(value)
+            }
+
+            disposable += ActionDisposable {
+                reactiveSwiftDisposable.dispose()
+            }
+        }
+    }
+
     /// Initializes a ValueStream with a ReactiveSwift.SignalProducer.
     init<StateValue, P: ResourceParams, E: ResourceError>(
         signalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedValue, NoError>,
@@ -90,22 +103,13 @@ public extension ValueStream {
 
         self.init { sendState, disposable in
 
-            disposable += loadImpulseEmitter.observe { loadImpulse in
-
-                let reactiveSwiftDisposable = signalProducer(loadImpulse)
-                    .start { event in
-                        switch event {
-                        case let .value(state):
-                            sendState(state)
-                        case .completed, .interrupted, .failed:
-                            break
-                        }
-                    }
-
-                disposable += ActionDisposable {
-                    reactiveSwiftDisposable.dispose()
+            disposable += loadImpulseEmitter
+                .flatMapLatest { loadImpulse -> AnyObservable<ObservedValue> in
+                    return ValueStream(signalProducer: signalProducer(loadImpulse)).any
                 }
-            }
+                .observe { state in
+                    sendState(state)
+                }
         }
     }
 
@@ -131,4 +135,21 @@ public extension ShareableValueStream {
         return ReactiveSwift.Property(initial: self.value, then: signalProducer)
     }
 
+}
+
+public extension AnyLoadImpulseEmitter {
+
+    var reactiveSwiftSignalProducer: ReactiveSwift.SignalProducer<LoadImpulse<P>, NoError> {
+
+        return SignalProducer<LoadImpulse<P>, NoError> { observer, lifetime in
+
+            let dataSourcererDisposable = self.observe { loadImpulse in
+                observer.send(value: loadImpulse)
+            }
+
+            lifetime += ReactiveSwift.AnyDisposable {
+                dataSourcererDisposable.dispose()
+            }
+        }
+    }
 }
