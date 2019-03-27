@@ -10,7 +10,7 @@ public struct ListViewDatasourceConfiguration
     SectionModelType: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
     HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemView: UIView,
     FooterItemError, ContainingView: UIView> where ItemModelType.E == E, HeaderItem.E == HeaderItemError,
-    FooterItem.E == FooterItemError {
+FooterItem.E == FooterItemError {
     public typealias ListState = ResourceState<Value, P, E>
     public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
@@ -115,13 +115,13 @@ public struct ListViewDatasourceConfiguration
 /// TODO: Add those functions
 public extension ListViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
-    FooterItemView == UIView {
+FooterItemView == UIView {
 
     init(
         datasource: Datasource<Value, P, E>,
         itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
         itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
-    ) {
+        ) {
 
         self.init(
             datasource: datasource,
@@ -226,7 +226,7 @@ public extension ListViewDatasourceConfiguration {
 
 public extension ListViewDatasourceConfiguration {
 
-    public typealias ConfigurationWithLoadingAndErrorStates = ListViewDatasourceConfiguration
+    typealias ConfigurationWithLoadingAndErrorStates = ListViewDatasourceConfiguration
         <Value, P, E, IdiomaticItemModel<ItemModelType>, ItemView, SectionModelType,
         HeaderItem, HeaderItemView, HeaderItemError, FooterItem, FooterItemView, FooterItemError,
         ContainingView>
@@ -235,8 +235,7 @@ public extension ListViewDatasourceConfiguration {
         noResultsText: String,
         loadingViewProducer: ViewProducer,
         errorViewProducer: ViewProducer,
-        noResultsViewProducer: ViewProducer,
-        hideLoadingSectionWhenReloading: Bool
+        noResultsViewProducer: ViewProducer
         )
         -> ConfigurationWithLoadingAndErrorStates
         where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
@@ -244,8 +243,7 @@ public extension ListViewDatasourceConfiguration {
         ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
 
             let idiomaticItemModelsProducer = self.itemModelProducer.showLoadingAndErrorStates(
-                noResultsText: noResultsText,
-                hideLoadingSectionWhenReloading: true
+                noResultsText: noResultsText
             )
 
             let idiomaticItemViewAdapter = self.itemViewsProducer.showLoadingAndErrorStates(
@@ -298,7 +296,7 @@ public extension ListViewDatasourceConfiguration {
                         case .loading, .error, .noResults:
                             break
                         }
-                    },
+                },
                     willDisplayHeaderItem: willDisplayHeaderItem,
                     willDisplayFooterItem: willDisplayFooterItem
             )
@@ -318,7 +316,7 @@ public typealias TableViewDatasourceConfiguration
 
 public extension TableViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
     HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
-    FooterItemView == UIView, ItemView == UITableViewCell {
+FooterItemView == UIView, ItemView == UITableViewCell {
 
     static func withBaseTableViewCell(
         datasource: Datasource<Value, P, E>,
@@ -351,7 +349,7 @@ public extension ListViewDatasourceConfiguration
     ContainingView == UITableView,
     HeaderItemView == UIView,
     FooterItemView == UIView,
-    SectionModelType == NoSection {
+SectionModelType == NoSection {
 
     var singleSectionTableViewController: SingleSectionTableViewController
         <Value, P, E, ItemModelType, HeaderItem, HeaderItemError, FooterItem, FooterItemError> {

@@ -10,16 +10,15 @@ public extension ResourceState {
         valueToIdiomaticListViewStateTransformer: ValueToListViewStateTransformer
         <Value, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         loadingSection:
-            @escaping (ResourceState)
-                -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+        @escaping (ResourceState)
+        -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         errorSection:
-            @escaping (E)
-                -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+        @escaping (E)
+        -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         noResultsSection:
-            @escaping (ResourceState)
-                -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
-        hideLoadingSectionWhenReloading: Bool
-    ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
+        @escaping (ResourceState)
+        -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
+        ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
             func boxedValueToSections(_ box: EquatableBox<Value>?)
@@ -28,7 +27,8 @@ public extension ResourceState {
                     return (box?.value).flatMap { value
                         -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? in
 
-                        return valueToIdiomaticListViewStateTransformer.valueToListViewState(value).sectionsWithItems
+                        return valueToIdiomaticListViewStateTransformer.valueToListViewState(value)
+                            .sectionsWithItems
                     }
             }
 
@@ -60,13 +60,9 @@ public extension ResourceState {
                 if let sections = boxedValueToSections(value), numberOfItems(sections) > 0 {
                     // Loading and there are fallback items, return them
                     return ListViewState.readyToDisplay(sections)
-                } else if let error = self.error {
-                    // Loading, error, and there are no fallback items, return just loading item
-                    if hideLoadingSectionWhenReloading {
-                        return empty
-                    } else {
-                        return ListViewState.readyToDisplay([loadingSection(self)])
-                    }
+                } else if self.error != nil {
+                    // Loading, error, and there are no fallback items, return loading item
+                    return ListViewState.readyToDisplay([loadingSection(self)])
                 } else if value != nil {
                     // Loading and there is an empty fallback balue, return noResults item.
                     // We could also just display only the loadingSection instead, but then the view
@@ -75,11 +71,7 @@ public extension ResourceState {
                     return noResults
                 } else {
                     // Loading and there are no fallback items, return loading item
-                    if hideLoadingSectionWhenReloading {
-                        return empty
-                    } else {
-                        return ListViewState.readyToDisplay([loadingSection(self)])
-                    }
+                    return ListViewState.readyToDisplay([loadingSection(self)])
                 }
             case .result:
                 if let error = self.error {
@@ -103,8 +95,7 @@ public extension ResourceState {
     func addLoadingAndErrorStates<BaseItemModelType, SectionModelType: SectionModel>(
         valueToIdiomaticListViewStateTransformer: ValueToListViewStateTransformer
         <Value, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
-        noResultsText: String,
-        hideLoadingSectionWhenReloading: Bool
+        noResultsText: String
         ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
@@ -114,8 +105,7 @@ public extension ResourceState {
                 errorSection: { SectionAndItems(SectionModelType(), [IdiomaticItemModel.error($0)]) },
                 noResultsSection: { _ in
                     SectionAndItems(SectionModelType(), [IdiomaticItemModel.noResults(noResultsText)])
-                },
-                hideLoadingSectionWhenReloading: hideLoadingSectionWhenReloading
+                }
             )
     }
 

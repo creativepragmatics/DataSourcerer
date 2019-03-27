@@ -54,10 +54,10 @@ where ItemModelType.E == E {
     public func listViewState(with state: ResourceState<Value, P, E>)
         -> ListViewState<ItemModelType, SectionModelType> {
 
-        return stateToListViewState(state, valueToListViewStateTransformer)
+            return stateToListViewState(state, valueToListViewStateTransformer)
     }
 
-    public func showLoadingAndErrorStates(noResultsText: String, hideLoadingSectionWhenReloading: Bool)
+    public func showLoadingAndErrorStates(noResultsText: String)
         -> ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
             return ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType>(
@@ -66,8 +66,7 @@ where ItemModelType.E == E {
 
                     return state.addLoadingAndErrorStates(
                         valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
-                        noResultsText: noResultsText,
-                        hideLoadingSectionWhenReloading: hideLoadingSectionWhenReloading
+                        noResultsText: noResultsText
                     )
                 },
                 valueToListViewStateTransformer: valueToListViewStateTransformer.showLoadingAndErrorStates()
@@ -89,7 +88,7 @@ public struct ValueToListViewStateTransformer
 
     public init(
         valueToSections: @escaping (Value) -> [SectionAndItems<ItemModelType, SectionModelType>]
-    ) {
+        ) {
         self.valueToListViewState = { value in
             return ListViewState.readyToDisplay(valueToSections(value))
         }
@@ -100,20 +99,20 @@ public struct ValueToListViewStateTransformer
 
             return ValueToListViewStateTransformer
                 <Value, IdiomaticItemModel<ItemModelType>, SectionModelType> { value
-                -> ListViewState<IdiomaticItemModel<ItemModelType>, SectionModelType> in
+                    -> ListViewState<IdiomaticItemModel<ItemModelType>, SectionModelType> in
 
-                let innerListViewState = self.valueToListViewState(value)
-                switch innerListViewState {
-                case let .readyToDisplay(sectionsWithItems):
-                    return .readyToDisplay(sectionsWithItems.map { sectionAndItems in
-                        return SectionAndItems(
-                            sectionAndItems.section,
-                            sectionAndItems.items.map { IdiomaticItemModel.baseItem($0) }
-                        )
-                    })
-                case .notReady:
-                    return .notReady
-                }
+                    let innerListViewState = self.valueToListViewState(value)
+                    switch innerListViewState {
+                    case let .readyToDisplay(sectionsWithItems):
+                        return .readyToDisplay(sectionsWithItems.map { sectionAndItems in
+                            return SectionAndItems(
+                                sectionAndItems.section,
+                                sectionAndItems.items.map { IdiomaticItemModel.baseItem($0) }
+                            )
+                        })
+                    case .notReady:
+                        return .notReady
+                    }
             }
     }
 }

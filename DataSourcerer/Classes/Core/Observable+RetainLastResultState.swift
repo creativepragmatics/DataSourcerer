@@ -107,7 +107,8 @@ public final class LatestSuccessAndErrorRememberingCore
             guard let loadImpulse = state.loadImpulse else { return .notReady }
 
             switch self.latestResult.value {
-            case let .successValue(successValue) where successValue.params.isCacheCompatible(loadImpulse.params):
+            case let .successValue(successValue) where
+                successValue.params.isCacheCompatible(loadImpulse.params):
                 return State.loading(loadImpulse: loadImpulse,
                                      fallbackValueBox: successValue.value,
                                      fallbackError: nil)
@@ -135,9 +136,11 @@ public final class LatestSuccessAndErrorRememberingCore
                 }
             } else if let successValue = state.cacheCompatibleValue(for: loadImpulse) {
                 // We have a definitive success result, with no error, so we erase all previous errors
-                return State.value(valueBox: successValue,
-                                             loadImpulse: loadImpulse,
-                                             fallbackError: nil)
+                return State.value(
+                    valueBox: successValue,
+                    loadImpulse: loadImpulse,
+                    fallbackError: nil
+                )
             } else {
                 // Latest state might not match current parameters - return .notReady
                 // so all cached data is purged. This can happen if e.g. an authenticated API

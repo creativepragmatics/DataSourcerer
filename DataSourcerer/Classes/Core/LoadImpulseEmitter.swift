@@ -9,7 +9,7 @@ public protocol LoadImpulseEmitterProtocol: ObservableProtocol where ObservedVal
 
 public extension LoadImpulseEmitterProtocol {
 
-    public func emit(params: P, on queue: LoadImpulseEmitterQueue) {
+    func emit(params: P, on queue: LoadImpulseEmitterQueue) {
         let loadImpulse = LoadImpulse(params: params)
         emit(loadImpulse: loadImpulse, on: queue)
     }
@@ -17,7 +17,7 @@ public extension LoadImpulseEmitterProtocol {
 
 public extension LoadImpulseEmitterProtocol where P == NoResourceParams {
 
-    public func emit(on queue: LoadImpulseEmitterQueue) {
+    func emit(on queue: LoadImpulseEmitterQueue) {
         emit(params: NoResourceParams(), on: queue)
     }
 }

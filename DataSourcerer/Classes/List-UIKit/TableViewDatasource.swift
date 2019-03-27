@@ -24,7 +24,6 @@ open class TableViewDatasource
         return sections.sectionsWithItems?.count ?? 0
     }
 
-
     public init(
         configuration: Configuration,
         tableView: UITableView,

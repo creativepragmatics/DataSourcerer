@@ -133,7 +133,7 @@ open class SingleSectionTableViewController
 
     public func onPullToRefresh(_ pullToRefresh: @escaping () -> Void)
         -> SingleSectionTableViewController {
-            
+
         self.pullToRefresh = pullToRefresh
         return self
     }

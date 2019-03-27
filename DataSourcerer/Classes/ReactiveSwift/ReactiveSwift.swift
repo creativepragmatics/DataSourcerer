@@ -77,7 +77,7 @@ public extension Datasource {
             loadImpulseBehavior: loadImpulseBehavior
         )
     }
-    
+
 }
 
 public extension ValueStream {
@@ -125,7 +125,7 @@ public extension ShareableValueStream {
             let dataSourcererDisposable = self.skip(first: 1)
                 .observe { value in
                     observer.send(value: value)
-            }
+                }
 
             lifetime += ReactiveSwift.AnyDisposable {
                 dataSourcererDisposable.dispose()

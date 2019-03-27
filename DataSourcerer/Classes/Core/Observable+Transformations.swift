@@ -32,7 +32,7 @@ public extension ObservableProtocol {
                 latestInnerDisposable = nextInnerDisposable
                 disposable += nextInnerDisposable
             }
-            }.any
+        }.any
     }
 
     func reduce<ReducedValue>(_ reduce:

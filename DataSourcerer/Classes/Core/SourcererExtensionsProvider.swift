@@ -2,12 +2,12 @@ import Foundation
 
 public protocol SourcererExtensionsProvider {}
 
-extension SourcererExtensionsProvider {
-    public var sourcerer: SourcererExtension<Self> {
+public extension SourcererExtensionsProvider {
+    var sourcerer: SourcererExtension<Self> {
         return SourcererExtension(self)
     }
 
-    public static var sourcerer: SourcererExtension<Self>.Type {
+    static var sourcerer: SourcererExtension<Self>.Type {
         return SourcererExtension<Self>.self
     }
 }

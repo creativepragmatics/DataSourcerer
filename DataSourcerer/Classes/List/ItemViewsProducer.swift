@@ -7,9 +7,11 @@ public struct ItemViewsProducer<ItemModelType: Equatable, ProducedView: UIView, 
     public let registerAtContainingView: (ContainingView) -> Void
     public let itemViewSize: ((ItemModelType, ContainingView) -> CGSize)?
 
-    public init(produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
-         registerAtContainingView: @escaping (ContainingView) -> Void,
-         itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil) {
+    public init(
+        produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
+        registerAtContainingView: @escaping (ContainingView) -> Void,
+        itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil
+        ) {
         self.produceView = produceView
         self.registerAtContainingView = registerAtContainingView
         self.itemViewSize = itemViewSize
