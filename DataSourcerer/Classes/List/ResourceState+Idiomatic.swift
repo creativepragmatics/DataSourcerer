@@ -53,6 +53,10 @@ public extension ResourceState {
                     return ListViewState.readyToDisplay([errorSection(error)])
             }
 
+            var loading: ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                    return ListViewState.readyToDisplay([loadingSection(self)])
+            }
+
             switch provisioningState {
             case .notReady:
                 return ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>.notReady
@@ -61,8 +65,13 @@ public extension ResourceState {
                     // Loading and there are fallback items, return them
                     return ListViewState.readyToDisplay(sections)
                 } else if self.error != nil {
-                    // Loading, error, and there are no fallback items, return loading item
-                    return ListViewState.readyToDisplay([loadingSection(self)])
+                    // Loading, error, and there are no fallback items > return loading item
+                    // if the loadImpulse permits it, or if no loadImpulse available (== .notReady)
+                    if self.loadImpulse?.type.showLoadingIndicator ?? true {
+                        return loading
+                    } else {
+                        return empty
+                    }
                 } else if value != nil {
                     // Loading and there is an empty fallback balue, return noResults item.
                     // We could also just display only the loadingSection instead, but then the view
@@ -71,7 +80,11 @@ public extension ResourceState {
                     return noResults
                 } else {
                     // Loading and there are no fallback items, return loading item
-                    return ListViewState.readyToDisplay([loadingSection(self)])
+                    if self.loadImpulse?.type.showLoadingIndicator ?? true {
+                        return loading
+                    } else {
+                        return empty
+                    }
                 }
             case .result:
                 if let error = self.error {

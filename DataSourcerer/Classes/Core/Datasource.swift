@@ -20,18 +20,21 @@ public extension Datasource {
 
     func refresh(
         params: P,
+        type: LoadImpulseType,
         on queue: LoadImpulseEmitterQueue = .distinct(DispatchQueue(label: "PublicReposViewModel.refresh"))
     ) {
-        loadImpulseEmitter.emit(params: params, on: queue)
+        let loadImpulse = LoadImpulse(params: params, type: type)
+        loadImpulseEmitter.emit(loadImpulse: loadImpulse, on: queue)
     }
 }
 
 public extension Datasource where P == NoResourceParams {
 
     func refresh(
+        type: LoadImpulseType,
         on queue: LoadImpulseEmitterQueue = .distinct(DispatchQueue(label: "PublicReposViewModel.refresh"))
         ) {
-        refresh(params: NoResourceParams(), on: queue)
+        refresh(params: NoResourceParams(), type: type, on: queue)
     }
 }
 
@@ -72,14 +75,14 @@ public extension Datasource {
         var loadImpulseEmitter: AnyLoadImpulseEmitter<P> {
             switch self {
             case let .default(initialParameters):
-                let initialImpulse = initialParameters.map { LoadImpulse<P>(params: $0) }
+                let initialImpulse = initialParameters.map { LoadImpulse<P>(params: $0, type: .initial) }
                 return SimpleLoadImpulseEmitter(initialImpulse: initialImpulse).any
             case let .instance(loadImpulseEmitter):
                 return loadImpulseEmitter
             case let .recurring(initialParameters,
                                 timerMode,
                                 timerEmitQueue):
-                let initialImpulse = initialParameters.map { LoadImpulse<P>(params: $0) }
+                let initialImpulse = initialParameters.map { LoadImpulse<P>(params: $0, type: .initial) }
                 return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse,
                                                    timerMode: timerMode,
                                                    timerEmitQueue: timerEmitQueue).any
