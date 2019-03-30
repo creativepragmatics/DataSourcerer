@@ -2,10 +2,10 @@ import DataSourcerer
 import Foundation
 import UIKit
 
-class PublicReposRootViewController : UIViewController {
+class PullToRefreshTableViewController : UIViewController {
 
-    lazy var viewModel: PublicReposViewModel = {
-        PublicReposViewModel()
+    lazy var viewModel: PullToRefreshTableViewModel = {
+        PullToRefreshTableViewModel()
     }()
 
     lazy var watchdog = Watchdog(threshold: 0.1, strictMode: false)
@@ -61,23 +61,14 @@ class PublicReposRootViewController : UIViewController {
             )
             .singleSectionTableViewController
             .onPullToRefresh { [weak self] in
-                self?.viewModel.datasource.refresh()
+                self?.viewModel.datasource.refresh(type: LoadImpulseType(mode: .fullRefresh, issuer: .user))
                 self?.tableViewController.refreshControl?.beginRefreshing()
             }
-
-    init() {
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    @available(*, unavailable)
-    required init?(coder aDecoder: NSCoder) {
-        fatalError("Storyboards not supported for PublicReposViewController")
-    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        title = "Github Public Repos"
+        title = "TableView with Pull to Refresh"
 
         tableViewController.willMove(toParent: self)
         self.addChild(tableViewController)

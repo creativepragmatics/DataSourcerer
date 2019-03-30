@@ -18,12 +18,12 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 return false
             }
 
-            window = UIWindow(frame: UIScreen.main.bounds)
-            if let window = window {
-                window.rootViewController =
-                    UINavigationController(rootViewController: PublicReposRootViewController())
-                window.makeKeyAndVisible()
-            }
+//            window = UIWindow(frame: UIScreen.main.bounds)
+//            if let window = window {
+//                window.rootViewController =
+//                    UINavigationController(rootViewController: PublicReposRootViewController())
+//                window.makeKeyAndVisible()
+//            }
 
             return true
     }

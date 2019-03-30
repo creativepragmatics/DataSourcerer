@@ -1,10 +1,10 @@
 import DataSourcerer
 import Foundation
 
-class PublicReposViewModel {
+class PullToRefreshTableViewModel {
 
     lazy var loadImpulseEmitter: RecurringLoadImpulseEmitter<NoResourceParams> = {
-        let initialImpulse = LoadImpulse(params: NoResourceParams())
+        let initialImpulse = LoadImpulse(params: NoResourceParams(), type: .initial)
         return RecurringLoadImpulseEmitter(initialImpulse: initialImpulse)
     }()
 
