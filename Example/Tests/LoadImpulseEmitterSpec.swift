@@ -9,7 +9,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
         describe("SimpleLoadImpulseEmitter") {
             it("should send initial load impulse to an observer") {
 
-                let initialImpulse = LoadImpulse(params: "1")
+                let initialImpulse = LoadImpulse(params: "1", type: .initial)
                 let emitter = SimpleLoadImpulseEmitter<String>(initialImpulse: initialImpulse)
 
                 var observedImpulses: [LoadImpulse<String>] = []
@@ -30,7 +30,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
                     observedImpulses.append(loadImpulse)
                 })
 
-                let impulses = [LoadImpulse(params: "1"), LoadImpulse(params: "2")]
+                let impulses = [LoadImpulse(params: "1", type: .initial), LoadImpulse(params: "2", type: LoadImpulseType(mode: .fullRefresh, issuer: .user))]
                 impulses.forEach({ emitter.emit(loadImpulse: $0, on: .current) })
 
                 expect(observedImpulses) == impulses
@@ -46,7 +46,7 @@ class LoadImpulseEmitterSpec: QuickSpec {
                 })
                 _ = emitter.observe({ _ in })
 
-                let impulses = [LoadImpulse(params: "1"), LoadImpulse(params: "2")]
+                let impulses = [LoadImpulse(params: "1", type: .initial), LoadImpulse(params: "2", type: LoadImpulseType(mode: .fullRefresh, issuer: .user))]
                 impulses.forEach({ emitter.emit(loadImpulse: $0, on: .current) })
 
                 expect(observedImpulses) == impulses
@@ -67,9 +67,9 @@ class LoadImpulseEmitterSpec: QuickSpec {
 
                 let disposable = testScope()
 
-                emitter.emit(loadImpulse: LoadImpulse(params: "1"), on: .current)
+                emitter.emit(loadImpulse: LoadImpulse(params: "1", type: .initial), on: .current)
                 expect(testStr) == "1"
-                emitter.emit(loadImpulse: LoadImpulse(params: "2"), on: .current)
+                emitter.emit(loadImpulse: LoadImpulse(params: "2", type: LoadImpulseType(mode: .fullRefresh, issuer: .user)), on: .current)
                 expect(testStr) == "12"
 
                 disposable.dispose()

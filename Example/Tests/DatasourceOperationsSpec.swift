@@ -5,7 +5,7 @@ import Quick
 
 class DatasourceOperationsSpec: QuickSpec {
 
-    private lazy var testStringLoadImpulse = LoadImpulse(params: "1")
+    private lazy var testStringLoadImpulse = LoadImpulse(params: "1", type: .initial)
 
     var stringLoadImpulseEmitter: AnyLoadImpulseEmitter<String> {
         return SimpleLoadImpulseEmitter<String>(initialImpulse: testStringLoadImpulse).any
@@ -38,8 +38,8 @@ class DatasourceOperationsSpec: QuickSpec {
                     observedInts.append(value)
                 })
 
-                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "2"), on: .current)
-                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "3"), on: .current)
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "2", type: LoadImpulseType(mode: .fullRefresh, issuer: .user)), on: .current)
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "3", type: LoadImpulseType(mode: .fullRefresh, issuer: .user)), on: .current)
 
                 disposable.dispose()
 
@@ -73,7 +73,7 @@ class DatasourceOperationsSpec: QuickSpec {
                 let disposable = testScope()
                 expect(testStr) == "1"
 
-                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "1"), on: .current)
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "1", type: .initial), on: .current)
                 expect(testStr) == "11"
 
                 disposable.dispose()

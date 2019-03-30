@@ -34,13 +34,13 @@ struct OneTwoThreeStringTestStates {
     public static var oneTwoThreeStringStates: [ResourceState<String, String, TestStateError>] = {
         return [
             ResourceState.value(valueBox: EquatableBox("1"),
-                        loadImpulse: LoadImpulse(params: "1"),
+                        loadImpulse: LoadImpulse(params: "1", type: .initial),
                         fallbackError: nil),
             ResourceState.value(valueBox: EquatableBox("2"),
-                        loadImpulse: LoadImpulse(params: "2"),
+                        loadImpulse: LoadImpulse(params: "2", type: LoadImpulseType(mode: .fullRefresh, issuer: .user)),
                         fallbackError: nil),
             ResourceState.value(valueBox: EquatableBox("3"),
-                        loadImpulse: LoadImpulse(params: "3"),
+                        loadImpulse: LoadImpulse(params: "3", type: LoadImpulseType(mode: .fullRefresh, issuer: .user)),
                         fallbackError: nil)
         ]
     }()

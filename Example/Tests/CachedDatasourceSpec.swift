@@ -5,7 +5,7 @@ import Quick
 
 class CachedDatasourceSpec: QuickSpec {
 
-    private let testStringLoadImpulse = LoadImpulse(params: "1")
+    private let testStringLoadImpulse = LoadImpulse(params: "1", type: .initial)
 
     private lazy var testStringState: ResourceState<String, String, TestStateError> = {
         return ResourceState(
@@ -90,7 +90,7 @@ class CachedDatasourceSpec: QuickSpec {
                 let disposable = testScope()
                 expect(testStr) == "1"
 
-                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "2"), on: .current)
+                loadImpulseEmitter.emit(loadImpulse: LoadImpulse(params: "2", type: LoadImpulseType(mode: .fullRefresh, issuer: .user)), on: .current)
                 expect(testStr) == "12"
 
                 disposable.dispose()
