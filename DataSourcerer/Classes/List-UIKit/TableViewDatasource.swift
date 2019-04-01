@@ -12,11 +12,11 @@ open class TableViewDatasource
         UIView, HeaderItemError, FooterItem, UIView, FooterItemError, UITableView>
 
     public let configuration: Configuration
-    public weak var delegate: UITableViewDelegate?
-    public weak var datasource: UITableViewDataSource?
+    public weak var delegate: AnyObject?
+    public weak var datasource: AnyObject?
     public let hideBottomMostSeparatorWithHack: Bool
 
-    public var sections: ListViewState<CellModelType, SectionModelType> {
+    public var sections: ListViewState<P, CellModelType, SectionModelType> {
         return configuration.sections
     }
 
@@ -165,15 +165,16 @@ open class TableViewDatasource
 
 public extension TableViewDatasource where SectionModelType == NoSection {
 
-    var cellsProperty: ShareableValueStream<SingleSectionListViewState<CellModelType>> {
+    var cellsProperty: ShareableValueStream<SingleSectionListViewState<P, CellModelType>> {
 
         return configuration.stateAndSections
-            .map { SingleSectionListViewState<CellModelType>(sections: $0.listViewState) }
+            .map { SingleSectionListViewState<P, CellModelType>(sections: $0.listViewState) }
+            .skipRepeats()
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
     }
 
-    var cells: SingleSectionListViewState<CellModelType> {
-        return SingleSectionListViewState<CellModelType>(sections: configuration.sections)
+    var cells: SingleSectionListViewState<P, CellModelType> {
+        return SingleSectionListViewState<P, CellModelType>(sections: configuration.sections)
     }
 }

@@ -15,7 +15,7 @@ FooterItem.E == FooterItemError {
     public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
     public typealias FooterItemViewAdapter = ItemViewsProducer<FooterItem, FooterItemView, ContainingView>
-    public typealias StateAndSections = ListStateAndSections<ListState, ItemModelType, SectionModelType>
+    public typealias StateAndSections = ListStateAndSections<ListState, P, ItemModelType, SectionModelType>
     public struct ItemSelection {
         public let itemModel: ItemModelType
         public let view: ItemView
@@ -143,11 +143,12 @@ FooterItemView == UIView {
     }
 }
 
-public struct ListStateAndSections<Value, ItemModelType: ItemModel, SectionModelType: SectionModel> {
+public struct ListStateAndSections
+<Value, P: ResourceParams, ItemModelType: ItemModel, SectionModelType: SectionModel> {
     public let value: Value
-    public let listViewState: ListViewState<ItemModelType, SectionModelType>
+    public let listViewState: ListViewState<P, ItemModelType, SectionModelType>
 
-    public init(value: Value, listViewState: ListViewState<ItemModelType, SectionModelType>) {
+    public init(value: Value, listViewState: ListViewState<P, ItemModelType, SectionModelType>) {
         self.value = value
         self.listViewState = listViewState
     }
@@ -155,7 +156,7 @@ public struct ListStateAndSections<Value, ItemModelType: ItemModel, SectionModel
 
 public extension ListViewDatasourceConfiguration {
 
-    var sections: ListViewState<ItemModelType, SectionModelType> {
+    var sections: ListViewState<P, ItemModelType, SectionModelType> {
         return stateAndSections.value.listViewState
     }
 
@@ -169,8 +170,9 @@ public extension ListViewDatasourceConfiguration {
     }
 
     func items(in section: Int) -> [ItemModelType] {
-        return stateAndSections.value.listViewState
+        let sections = stateAndSections.value.listViewState
             .sectionedValues.sectionsAndValues[section].1
+        return sections
     }
 
     func itemView(at indexPath: IndexPath, in containingView: ContainingView) -> ItemView {

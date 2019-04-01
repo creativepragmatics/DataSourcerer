@@ -27,12 +27,22 @@ public extension ListViewDatasourceConfiguration
             ) -> ItemModelsProducerSelected {
                 let itemModelsProducer = ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>(
                     baseValueToListViewStateTransformer:
-                        ValueToListViewStateTransformer<Value, ItemModelType, SectionModelType>(
+                        ValueToListViewStateTransformer<Value, P, ItemModelType, SectionModelType>(
                             valueToSections: sectionModels
                     )
                 )
 
                 return ItemModelsProducerSelected(
+                    previous: self,
+                    itemModelsProducer: itemModelsProducer
+                )
+            }
+
+            public func setItemModelsProducer(
+                _ itemModelsProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
+            ) -> ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected {
+
+                return ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected(
                     previous: self,
                     itemModelsProducer: itemModelsProducer
                 )
@@ -95,11 +105,11 @@ public extension ListViewDatasourceConfiguration.Builder.DatasourceSelected
     SectionModelType == NoSection {
 
     func mapSingleSectionItemModels(
-        _ itemModels: @escaping (Value) -> [ItemModelType]
+        _ itemModels: @escaping (Value, LoadImpulse<P>) -> [ItemModelType]
         ) -> ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected {
         let itemModelsProducer = ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(
             baseValueToListViewStateTransformer:
-            ValueToListViewStateTransformer<Value, ItemModelType, SectionModelType>(
+            ValueToListViewStateTransformer<Value, P, ItemModelType, SectionModelType>(
                 valueToSingleSectionItems: itemModels
             )
         )
@@ -109,6 +119,7 @@ public extension ListViewDatasourceConfiguration.Builder.DatasourceSelected
             itemModelsProducer: itemModelsProducer
         )
     }
+
 }
 
 /// Builder.ItemModelsProducerSelected for tableviews

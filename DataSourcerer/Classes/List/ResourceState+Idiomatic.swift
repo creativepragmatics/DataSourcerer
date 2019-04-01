@@ -8,7 +8,7 @@ public extension ResourceState {
     /// instead.
     func addLoadingAndErrorStates<BaseItemModelType: ItemModel, SectionModelType: SectionModel>(
         valueToIdiomaticListViewStateTransformer: ValueToListViewStateTransformer
-        <Value, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+        <Value, P, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         loadingSection:
         @escaping (ResourceState)
         -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
@@ -18,8 +18,12 @@ public extension ResourceState {
         noResultsSection:
         @escaping (ResourceState)
         -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
-        ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
+        ) -> ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
+
+            guard let loadImpulse = self.loadImpulse else {
+                return ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType>.notReady
+            }
 
             func boxedValueToSections(_ box: EquatableBox<Value>?)
                 -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? {
@@ -27,7 +31,7 @@ public extension ResourceState {
                     return (box?.value).flatMap { value
                         -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? in
 
-                        return valueToIdiomaticListViewStateTransformer.valueToListViewState(value)
+                        return valueToIdiomaticListViewStateTransformer.valueToListViewState(value, loadImpulse)
                             .sectionsWithItems
                     }
             }
@@ -38,32 +42,32 @@ public extension ResourceState {
                 return sections.map({ $0.items.count }).reduce(0, +)
             }
 
-            var noResults: ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
-                return ListViewState.readyToDisplay([noResultsSection(self)])
+            var noResults: ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                return ListViewState.readyToDisplay(loadImpulse, [noResultsSection(self)])
             }
 
-            var empty: ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
-                return ListViewState.readyToDisplay([
+            var empty: ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                return ListViewState.readyToDisplay(loadImpulse, [
                     SectionAndItems(SectionModelType(), [])
                 ])
             }
 
             func showError(_ error: E)
-                -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
-                    return ListViewState.readyToDisplay([errorSection(error)])
+                -> ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                    return ListViewState.readyToDisplay(loadImpulse, [errorSection(error)])
             }
 
-            var loading: ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
-                    return ListViewState.readyToDisplay([loadingSection(self)])
+            var loading: ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
+                    return ListViewState.readyToDisplay(loadImpulse, [loadingSection(self)])
             }
 
             switch provisioningState {
             case .notReady:
-                return ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>.notReady
+                return ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType>.notReady
             case .loading:
                 if let sections = boxedValueToSections(value), numberOfItems(sections) > 0 {
                     // Loading and there are fallback items, return them
-                    return ListViewState.readyToDisplay(sections)
+                    return ListViewState.readyToDisplay(loadImpulse, sections)
                 } else if self.error != nil {
                     // Loading, error, and there are no fallback items > return loading item
                     // if the loadImpulse permits it, or if no loadImpulse available (== .notReady)
@@ -92,7 +96,7 @@ public extension ResourceState {
                 } else if let value = self.value {
                     if let sections = boxedValueToSections(value), numberOfItems(sections) > 0 {
                         // Success, return items
-                        return ListViewState.readyToDisplay(sections)
+                        return ListViewState.readyToDisplay(loadImpulse, sections)
                     } else {
                         // Success without items, return noResults
                         return noResults
@@ -107,9 +111,9 @@ public extension ResourceState {
     /// Convenience
     func addLoadingAndErrorStates<BaseItemModelType, SectionModelType: SectionModel>(
         valueToIdiomaticListViewStateTransformer: ValueToListViewStateTransformer
-        <Value, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+        <Value, P, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         noResultsText: String
-        ) -> ListViewState<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
+        ) -> ListViewState<P, IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
             return addLoadingAndErrorStates(

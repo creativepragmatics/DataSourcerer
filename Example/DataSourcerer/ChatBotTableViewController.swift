@@ -11,40 +11,23 @@ class ChatBotTableViewController : UIViewController {
     lazy var watchdog = Watchdog(threshold: 0.1, strictMode: false)
 
     private let disposeBag = DisposeBag()
+    private let cellUpdateInterceptor = ChatBotTableCellUpdateInterceptor()
 
     private lazy var tableViewController =
         ListViewDatasourceConfiguration
             .buildSingleSectionTableView(
                 datasource: viewModel.datasource,
-                withCellModelType: PublicRepoCell.self
+                withCellModelType: ChatBotCell.self
             )
-            .mapSingleSectionItemModels { response -> [PublicRepoCell] in
-                return response.map { PublicRepoCell.repo($0) }
-            }
-            .renderWithCellClass(
-                cellType: UITableViewCell.self,
-                dequeueIdentifier: "cell",
-                configure: { repo, cellView in
-                    cellView.textLabel?.text = {
-                        switch repo {
-                        case let .repo(repo): return repo.name
-                        case .error: return nil
-                        }
-                    }()
-                }
+            .setItemModelsProducer(
+                ChatBotTableItemModelsProducer().make()
+            )
+            .setItemViewsProducer(
+                ChatBotItemViewsProducer().make()
             )
             .configurationForFurtherCustomization
-            .onDidSelectItem { [weak self] itemSelection in
-                itemSelection.containingView.deselectRow(at: itemSelection.indexPath, animated: true)
-                switch itemSelection.itemModel {
-                case let .repo(repo):
-                    self?.repoSelected(repo: repo)
-                case .error:
-                    return
-                }
-            }
             .showLoadingAndErrorStates(
-                noResultsText: "No results",
+                noResultsText: "You have received no messages so far.",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
                 errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in
                     guard case let .error(error) = cell else { return ErrorTableViewCell() }
@@ -55,13 +38,16 @@ class ChatBotTableViewController : UIViewController {
                 noResultsViewProducer: SimpleTableViewCellProducer.instantiate { _ in
                     let tableViewCell = ErrorTableViewCell()
                     tableViewCell.content = StateErrorMessage
-                        .message("Strangely, there are no public repos on Github.")
+                        .message("You have received no messages so far.")
                     return tableViewCell
                 }
             )
             .singleSectionTableViewController
             .onPullToRefresh { [weak self] in
-                self?.viewModel.datasource.refresh(type: LoadImpulseType(mode: .fullRefresh, issuer: .user))
+                self?.viewModel.datasource.refresh(
+                    params: ChatBotRequest.loadOldMessages(oldestKnownMessageId: "", limit: 20),
+                    type: LoadImpulseType(mode: .fullRefresh, issuer: .user)
+                )
                 self?.tableViewController.refreshControl?.beginRefreshing()
             }
 
@@ -87,12 +73,30 @@ class ChatBotTableViewController : UIViewController {
         tableViewController.refreshControl?.sourcerer
             .endRefreshingOnLoadingEnded(viewModel.datasource)
             .disposed(by: disposeBag)
+
+        tableViewController.willChangeCellsInView = { [weak self] tableView, previous, next in
+            self?.cellUpdateInterceptor.willChangeCells(
+                tableView: tableView,
+                previous: previous,
+                next: next
+            )
+            return
+        }
+
+        tableViewController.didChangeCellsInView = { [weak self] tableView, previous, next in
+            self?.cellUpdateInterceptor.didChangeCells(
+                tableView: tableView,
+                previous: previous,
+                next: next
+            )
+            return
+        }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-        viewModel.loadImpulseEmitter.timerMode = .timeInterval(.seconds(90))
+        viewModel.startReceivingNewMessages()
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -104,7 +108,7 @@ class ChatBotTableViewController : UIViewController {
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        viewModel.loadImpulseEmitter.timerMode = .none
+        viewModel.stopReceivingNewMessages()
     }
 
     func repoSelected(repo: PublicRepo) {

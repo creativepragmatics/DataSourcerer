@@ -1,21 +1,21 @@
 PODS:
   - Cache (5.2.0)
-  - DataSourcerer (0.1.0):
-    - DataSourcerer/Core (= 0.1.0)
-    - DataSourcerer/List (= 0.1.0)
-    - DataSourcerer/List-UIKit (= 0.1.0)
-    - DataSourcerer/Persister-Cache (= 0.1.0)
-    - DataSourcerer/ReactiveSwift (= 0.1.0)
-  - DataSourcerer/Core (0.1.0)
-  - DataSourcerer/List (0.1.0):
+  - DataSourcerer (0.2.3):
+    - DataSourcerer/Core (= 0.2.3)
+    - DataSourcerer/List (= 0.2.3)
+    - DataSourcerer/List-UIKit (= 0.2.3)
+    - DataSourcerer/Persister-Cache (= 0.2.3)
+    - DataSourcerer/ReactiveSwift (= 0.2.3)
+  - DataSourcerer/Core (0.2.3)
+  - DataSourcerer/List (0.2.3):
     - DataSourcerer/Core
-  - DataSourcerer/List-UIKit (0.1.0):
+  - DataSourcerer/List-UIKit (0.2.3):
     - DataSourcerer/List
     - Dwifft (~> 0.9)
-  - DataSourcerer/Persister-Cache (0.1.0):
+  - DataSourcerer/Persister-Cache (0.2.3):
     - Cache (~> 5.2.0)
     - DataSourcerer/Core
-  - DataSourcerer/ReactiveSwift (0.1.0):
+  - DataSourcerer/ReactiveSwift (0.2.3):
     - DataSourcerer/List
     - ReactiveSwift (~> 4.0)
   - Dwifft (0.9)
@@ -24,12 +24,14 @@ PODS:
   - ReactiveSwift (4.0.0):
     - Result (~> 4.0)
   - Result (4.1.0)
+  - Reveal-SDK (19)
   - SwiftLint (0.31.0)
 
 DEPENDENCIES:
   - DataSourcerer (from `../`)
   - Nimble (~> 7.3.1)
   - Quick (~> 1.3.2)
+  - Reveal-SDK (= 19)
   - SwiftLint
 
 SPEC REPOS:
@@ -40,6 +42,7 @@ SPEC REPOS:
     - Quick
     - ReactiveSwift
     - Result
+    - Reveal-SDK
     - SwiftLint
 
 EXTERNAL SOURCES:
@@ -48,14 +51,15 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Cache: 807c5d86d01a177f06ede9865add3aea269bbfd4
-  DataSourcerer: 08778a0bbd47ca032c0ec004407db4f48a603b39
+  DataSourcerer: c1b63074d3b91a00f49abf7cd3a6ea802b157ec8
   Dwifft: 42912068ed2a8146077d1a1404df18625bd086e1
   Nimble: 051e3d8912d40138fa5591c78594f95fb172af37
   Quick: f4f7f063c524394c73ed93ac70983c609805d481
   ReactiveSwift: a2bb9ace428a109e9c0209615645d9d286c8c433
   Result: bd966fac789cc6c1563440b348ab2598cc24d5c7
+  Reveal-SDK: 9f0d2c6c12eb7507921e5454ac165b7aa21140a4
   SwiftLint: 7a0227733d786395817373b2d0ca799fd0093ff3
 
-PODFILE CHECKSUM: 1e3c18ea70e01e8d9f5f349a05464e4756e6c010
+PODFILE CHECKSUM: 07c5f205d15878e4cdf6d4754a5128caacdd8b8c
 
 COCOAPODS: 1.5.3

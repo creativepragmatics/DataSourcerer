@@ -27,23 +27,23 @@ public protocol HashableItemModel : ItemModel, Hashable { }
 
 // MARK: SingleSectionListViewState
 
-public enum SingleSectionListViewState<LI: ItemModel>: Equatable {
+public enum SingleSectionListViewState<P: ResourceParams, LI: ItemModel>: Equatable {
     case notReady
-    case readyToDisplay([LI])
+    case readyToDisplay(LoadImpulse<P>, [LI])
 
     public var items: [LI]? {
         switch self {
         case .notReady: return nil
-        case let .readyToDisplay(items): return items
+        case let .readyToDisplay(_, items): return items
         }
     }
 
-    init(sections: ListViewState<LI, NoSection>) {
+    init(sections: ListViewState<P, LI, NoSection>) {
         switch sections {
         case .notReady:
             self = .notReady
-        case let .readyToDisplay(sectionsWithItems):
-            self = .readyToDisplay(sectionsWithItems.first?.items ?? [])
+        case let .readyToDisplay(loadImpulse, sectionsWithItems):
+            self = .readyToDisplay(loadImpulse, sectionsWithItems.first?.items ?? [])
         }
     }
 }
@@ -58,15 +58,15 @@ public struct SectionAndItems<Item: ItemModel, Section: SectionModel>: Equatable
     }
 }
 
-public enum ListViewState<ItemModelType: ItemModel, SectionModelType: SectionModel>: Equatable {
+public enum ListViewState<P: ResourceParams, ItemModelType: ItemModel, SectionModelType: SectionModel>: Equatable {
 
     case notReady
-    case readyToDisplay([SectionAndItems<ItemModelType, SectionModelType>])
+    case readyToDisplay(LoadImpulse<P>, [SectionAndItems<ItemModelType, SectionModelType>])
 
     public var sectionsWithItems: [SectionAndItems<ItemModelType, SectionModelType>]? {
         switch self {
         case .notReady: return nil
-        case let .readyToDisplay(sectionsWithItems): return sectionsWithItems
+        case let .readyToDisplay(_, sectionsWithItems): return sectionsWithItems
         }
     }
 }

@@ -8,10 +8,11 @@ open class SingleSectionTableViewController
     where CellModelType.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError {
 
     public typealias ValuesObservable = AnyObservable<Value>
-    public typealias Cells = SingleSectionListViewState<CellModelType>
+    public typealias ViewState = SingleSectionListViewState<P, CellModelType>
     public typealias Configuration = ListViewDatasourceConfiguration
         <Value, P, E, CellModelType, UITableViewCell, NoSection, HeaderItem, UIView, HeaderItemError,
         FooterItem, UIView, FooterItemError, UITableView>
+    public typealias ChangeCellsInView = (UITableView, _ previous: ViewState, _ next: ViewState) -> Void
 
     open var refreshControl: UIRefreshControl?
     private let disposeBag = DisposeBag()
@@ -36,6 +37,8 @@ open class SingleSectionTableViewController
     public var supportPullToRefresh = true
     public var animateTableViewUpdates = true
     public var pullToRefresh: (() -> Void)?
+    public var willChangeCellsInView: ChangeCellsInView?
+    public var didChangeCellsInView: ChangeCellsInView?
 
     open var isViewVisible: Bool {
         return viewIfLoaded?.window != nil && view.alpha > 0.001
@@ -91,26 +94,36 @@ open class SingleSectionTableViewController
         var previousCells = cellsProperty.value
 
         // Update table with most current cells
-        cellsProperty.observe({ [weak self] cells in
-            self?.updateCells(previous: previousCells, next: cells)
-            previousCells = cells
-        }).disposed(by: disposeBag)
+        cellsProperty
+            .skipRepeats { lhs, rhs -> Bool in
+                return lhs.items == rhs.items
+            }
+            .observe { [weak self] cells in
+                self?.updateCells(previous: previousCells, next: cells)
+                previousCells = cells
+            }
+            .disposed(by: disposeBag)
     }
 
-    private func updateCells(previous: Cells, next: Cells) {
+    private func updateCells(previous: ViewState, next: ViewState) {
         switch previous {
-        case let .readyToDisplay(previousCells) where isViewVisible && animateTableViewUpdates:
-            if self.tableViewDiffCalculator == nil {
+        case let .readyToDisplay(_, previousCells) where isViewVisible && animateTableViewUpdates:
+            if tableViewDiffCalculator == nil {
                 // Use previous cells as initial values such that "next" cells are
                 // inserted with animations
-                self.tableViewDiffCalculator = self.createTableViewDiffCalculator(initial: previousCells)
+                tableViewDiffCalculator = createTableViewDiffCalculator(initial: previousCells)
             }
-            self.tableViewDiffCalculator?.rows = next.items ?? []
+            willChangeCellsInView?(tableView, previous, next)
+            tableViewDiffCalculator?.rows = next.items ?? []
+            didChangeCellsInView?(tableView, previous, next)
         case .readyToDisplay, .notReady:
             // Animations disabled or view invisible - skip animations.
             self.tableViewDiffCalculator = nil
             DispatchQueue.main.async { [weak self] in
-                self?.tableView.reloadData()
+                guard let self = self else { return }
+                self.willChangeCellsInView?(self.tableView, previous, next)
+                self.tableView.reloadData()
+                self.didChangeCellsInView?(self.tableView, previous, next)
             }
         }
     }

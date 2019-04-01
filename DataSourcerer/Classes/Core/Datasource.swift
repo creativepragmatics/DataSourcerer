@@ -44,7 +44,7 @@ public extension Datasource {
         case none
         case persist(persister: AnyResourceStatePersister<Value, P, E>, cacheLoadError: E)
 
-        func apply(on observable: AnyObservable<ResourceState<Value, P, E>>,
+        public func apply(on observable: AnyObservable<ResourceState<Value, P, E>>,
                    loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
             -> AnyObservable<ResourceState<Value, P, E>> {
                 switch self {
