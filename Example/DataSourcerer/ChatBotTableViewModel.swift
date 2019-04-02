@@ -3,8 +3,6 @@ import Foundation
 
 class ChatBotTableViewModel {
 
-    private let loadOldMessagesEnabledState: ChatBotLoadOldMessagesEnabledState
-
     typealias State = ResourceState<ChatBotResponse, ChatBotRequest, APIError>
 
     lazy var datasource: Datasource<ChatBotResponse, ChatBotRequest, APIError> = {
@@ -33,10 +31,6 @@ class ChatBotTableViewModel {
 
     var newMessageTimer: Timer?
 
-    init(loadOldMessagesEnabledState: ChatBotLoadOldMessagesEnabledState) {
-        self.loadOldMessagesEnabledState = loadOldMessagesEnabledState
-    }
-
     func startReceivingNewMessages() {
         newMessageTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { [weak self] _ in
             let loadImpulse = LoadImpulse(
@@ -51,9 +45,9 @@ class ChatBotTableViewModel {
         newMessageTimer?.invalidate()
     }
 
-    func tryLoadOldMessages() {
+    func tryLoadOldMessages(tableView: UITableView) {
 
-        guard loadOldMessagesEnabledState.suspended == false else {
+        guard tableView.contentOffset.y < 100 else {
             return
         }
 

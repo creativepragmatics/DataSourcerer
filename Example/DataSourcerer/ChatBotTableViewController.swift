@@ -4,19 +4,13 @@ import UIKit
 
 class ChatBotTableViewController : UIViewController {
 
-    private let loadOldMessagesEnabledState = ChatBotLoadOldMessagesEnabledState()
-
-    lazy var viewModel: ChatBotTableViewModel = {
-        ChatBotTableViewModel(loadOldMessagesEnabledState: loadOldMessagesEnabledState)
-    }()
+    let viewModel = ChatBotTableViewModel()
 
     lazy var watchdog = Watchdog(threshold: 0.1, strictMode: false)
 
     private let disposeBag = DisposeBag()
-    private lazy var cellUpdateInterceptor = ChatBotTableCellUpdateInterceptor(
-        loadOldMessagesEnabledState: loadOldMessagesEnabledState,
-        tryLoadOldMessages: { [weak self] in self?.viewModel.tryLoadOldMessages() }
-    )
+    private lazy var cellUpdateInterceptor = ChatBotTableCellUpdateInterceptor()
+    private var loadOldMessagesTimer: Timer?
 
     private lazy var tableViewController =
         ListViewDatasourceConfiguration
@@ -31,11 +25,6 @@ class ChatBotTableViewController : UIViewController {
                 ChatBotItemViewsProducer().make()
             )
             .configurationForFurtherCustomization
-            .onWillDisplayItem { [weak self] _, _, indexPath in
-                if indexPath.row == 3 {
-                    self?.viewModel.tryLoadOldMessages()
-                }
-            }
             .showLoadingAndErrorStates(
                 noResultsText: "You have received no messages so far.",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
@@ -102,6 +91,11 @@ class ChatBotTableViewController : UIViewController {
         super.viewWillAppear(animated)
 
         viewModel.startReceivingNewMessages()
+        loadOldMessagesTimer?.invalidate()
+        loadOldMessagesTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true, block: { [weak self] _ in
+            guard let tableView = self?.tableViewController.tableView else { return }
+            self?.viewModel.tryLoadOldMessages(tableView: tableView)
+        })
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -114,6 +108,7 @@ class ChatBotTableViewController : UIViewController {
         super.viewWillDisappear(animated)
 
         viewModel.stopReceivingNewMessages()
+        loadOldMessagesTimer?.invalidate()
     }
 
     func repoSelected(repo: PublicRepo) {

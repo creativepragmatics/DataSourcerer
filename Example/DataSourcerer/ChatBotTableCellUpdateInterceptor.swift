@@ -4,18 +4,8 @@ import UIKit
 
 class ChatBotTableCellUpdateInterceptor {
 
-    private let loadOldMessagesEnabledState: ChatBotLoadOldMessagesEnabledState
     private var isScrolledToBottom = false
     private var oldMessageLoadKeepOffset: OldMessageLoadKeepContentOffset = .none
-    private let tryLoadOldMessages: () -> Void
-
-    init(
-        loadOldMessagesEnabledState: ChatBotLoadOldMessagesEnabledState,
-        tryLoadOldMessages: @escaping () -> Void
-    ) {
-        self.loadOldMessagesEnabledState = loadOldMessagesEnabledState
-        self.tryLoadOldMessages = tryLoadOldMessages
-    }
 
     func isLoadingCellVisible(
         tableView: UITableView,
@@ -72,9 +62,8 @@ class ChatBotTableCellUpdateInterceptor {
         ) {
         isScrolledToBottom = self.isScrolledToBottom(tableView: tableView, state: previous)
 
-        // Keep offset if next state is a `loadOldMessages` result, and loading cell is visible:
+        // Keep offset if next state is a `loadOldMessages` result:
         if next.isLoadOldMessagesResult,
-            isLoadingCellVisible(tableView: tableView, state: previous),
             let firstVisibleMessage = self.firstVisibleMessageCell(tableView: tableView, state: previous) {
 
             var offsetFromTop =
@@ -90,6 +79,8 @@ class ChatBotTableCellUpdateInterceptor {
                     topMostMessage: firstVisibleMessage.0,
                     cellOffsetFromTop: offsetFromTop
             )
+        } else {
+            self.oldMessageLoadKeepOffset = .none
         }
 
         switch next {
@@ -98,8 +89,6 @@ class ChatBotTableCellUpdateInterceptor {
         case .readyToDisplay:
             UIView.setAnimationsEnabled(false)
         }
-
-        loadOldMessagesEnabledState.willChangeCells()
     }
 
     func offsetFromRootViewTopEdge(cell: UITableViewCell, tableView: UITableView) -> CGFloat? {
@@ -121,6 +110,8 @@ class ChatBotTableCellUpdateInterceptor {
             oldMessageLoadKeepOffset = .none // reset
 
             if let rowToScrollTo = next.items?.firstIndex(of: cell) {
+
+                self.oldMessageLoadKeepOffset = .none
 
                 // Calculate total height of all rows before the row
                 // that should be scrolled to
@@ -146,22 +137,8 @@ class ChatBotTableCellUpdateInterceptor {
                 )
 
             }
-//            tableView.scrollRectToVisible(
-//                CGRect(x: 0, y: newOffsetY, width: 1, height: visibleTableHeight),
-//                animated: false
-//            )
         case .none:
             break
-        }
-
-        // Unsuspend old messages loading and trigger
-
-        loadOldMessagesEnabledState.didChangeCells()
-        DispatchQueue.main.async { [weak self, weak tableView] in
-            if tableView?.visibleCells.contains(where: { $0 is LoadingCell })
-                ?? false {
-                self?.tryLoadOldMessages()
-            }
         }
 
         // Re-enable animations which were probably disabled in `willChangeCells`
@@ -245,7 +222,7 @@ class ChatBotTableCellUpdateInterceptor {
                 tableView.contentInset.bottom
         }
 
-        return (lastVisibleCell.frame.maxY - visibleBottomLine) <= 10
+        return (lastVisibleCell.frame.maxY - visibleBottomLine) <= 20
     }
 
     enum ScrollToBottom {
