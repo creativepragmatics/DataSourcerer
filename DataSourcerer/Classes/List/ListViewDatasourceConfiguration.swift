@@ -224,6 +224,12 @@ public extension ListViewDatasourceConfiguration {
         mutableSelf.didSelectItem = didSelectItem
         return mutableSelf
     }
+
+    func onWillDisplayItem(_ willDisplayItem: @escaping WillDisplayItem) -> ListViewDatasourceConfiguration {
+        var mutableSelf = self
+        mutableSelf.willDisplayItem = willDisplayItem
+        return mutableSelf
+    }
 }
 
 public extension ListViewDatasourceConfiguration {

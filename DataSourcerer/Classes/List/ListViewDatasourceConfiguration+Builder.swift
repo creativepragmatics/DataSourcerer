@@ -23,7 +23,8 @@ public extension ListViewDatasourceConfiguration
             let datasource: Datasource<Value, P, E>
 
             public func mapSectionedItemModels(
-                _ sectionModels: @escaping (Value) -> [SectionAndItems<ItemModelType, SectionModelType>]
+                _ sectionModels: @escaping (Value, LoadImpulse<P>, ProvisioningState)
+                -> [SectionAndItems<ItemModelType, SectionModelType>]
             ) -> ItemModelsProducerSelected {
                 let itemModelsProducer = ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>(
                     baseValueToListViewStateTransformer:
@@ -105,7 +106,7 @@ public extension ListViewDatasourceConfiguration.Builder.DatasourceSelected
     SectionModelType == NoSection {
 
     func mapSingleSectionItemModels(
-        _ itemModels: @escaping (Value, LoadImpulse<P>) -> [ItemModelType]
+        _ itemModels: @escaping (Value, LoadImpulse<P>, ProvisioningState) -> [ItemModelType]
         ) -> ListViewDatasourceConfiguration.Builder.ItemModelsProducerSelected {
         let itemModelsProducer = ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(
             baseValueToListViewStateTransformer:

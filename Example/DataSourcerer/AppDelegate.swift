@@ -18,6 +18,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 return false
             }
 
+            NotificationCenter.default.post(name: Notification.Name("IBARevealRequestStart"), object: nil)
 //            window = UIWindow(frame: UIScreen.main.bounds)
 //            if let window = window {
 //                window.rootViewController =

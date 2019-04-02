@@ -4,14 +4,19 @@ import UIKit
 
 class ChatBotTableViewController : UIViewController {
 
+    private let loadOldMessagesEnabledState = ChatBotLoadOldMessagesEnabledState()
+
     lazy var viewModel: ChatBotTableViewModel = {
-        ChatBotTableViewModel()
+        ChatBotTableViewModel(loadOldMessagesEnabledState: loadOldMessagesEnabledState)
     }()
 
     lazy var watchdog = Watchdog(threshold: 0.1, strictMode: false)
 
     private let disposeBag = DisposeBag()
-    private let cellUpdateInterceptor = ChatBotTableCellUpdateInterceptor()
+    private lazy var cellUpdateInterceptor = ChatBotTableCellUpdateInterceptor(
+        loadOldMessagesEnabledState: loadOldMessagesEnabledState,
+        tryLoadOldMessages: { [weak self] in self?.viewModel.tryLoadOldMessages() }
+    )
 
     private lazy var tableViewController =
         ListViewDatasourceConfiguration
@@ -26,6 +31,11 @@ class ChatBotTableViewController : UIViewController {
                 ChatBotItemViewsProducer().make()
             )
             .configurationForFurtherCustomization
+            .onWillDisplayItem { [weak self] _, _, indexPath in
+                if indexPath.row == 3 {
+                    self?.viewModel.tryLoadOldMessages()
+                }
+            }
             .showLoadingAndErrorStates(
                 noResultsText: "You have received no messages so far.",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
@@ -55,6 +65,7 @@ class ChatBotTableViewController : UIViewController {
         super.viewDidLoad()
 
         title = "Chatbot TableView"
+        tableViewController.supportPullToRefresh = false
 
         tableViewController.willMove(toParent: self)
         self.addChild(tableViewController)
@@ -68,12 +79,6 @@ class ChatBotTableViewController : UIViewController {
         view.rightAnchor.constraint(equalTo: self.view.rightAnchor).isActive = true
 
         tableViewController.didMove(toParent: self)
-
-        // Hide pull to refresh when loading finishes
-        tableViewController.refreshControl?.sourcerer
-            .endRefreshingOnLoadingEnded(viewModel.datasource)
-            .disposed(by: disposeBag)
-
         tableViewController.willChangeCellsInView = { [weak self] tableView, previous, next in
             self?.cellUpdateInterceptor.willChangeCells(
                 tableView: tableView,

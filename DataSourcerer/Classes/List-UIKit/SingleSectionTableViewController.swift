@@ -107,7 +107,7 @@ open class SingleSectionTableViewController
 
     private func updateCells(previous: ViewState, next: ViewState) {
         switch previous {
-        case let .readyToDisplay(_, previousCells) where isViewVisible && animateTableViewUpdates:
+        case let .readyToDisplay(_, _, previousCells) where isViewVisible && animateTableViewUpdates:
             if tableViewDiffCalculator == nil {
                 // Use previous cells as initial values such that "next" cells are
                 // inserted with animations

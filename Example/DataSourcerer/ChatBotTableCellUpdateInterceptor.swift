@@ -1,11 +1,69 @@
+import DataSourcerer
 import Foundation
 import UIKit
-import DataSourcerer
 
 class ChatBotTableCellUpdateInterceptor {
 
-    var isScrolledToBottom = false
-    var oldMessageLoadOffset: OldMessageLoadOffset?
+    private let loadOldMessagesEnabledState: ChatBotLoadOldMessagesEnabledState
+    private var isScrolledToBottom = false
+    private var oldMessageLoadKeepOffset: OldMessageLoadKeepContentOffset = .none
+    private let tryLoadOldMessages: () -> Void
+
+    init(
+        loadOldMessagesEnabledState: ChatBotLoadOldMessagesEnabledState,
+        tryLoadOldMessages: @escaping () -> Void
+    ) {
+        self.loadOldMessagesEnabledState = loadOldMessagesEnabledState
+        self.tryLoadOldMessages = tryLoadOldMessages
+    }
+
+    func isLoadingCellVisible(
+        tableView: UITableView,
+        state: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
+    ) -> Bool {
+        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
+        return visibleIndexPaths.contains(where: { visibleIndexPath in
+            guard let visibleCell = state.items?[visibleIndexPath.row] else { return false }
+            switch visibleCell {
+            case let .baseItem(chatBotCell):
+                switch chatBotCell {
+                case .oldMessagesLoading:
+                    return true
+                case .message, .header, .error:
+                    return false
+                }
+            case .loading, .error, .noResults:
+                return false
+            }
+        })
+    }
+
+    func firstVisibleMessageCell(
+        tableView: UITableView,
+        state: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
+        ) -> (IdiomaticItemModel<ChatBotCell>, UITableViewCell)? {
+        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
+        return visibleIndexPaths.compactMap { visibleIndexPath
+            -> (IdiomaticItemModel<ChatBotCell>, UITableViewCell)? in
+
+            guard let visibleCell = state.items?[visibleIndexPath.row] else { return nil }
+            switch visibleCell {
+            case let .baseItem(chatBotCell):
+                switch chatBotCell {
+                case .message:
+                    if let tableViewCell = tableView.cellForRow(at: visibleIndexPath) {
+                        return (visibleCell, tableViewCell)
+                    } else {
+                        return nil
+                    }
+                case .oldMessagesLoading, .header, .error:
+                    return nil
+                }
+            case .loading, .error, .noResults:
+                return  nil
+            }
+        }.first
+    }
 
     func willChangeCells(
         tableView: UITableView,
@@ -13,10 +71,26 @@ class ChatBotTableCellUpdateInterceptor {
         next: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
         ) {
         isScrolledToBottom = self.isScrolledToBottom(tableView: tableView, state: previous)
-        oldMessageLoadOffset = OldMessageLoadOffset(
-            contentHeight: tableView.contentSize.height,
-            contentOffset: tableView.contentOffset.y
-        )
+
+        // Keep offset if next state is a `loadOldMessages` result, and loading cell is visible:
+        if next.isLoadOldMessagesResult,
+            isLoadingCellVisible(tableView: tableView, state: previous),
+            let firstVisibleMessage = self.firstVisibleMessageCell(tableView: tableView, state: previous) {
+
+            var offsetFromTop =
+                self.offsetFromRootViewTopEdge(cell: firstVisibleMessage.1, tableView: tableView) ?? 0
+            if #available(iOS 11.0, *) {
+                offsetFromTop -= tableView.adjustedContentInset.top
+            } else {
+                offsetFromTop -= tableView.contentInset.top
+            }
+
+            self.oldMessageLoadKeepOffset = OldMessageLoadKeepContentOffset
+                .keepOffset(
+                    topMostMessage: firstVisibleMessage.0,
+                    cellOffsetFromTop: offsetFromTop
+            )
+        }
 
         switch next {
         case .notReady:
@@ -24,6 +98,14 @@ class ChatBotTableCellUpdateInterceptor {
         case .readyToDisplay:
             UIView.setAnimationsEnabled(false)
         }
+
+        loadOldMessagesEnabledState.willChangeCells()
+    }
+
+    func offsetFromRootViewTopEdge(cell: UITableViewCell, tableView: UITableView) -> CGFloat? {
+        guard let superView = tableView.superview else { return nil }
+
+        return superView.convert(cell.frame, from: tableView).minY
     }
 
     func didChangeCells(
@@ -32,9 +114,61 @@ class ChatBotTableCellUpdateInterceptor {
         next: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
         ) {
 
+        // Keep content offset on old message prepended
+
+        switch oldMessageLoadKeepOffset {
+        case let .keepOffset(cell, cellYPosition):
+            oldMessageLoadKeepOffset = .none // reset
+
+            if let rowToScrollTo = next.items?.firstIndex(of: cell) {
+
+                // Calculate total height of all rows before the row
+                // that should be scrolled to
+                var totalCellsHeight: CGFloat = 0
+                for row in (0..<rowToScrollTo) {
+                    let indexPath = IndexPath(row: row, section: 0)
+                    guard let cell = tableView.cellForRow(at: indexPath) else {
+                        break
+                    }
+                    cell.layoutIfNeeded()
+                    totalCellsHeight += cell.frame.height
+                }
+
+                tableView.scrollToRow(
+                    at: IndexPath(row: rowToScrollTo, section: 0),
+                    at: .top,
+                    animated: false
+                )
+
+                tableView.setContentOffset(
+                    CGPoint(x: tableView.contentOffset.x, y: tableView.contentOffset.y - cellYPosition),
+                    animated: false
+                )
+
+            }
+//            tableView.scrollRectToVisible(
+//                CGRect(x: 0, y: newOffsetY, width: 1, height: visibleTableHeight),
+//                animated: false
+//            )
+        case .none:
+            break
+        }
+
+        // Unsuspend old messages loading and trigger
+
+        loadOldMessagesEnabledState.didChangeCells()
+        DispatchQueue.main.async { [weak self, weak tableView] in
+            if tableView?.visibleCells.contains(where: { $0 is LoadingCell })
+                ?? false {
+                self?.tryLoadOldMessages()
+            }
+        }
+
+        // Re-enable animations which were probably disabled in `willChangeCells`
+
         UIView.setAnimationsEnabled(true)
 
-        // Scroll to bottom on new message(s)
+        // Scroll to bottom for new message(s) appended at the bottom
 
         let scrollToBottom = shouldScrollToBottom(
             tableView: tableView,
@@ -53,23 +187,6 @@ class ChatBotTableCellUpdateInterceptor {
             break
         }
 
-        // Keep content offset on old message prepended
-
-        if let oldMessageLoadOffset = self.oldMessageLoadOffset {
-            switch next {
-            case let .readyToDisplay(loadImpulse, _):
-                switch loadImpulse.params {
-                case .loadOldMessages:
-                    let heightDiff = tableView.contentSize.height - oldMessageLoadOffset.contentHeight
-                    let newOffsetY = oldMessageLoadOffset.contentOffset + heightDiff
-                    tableView.contentOffset = CGPoint(x: 0, y: newOffsetY)
-                case .loadInitialMessages, .loadNewMessages:
-                    break
-                }
-            case .notReady:
-                break
-            }
-        }
     }
 
     func shouldScrollToBottom(
@@ -81,7 +198,7 @@ class ChatBotTableCellUpdateInterceptor {
         switch next {
         case .notReady:
             return .scrollToBottom(animated: false)
-        case let .readyToDisplay(loadImpulse, _):
+        case let .readyToDisplay(loadImpulse, _, _):
             switch loadImpulse.params {
             case .loadOldMessages:
                 return .none
@@ -136,8 +253,25 @@ class ChatBotTableCellUpdateInterceptor {
         case none
     }
 
-    struct OldMessageLoadOffset {
-        let contentHeight: CGFloat
-        let contentOffset: CGFloat
+    enum OldMessageLoadKeepContentOffset {
+        case none
+        case keepOffset(topMostMessage: IdiomaticItemModel<ChatBotCell>, cellOffsetFromTop: CGFloat)
+    }
+}
+
+extension SingleSectionListViewState where P == ChatBotRequest {
+
+    var isLoadOldMessagesResult: Bool {
+        switch self {
+        case let .readyToDisplay(loadImpulse, provisioningState, _):
+            switch (loadImpulse.params, provisioningState) {
+            case (.loadOldMessages, .result):
+                return true
+            default:
+                return false
+            }
+        case .notReady:
+            return false
+        }
     }
 }

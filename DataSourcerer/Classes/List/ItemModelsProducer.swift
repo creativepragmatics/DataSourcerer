@@ -29,7 +29,11 @@ where ItemModelType.E == E {
 
         self.stateToListViewState = { state, valueToListViewStateTransformer in
             if let value = state.value?.value, let loadImpulse = state.loadImpulse {
-                return valueToListViewStateTransformer.valueToListViewState(value, loadImpulse)
+                return valueToListViewStateTransformer.valueToListViewState(
+                    value,
+                    loadImpulse,
+                    state.provisioningState
+                )
             } else {
                 return .notReady
             }
@@ -38,12 +42,14 @@ where ItemModelType.E == E {
     }
 
     public static func withSingleSectionItems<P: ResourceParams>(
-        _ singleSectionItems: @escaping (Value) -> [ItemModelType]
+        _ singleSectionItems: @escaping (Value, LoadImpulse<P>, ProvisioningState) -> [ItemModelType]
         ) -> ItemModelsProducer<Value, P, E, ItemModelType, NoSection> where ItemModelType.E == E {
 
         let valueToListViewStateTransformer =
             ValueToListViewStateTransformer<Value, P, ItemModelType, NoSection>(
-                valueToSingleSectionItems: { value, _ in singleSectionItems(value) }
+                valueToSingleSectionItems: { value, loadImpulse, provisioningState in
+                    return singleSectionItems(value, loadImpulse, provisioningState)
+                }
             )
 
         return ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(
@@ -78,7 +84,7 @@ where ItemModelType.E == E {
 public struct ValueToListViewStateTransformer
 <Value, P: ResourceParams, ItemModelType: ItemModel, SectionModelType: SectionModel> {
 
-    public typealias ValueToListViewState = (Value, LoadImpulse<P>)
+    public typealias ValueToListViewState = (Value, LoadImpulse<P>, ProvisioningState)
         -> ListViewState<P, ItemModelType, SectionModelType>
 
     public let valueToListViewState: ValueToListViewState
@@ -88,10 +94,15 @@ public struct ValueToListViewStateTransformer
     }
 
     public init(
-        valueToSections: @escaping (Value) -> [SectionAndItems<ItemModelType, SectionModelType>]
-        ) {
-        self.valueToListViewState = { value, params in
-            return ListViewState.readyToDisplay(params, valueToSections(value))
+        valueToSections: @escaping (Value, LoadImpulse<P>, ProvisioningState)
+        -> [SectionAndItems<ItemModelType, SectionModelType>]
+    ) {
+        self.valueToListViewState = { value, loadImpulse, provisioningState in
+            return ListViewState.readyToDisplay(
+                loadImpulse,
+                provisioningState,
+                valueToSections(value, loadImpulse, provisioningState)
+            )
         }
     }
 
@@ -99,15 +110,17 @@ public struct ValueToListViewStateTransformer
         -> ValueToListViewStateTransformer<Value, P, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
             return ValueToListViewStateTransformer
-                <Value, P, IdiomaticItemModel<ItemModelType>, SectionModelType> { value, loadImpulse
+                <Value, P, IdiomaticItemModel<ItemModelType>, SectionModelType> { value,
+                    loadImpulse, provisioningState
                     -> ListViewState<P, IdiomaticItemModel<ItemModelType>, SectionModelType> in
 
-                    let innerListViewState = self.valueToListViewState(value, loadImpulse)
+                    let innerListViewState = self.valueToListViewState(value, loadImpulse, provisioningState)
                     switch innerListViewState {
-                    case let .readyToDisplay(sectionsWithItems):
-                        return .readyToDisplay(
+                    case let .readyToDisplay(loadImpulse, provisioningState, sectionsWithItems):
+                        return ListViewState.readyToDisplay(
                             loadImpulse,
-                            sectionsWithItems.1.map { sectionAndItems in
+                            provisioningState,
+                            sectionsWithItems.map { sectionAndItems in
                                 return SectionAndItems(
                                     sectionAndItems.section,
                                     sectionAndItems.items.map { IdiomaticItemModel.baseItem($0) }
@@ -123,10 +136,15 @@ public struct ValueToListViewStateTransformer
 
 public extension ValueToListViewStateTransformer where SectionModelType == NoSection {
 
-    init(valueToSingleSectionItems: @escaping (Value, LoadImpulse<P>) -> [ItemModelType]) {
-        self.valueToListViewState = { value, loadImpulse in
-            let sectionAndItems = SectionAndItems(NoSection(), valueToSingleSectionItems(value, loadImpulse))
-            return ListViewState.readyToDisplay(loadImpulse, [sectionAndItems])
+    init(
+        valueToSingleSectionItems: @escaping (Value, LoadImpulse<P>, ProvisioningState) -> [ItemModelType]
+    ) {
+        self.valueToListViewState = { value, loadImpulse, provisioningState in
+            let sectionAndItems = SectionAndItems(
+                NoSection(),
+                valueToSingleSectionItems(value, loadImpulse, provisioningState)
+            )
+            return ListViewState.readyToDisplay(loadImpulse, provisioningState, [sectionAndItems])
         }
     }
 }
