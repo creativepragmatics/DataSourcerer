@@ -28,6 +28,52 @@ public extension Datasource {
     }
 }
 
+public extension Datasource {
+
+    init<S: Sequence>(
+        combine datasources: S,
+        map: @escaping ([ObservedState]) -> ObservedState
+    ) where S.Element == Datasource<Value, P, E> {
+
+        let observables = datasources
+            .map { $0.state.any }
+
+        state = AnyObservable
+            .combine(observables: observables, map: map)
+            .shareable(initialValue: .notReady)
+
+        // Insert nonfunctional load impulse emitter - values will only flow from the
+        // sub datasources.
+        self.loadImpulseEmitter = SimpleLoadImpulseEmitter(initialImpulse: nil).any
+    }
+
+    init(
+        combine first: Datasource<Value, P, E>,
+        with second: Datasource<Value, P, E>,
+        map: @escaping (ObservedState, ObservedState) -> ObservedState
+        ) {
+
+        self.init(combine: [first, second]) { states
+            -> ResourceState<Value, P, E> in
+            map(states[0], states[1])
+        }
+    }
+
+    init(
+        combine first: Datasource<Value, P, E>,
+        with second: Datasource<Value, P, E>,
+        and third: Datasource<Value, P, E>,
+        map: @escaping (ObservedState, ObservedState, ObservedState) -> ObservedState
+        ) {
+
+        self.init(combine: [first, second, third]) { states
+            -> ResourceState<Value, P, E> in
+            map(states[0], states[1], states[2])
+        }
+    }
+
+}
+
 public extension Datasource where P == NoResourceParams {
 
     func refresh(
@@ -45,7 +91,7 @@ public extension Datasource {
         case persist(persister: AnyResourceStatePersister<Value, P, E>, cacheLoadError: E)
 
         public func apply(on observable: AnyObservable<ResourceState<Value, P, E>>,
-                   loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
+                          loadImpulseEmitter: AnyLoadImpulseEmitter<P>)
             -> AnyObservable<ResourceState<Value, P, E>> {
                 switch self {
                 case .none:

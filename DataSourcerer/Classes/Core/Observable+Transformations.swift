@@ -51,6 +51,77 @@ public extension ObservableProtocol {
             }.any
     }
 
+
+    /// Very similar to combineLatest() in ReactiveSwift
+    static func combine<S: Sequence, CombinedValue>(
+        observables: S,
+        map: @escaping ([ObservedValue]) -> (CombinedValue)
+    ) -> AnyObservable<CombinedValue> where S.Element == AnyObservable<ObservedValue> {
+
+        return ValueStream<CombinedValue> { sendValue, disposable in
+
+            let executer = SynchronizedExecuter()
+            let observablesArray = Array(observables)
+            let receivedValues = observablesArray.map { _ in SynchronizedMutableProperty<ObservedValue?>(nil) }
+
+            // unsynchronized!
+            func sendIfAllValuesExist() {
+                let values = receivedValues.compactMap { $0.value }
+                guard values.count == observablesArray.count else { return }
+                sendValue(map(values))
+            }
+
+            for (index, observable) in observables.enumerated() {
+                disposable += observable.observe { value in
+                    executer.sync {
+                        receivedValues[index].value = value
+                        sendIfAllValuesExist()
+                    }
+                }
+            }
+
+        }.any
+    }
+
+    /// Very similar to combineLatest(with:) in ReactiveSwift
+    func combine<OtherValue>(with other: AnyObservable<OtherValue>)
+        -> AnyObservable<(ObservedValue, OtherValue)> {
+
+        return ValueStream<(ObservedValue, OtherValue)> { sendValue, disposable in
+
+            let values = SynchronizedMutableProperty<(ObservedValue?, OtherValue?)>((nil, nil))
+            let executer = SynchronizedExecuter()
+
+            // unsynchronized!
+            func sendIfAllValuesExist() {
+                guard let selfValue = values.value.0, let otherValue = values.value.1 else {
+                    return
+                }
+
+                sendValue((selfValue, otherValue))
+            }
+
+            disposable += other.observe { value in
+                executer.sync {
+                    var newValues = values.value
+                    newValues.1 = value
+                    values.value = newValues
+                    sendIfAllValuesExist()
+                }
+            }
+
+            disposable += self.observe { value in
+                executer.sync {
+                    var newValues = values.value
+                    newValues.0 = value
+                    values.value = newValues
+                    sendIfAllValuesExist()
+                }
+            }
+
+        }.any
+    }
+
     func filter(_ include: @escaping (ObservedValue) -> (Bool))
         -> AnyObservable<ObservedValue> {
 
