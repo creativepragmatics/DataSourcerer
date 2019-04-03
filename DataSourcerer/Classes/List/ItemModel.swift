@@ -27,25 +27,26 @@ public protocol HashableItemModel : ItemModel, Hashable { }
 
 // MARK: SingleSectionListViewState
 
-public enum SingleSectionListViewState<P: ResourceParams, LI: ItemModel>: Equatable {
+public enum SingleSectionListViewState<Value, P: ResourceParams, E: ResourceError, LI: ItemModel>:
+Equatable {
+
     case notReady
-    case readyToDisplay(LoadImpulse<P>, ProvisioningState, [LI])
+    case readyToDisplay(ResourceState<Value, P, E>, [LI])
 
     public var items: [LI]? {
         switch self {
         case .notReady: return nil
-        case let .readyToDisplay(_, _, items): return items
+        case let .readyToDisplay(_, items): return items
         }
     }
 
-    init(sections: ListViewState<P, LI, NoSection>) {
-        switch sections {
+    init(listViewState: ListViewState<Value, P, E, LI, NoSection>) {
+        switch listViewState {
         case .notReady:
             self = .notReady
-        case let .readyToDisplay(loadImpulse, provisioningState, sectionsWithItems):
+        case let .readyToDisplay(resourceState, sectionsWithItems):
             self = .readyToDisplay(
-                loadImpulse,
-                provisioningState,
+                resourceState,
                 sectionsWithItems.first?.items ?? []
             )
         }
@@ -63,19 +64,49 @@ public struct SectionAndItems<Item: ItemModel, Section: SectionModel>: Equatable
 }
 
 public enum ListViewState
-    <P: ResourceParams, ItemModelType: ItemModel, SectionModelType: SectionModel>: Equatable {
+    <Value, P: ResourceParams, E: ResourceError, ItemModelType: ItemModel,
+    SectionModelType: SectionModel>: Equatable {
 
     case notReady
     case readyToDisplay(
-        LoadImpulse<P>,
-        ProvisioningState,
+        ResourceState<Value, P, E>,
         [SectionAndItems<ItemModelType, SectionModelType>]
     )
 
     public var sectionsWithItems: [SectionAndItems<ItemModelType, SectionModelType>]? {
         switch self {
         case .notReady: return nil
-        case let .readyToDisplay(_, _, sectionsWithItems): return sectionsWithItems
+        case let .readyToDisplay(_, sectionsWithItems): return sectionsWithItems
+        }
+    }
+}
+
+public extension ListViewState {
+
+    func doCellsDiffer(other: ListViewState) -> Bool {
+        switch (self, other) {
+        case (.notReady, .notReady):
+            return false
+        case (.notReady, .readyToDisplay), (.readyToDisplay, .notReady):
+            return true
+        case let (.readyToDisplay(_, lhsSectionsAndItems),
+                  .readyToDisplay(_, rhsSectionsAndItems)):
+            return lhsSectionsAndItems == rhsSectionsAndItems
+        }
+    }
+}
+
+public extension SingleSectionListViewState {
+
+    func doCellsDiffer(other: SingleSectionListViewState) -> Bool {
+        switch (self, other) {
+        case (.notReady, .notReady):
+            return false
+        case (.notReady, .readyToDisplay), (.readyToDisplay, .notReady):
+            return true
+        case let (.readyToDisplay(_, lhsSectionsAndItems),
+                  .readyToDisplay(_, rhsSectionsAndItems)):
+            return lhsSectionsAndItems == rhsSectionsAndItems
         }
     }
 }

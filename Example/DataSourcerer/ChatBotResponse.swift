@@ -1,4 +1,5 @@
 import Foundation
+import DataSourcerer
 
 struct ChatBotResponse: Equatable, Codable {
     let messages: [ChatBotMessage]

@@ -51,6 +51,17 @@ public extension ObservableProtocol {
             }.any
     }
 
+    public func startWith(value: ObservedValue) -> AnyObservable<ObservedValue> {
+
+        return ValueStream<ObservedValue> { sendValue, disposable in
+
+            sendValue(value)
+
+            disposable += self.observe { value in
+                sendValue(value)
+            }
+        }.any
+    }
 
     /// Very similar to combineLatest() in ReactiveSwift
     static func combine<S: Sequence, CombinedValue>(

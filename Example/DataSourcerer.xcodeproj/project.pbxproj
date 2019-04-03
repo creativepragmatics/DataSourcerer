@@ -29,7 +29,6 @@
 		6FB45A9C22535E7A008E78AE /* ChatBotMockStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB45A9B22535E7A008E78AE /* ChatBotMockStorage.swift */; };
 		6FB45A9E22535E90008E78AE /* ChatBotCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB45A9D22535E90008E78AE /* ChatBotCell.swift */; };
 		6FB45AA022535EA7008E78AE /* ChatBotRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB45A9F22535EA7008E78AE /* ChatBotRequest.swift */; };
-		6FB45AA222535EEA008E78AE /* ChatBotResourceStatesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FB45AA122535EEA008E78AE /* ChatBotResourceStatesProvider.swift */; };
 		6FC5BFA321D799E2003DD629 /* TestDatasource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FC5BFA221D799E2003DD629 /* TestDatasource.swift */; };
 		6FCC264721DA1AC2005DE711 /* PublicRepo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC263F21DA1AC2005DE711 /* PublicRepo.swift */; };
 		6FCC264B21DA1AC2005DE711 /* LoadingCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264321DA1AC2005DE711 /* LoadingCell.swift */; };
@@ -38,6 +37,9 @@
 		6FCC264E21DA1AC2005DE711 /* PullToRefreshTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264621DA1AC2005DE711 /* PullToRefreshTableViewController.swift */; };
 		6FCC265021DA336C005DE711 /* ErrorTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FCC264F21DA336C005DE711 /* ErrorTableViewCell.swift */; };
 		6FDEB2ED21D56D11005ED5C8 /* BroadcastObservableSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FDEB2EB21D56D0C005ED5C8 /* BroadcastObservableSpec.swift */; };
+		6FE7794822549967003BF625 /* InitialChatBotStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794722549967003BF625 /* InitialChatBotStates.swift */; };
+		6FE7794A22549979003BF625 /* NewMessagesChatBotStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794922549979003BF625 /* NewMessagesChatBotStates.swift */; };
+		6FE7794C22549997003BF625 /* OldMessagesChatBotStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794B22549997003BF625 /* OldMessagesChatBotStates.swift */; };
 		B9438935A28A3CA2D08D90FE /* Pods_DataSourcerer_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 373D91A51316AC04BAAEF81F /* Pods_DataSourcerer_Tests.framework */; };
 /* End PBXBuildFile section */
 
@@ -80,7 +82,6 @@
 		6FB45A9B22535E7A008E78AE /* ChatBotMockStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBotMockStorage.swift; sourceTree = "<group>"; };
 		6FB45A9D22535E90008E78AE /* ChatBotCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBotCell.swift; sourceTree = "<group>"; };
 		6FB45A9F22535EA7008E78AE /* ChatBotRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBotRequest.swift; sourceTree = "<group>"; };
-		6FB45AA122535EEA008E78AE /* ChatBotResourceStatesProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBotResourceStatesProvider.swift; sourceTree = "<group>"; };
 		6FC5BFA221D799E2003DD629 /* TestDatasource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestDatasource.swift; sourceTree = "<group>"; };
 		6FCC263F21DA1AC2005DE711 /* PublicRepo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PublicRepo.swift; sourceTree = "<group>"; };
 		6FCC264321DA1AC2005DE711 /* LoadingCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingCell.swift; sourceTree = "<group>"; };
@@ -89,6 +90,9 @@
 		6FCC264621DA1AC2005DE711 /* PullToRefreshTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PullToRefreshTableViewController.swift; sourceTree = "<group>"; };
 		6FCC264F21DA336C005DE711 /* ErrorTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ErrorTableViewCell.swift; sourceTree = "<group>"; };
 		6FDEB2EB21D56D0C005ED5C8 /* BroadcastObservableSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BroadcastObservableSpec.swift; sourceTree = "<group>"; };
+		6FE7794722549967003BF625 /* InitialChatBotStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialChatBotStates.swift; sourceTree = "<group>"; };
+		6FE7794922549979003BF625 /* NewMessagesChatBotStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMessagesChatBotStates.swift; sourceTree = "<group>"; };
+		6FE7794B22549997003BF625 /* OldMessagesChatBotStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OldMessagesChatBotStates.swift; sourceTree = "<group>"; };
 		6FF1A99D21D78E29000D9E53 /* CachedDatasourceSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedDatasourceSpec.swift; sourceTree = "<group>"; };
 		AF60253B6D4AE5C9DCF23DD1 /* Pods-DataSourcerer_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DataSourcerer_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-DataSourcerer_Example/Pods-DataSourcerer_Example.release.xcconfig"; sourceTree = "<group>"; };
 		BC79CBD8A5C9E2D4BEF42D16 /* Pods-DataSourcerer_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DataSourcerer_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-DataSourcerer_Tests/Pods-DataSourcerer_Tests.release.xcconfig"; sourceTree = "<group>"; };
@@ -229,6 +233,7 @@
 		6F4B87D3224FABA600326BF2 /* ChatBot TableView */ = {
 			isa = PBXGroup;
 			children = (
+				6FE7794D22549B8F003BF625 /* State Providers */,
 				6F4B879F224FA71800326BF2 /* ChatBotTableViewController.swift */,
 				6F4B87D7224FAF3300326BF2 /* ChatBotTableViewModel.swift */,
 				6FB45A9522525EBA008E78AE /* ChatBotTableCellUpdateInterceptor.swift */,
@@ -237,7 +242,6 @@
 				6FB45A9B22535E7A008E78AE /* ChatBotMockStorage.swift */,
 				6FB45A9D22535E90008E78AE /* ChatBotCell.swift */,
 				6FB45A9F22535EA7008E78AE /* ChatBotRequest.swift */,
-				6FB45AA122535EEA008E78AE /* ChatBotResourceStatesProvider.swift */,
 			);
 			name = "ChatBot TableView";
 			sourceTree = "<group>";
@@ -266,6 +270,16 @@
 				6F850B622221E167006D6A77 /* Watchdog.swift */,
 			);
 			name = Vendor;
+			sourceTree = "<group>";
+		};
+		6FE7794D22549B8F003BF625 /* State Providers */ = {
+			isa = PBXGroup;
+			children = (
+				6FE7794722549967003BF625 /* InitialChatBotStates.swift */,
+				6FE7794922549979003BF625 /* NewMessagesChatBotStates.swift */,
+				6FE7794B22549997003BF625 /* OldMessagesChatBotStates.swift */,
+			);
+			name = "State Providers";
 			sourceTree = "<group>";
 		};
 		C9DFD7EAA563BEA57BAA564F /* Pods */ = {
@@ -510,8 +524,8 @@
 			files = (
 				6FB45AA022535EA7008E78AE /* ChatBotRequest.swift in Sources */,
 				6FCC264C21DA1AC2005DE711 /* PullToRefreshTableViewModel.swift in Sources */,
-				6FB45AA222535EEA008E78AE /* ChatBotResourceStatesProvider.swift in Sources */,
 				6FB45A9E22535E90008E78AE /* ChatBotCell.swift in Sources */,
+				6FE7794A22549979003BF625 /* NewMessagesChatBotStates.swift in Sources */,
 				6F4B87A0224FA71800326BF2 /* ChatBotTableViewController.swift in Sources */,
 				6F4B87D8224FAF3300326BF2 /* ChatBotTableViewModel.swift in Sources */,
 				6FB45A9C22535E7A008E78AE /* ChatBotMockStorage.swift in Sources */,
@@ -520,11 +534,13 @@
 				6FCC264721DA1AC2005DE711 /* PublicRepo.swift in Sources */,
 				607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */,
 				6FB45A9822525F06008E78AE /* ChatBotTableItemModelsProducer.swift in Sources */,
+				6FE7794C22549997003BF625 /* OldMessagesChatBotStates.swift in Sources */,
 				6FCC264D21DA1AC2005DE711 /* APIError.swift in Sources */,
 				6FB45A9A225263B3008E78AE /* ChatBotItemViewsProducer.swift in Sources */,
 				6FCC265021DA336C005DE711 /* ErrorTableViewCell.swift in Sources */,
 				6FB45A9622525EBA008E78AE /* ChatBotTableCellUpdateInterceptor.swift in Sources */,
 				6FCC264E21DA1AC2005DE711 /* PullToRefreshTableViewController.swift in Sources */,
+				6FE7794822549967003BF625 /* InitialChatBotStates.swift in Sources */,
 				6F4B87DA224FB02100326BF2 /* ChatBotResponse.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -16,12 +16,12 @@ open class TableViewDatasource
     public weak var datasource: AnyObject?
     public let hideBottomMostSeparatorWithHack: Bool
 
-    public var sections: ListViewState<P, CellModelType, SectionModelType> {
-        return configuration.sections
+    public var state: ListViewState<Value, P, E, CellModelType, SectionModelType> {
+        return configuration.state.value
     }
 
     private var numberOfSections: Int {
-        return sections.sectionsWithItems?.count ?? 0
+        return state.sectionsWithItems?.count ?? 0
     }
 
     public init(
@@ -43,7 +43,7 @@ open class TableViewDatasource
     }
 
     public func numberOfSections(in tableView: UITableView) -> Int {
-        return configuration.sections.sectionsWithItems?.count ?? 0
+        return state.sectionsWithItems?.count ?? 0
     }
 
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -165,16 +165,16 @@ open class TableViewDatasource
 
 public extension TableViewDatasource where SectionModelType == NoSection {
 
-    var cellsProperty: ShareableValueStream<SingleSectionListViewState<P, CellModelType>> {
+    var cellsProperty: ShareableValueStream<SingleSectionListViewState<Value, P, E, CellModelType>> {
 
-        return configuration.stateAndSections
-            .map { SingleSectionListViewState<P, CellModelType>(sections: $0.listViewState) }
+        return configuration.state
+            .map { SingleSectionListViewState<Value, P, E, CellModelType>(listViewState: $0) }
             .skipRepeats()
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
     }
 
-    var cells: SingleSectionListViewState<P, CellModelType> {
-        return SingleSectionListViewState<P, CellModelType>(sections: configuration.sections)
+    var cells: SingleSectionListViewState<Value, P, E, CellModelType> {
+        return cellsProperty.value
     }
 }

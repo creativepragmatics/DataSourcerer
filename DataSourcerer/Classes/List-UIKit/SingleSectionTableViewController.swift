@@ -8,7 +8,7 @@ open class SingleSectionTableViewController
     where CellModelType.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError {
 
     public typealias ValuesObservable = AnyObservable<Value>
-    public typealias ViewState = SingleSectionListViewState<P, CellModelType>
+    public typealias ViewState = SingleSectionListViewState<Value, P, E, CellModelType>
     public typealias Configuration = ListViewDatasourceConfiguration
         <Value, P, E, CellModelType, UITableViewCell, NoSection, HeaderItem, UIView, HeaderItemError,
         FooterItem, UIView, FooterItemError, UITableView>
@@ -106,8 +106,9 @@ open class SingleSectionTableViewController
     }
 
     private func updateCells(previous: ViewState, next: ViewState) {
+
         switch previous {
-        case let .readyToDisplay(_, _, previousCells) where isViewVisible && animateTableViewUpdates:
+        case let .readyToDisplay(_, previousCells) where isViewVisible && animateTableViewUpdates:
             if tableViewDiffCalculator == nil {
                 // Use previous cells as initial values such that "next" cells are
                 // inserted with animations

@@ -42,13 +42,6 @@ class ChatBotTableViewController : UIViewController {
                 }
             )
             .singleSectionTableViewController
-            .onPullToRefresh { [weak self] in
-                self?.viewModel.datasource.refresh(
-                    params: ChatBotRequest.loadOldMessages(oldestKnownMessageId: "", limit: 20),
-                    type: LoadImpulseType(mode: .fullRefresh, issuer: .user)
-                )
-                self?.tableViewController.refreshControl?.beginRefreshing()
-            }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -92,10 +85,14 @@ class ChatBotTableViewController : UIViewController {
 
         viewModel.startReceivingNewMessages()
         loadOldMessagesTimer?.invalidate()
-        loadOldMessagesTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true, block: { [weak self] _ in
-            guard let tableView = self?.tableViewController.tableView else { return }
-            self?.viewModel.tryLoadOldMessages(tableView: tableView)
-        })
+        loadOldMessagesTimer = Timer.scheduledTimer(
+            withTimeInterval: 0.3,
+            repeats: true,
+            block: { [weak self] _ in
+                guard let tableView = self?.tableViewController.tableView else { return }
+                self?.viewModel.tryLoadOldMessages(tableView: tableView)
+            }
+        )
     }
 
     override func viewDidAppear(_ animated: Bool) {

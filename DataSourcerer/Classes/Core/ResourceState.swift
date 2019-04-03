@@ -8,6 +8,18 @@ public struct ResourceState<Value, P: ResourceParams, E: ResourceError>: Equatab
     public var loadImpulse: LoadImpulse<P>?
     public var value: EquatableBox<Value>?
     public var error: E?
+
+    public init(
+        provisioningState: ProvisioningState,
+        loadImpulse: LoadImpulse<P>?,
+        value: EquatableBox<Value>?,
+        error: E?
+        ) {
+        self.provisioningState = provisioningState
+        self.loadImpulse = loadImpulse
+        self.value = value
+        self.error = error
+    }
 }
 
 public extension ResourceState {

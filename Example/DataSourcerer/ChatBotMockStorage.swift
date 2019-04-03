@@ -23,7 +23,7 @@ class ChatBotMockStorage {
     }
 
     func loadNewMessage(completion: @escaping (ChatBotResponse) -> Void) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
             guard let self = self else { return }
             let newMessage = self.makeNewMessage()
             self.messages += [newMessage]

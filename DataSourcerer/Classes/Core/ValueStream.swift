@@ -2,7 +2,7 @@ import Foundation
 
 /// Provides an observable stream of values.
 ///
-/// Will only start work after `observe(_)` is first called.
+/// Will only start work after `observe(_)` is called.
 ///
 /// Analogy to ReactiveSwift: ValueStreams are like SignalProducers,
 /// which are "cold" (no work performed) until they are started.

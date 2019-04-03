@@ -11,11 +11,10 @@ public struct ListViewDatasourceConfiguration
     HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemView: UIView,
     FooterItemError, ContainingView: UIView> where ItemModelType.E == E, HeaderItem.E == HeaderItemError,
 FooterItem.E == FooterItemError {
-    public typealias ListState = ResourceState<Value, P, E>
+    public typealias State = ListViewState<Value, P, E, ItemModelType, SectionModelType>
     public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
     public typealias FooterItemViewAdapter = ItemViewsProducer<FooterItem, FooterItemView, ContainingView>
-    public typealias StateAndSections = ListStateAndSections<ListState, P, ItemModelType, SectionModelType>
     public struct ItemSelection {
         public let itemModel: ItemModelType
         public let view: ItemView
@@ -41,7 +40,7 @@ FooterItem.E == FooterItemError {
 
     public let datasource: Datasource<Value, P, E>
     public let itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
-    public let stateAndSections: ShareableValueStream<StateAndSections>
+    public let state: ShareableValueStream<State>
     public let itemViewsProducer: ItemViewAdapter
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
@@ -76,20 +75,14 @@ FooterItem.E == FooterItemError {
                 willDisplayHeaderItem: WillDisplayHeaderItem?,
                 willDisplayFooterItem: WillDisplayFooterItem?) {
 
-        self.stateAndSections = datasource.state
-            .map { state -> StateAndSections in
-                return StateAndSections(
-                    value: state,
-                    listViewState: itemModelProducer.listViewState(with: state)
-                )
+        self.state = datasource.state
+            .map { resourceState -> State in
+                return itemModelProducer.listViewState(with: resourceState)
             }
             .observeOnUIThread()
             .shareable(
-                initialValue: StateAndSections(
-                    value: datasource.state.value,
-                    listViewState: itemModelProducer.listViewState(with: datasource.state.value)
-                )
-        )
+                initialValue: itemModelProducer.listViewState(with: datasource.state.value)
+            )
 
         self.datasource = datasource
         self.itemModelProducer = itemModelProducer
@@ -143,25 +136,10 @@ FooterItemView == UIView {
     }
 }
 
-public struct ListStateAndSections
-<Value, P: ResourceParams, ItemModelType: ItemModel, SectionModelType: SectionModel> {
-    public let value: Value
-    public let listViewState: ListViewState<P, ItemModelType, SectionModelType>
-
-    public init(value: Value, listViewState: ListViewState<P, ItemModelType, SectionModelType>) {
-        self.value = value
-        self.listViewState = listViewState
-    }
-}
-
 public extension ListViewDatasourceConfiguration {
 
-    var sections: ListViewState<P, ItemModelType, SectionModelType> {
-        return stateAndSections.value.listViewState
-    }
-
     func section(at index: Int) -> SectionAndItems<ItemModelType, SectionModelType> {
-        let rawSection = sections.sectionedValues.sectionsAndValues[index]
+        let rawSection = state.value.sectionedValues.sectionsAndValues[index]
         return SectionAndItems(rawSection.0, rawSection.1)
     }
 
@@ -170,8 +148,7 @@ public extension ListViewDatasourceConfiguration {
     }
 
     func items(in section: Int) -> [ItemModelType] {
-        let sections = stateAndSections.value.listViewState
-            .sectionedValues.sectionsAndValues[section].1
+        let sections = state.value.sectionedValues.sectionsAndValues[section].1
         return sections
     }
 

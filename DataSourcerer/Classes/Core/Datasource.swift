@@ -74,6 +74,28 @@ public extension Datasource {
 
 }
 
+public extension Datasource {
+
+    func combine<OtherValue, OtherP: ResourceParams, OtherE: ResourceError, MappedValue>(
+        with other: Datasource<OtherValue, OtherP, OtherE>,
+        map: @escaping (ObservedState, ResourceState<OtherValue, OtherP, OtherE>)
+            -> ResourceState<MappedValue, P, E>
+    ) -> Datasource<MappedValue, P, E> {
+
+        let combinedState = self.state.any
+            .combine(with: other.state.any)
+            .map(map)
+            .shareable(initialValue: .notReady)
+
+        // Insert nonfunctional load impulse emitter - values will only flow from the
+        // sub datasources.
+        let loadImpulseEmitter = SimpleLoadImpulseEmitter<P>(initialImpulse: nil).any
+
+        return Datasource<MappedValue, P, E>(combinedState, loadImpulseEmitter: loadImpulseEmitter)
+    }
+
+}
+
 public extension Datasource where P == NoResourceParams {
 
     func refresh(

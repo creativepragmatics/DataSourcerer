@@ -18,7 +18,7 @@ class PullToRefreshTableViewController : UIViewController {
                 datasource: viewModel.datasource,
                 withCellModelType: PublicRepoCell.self
             )
-            .mapSingleSectionItemModels { response, _, _ -> [PublicRepoCell] in
+            .mapSingleSectionItemModels { response, _ -> [PublicRepoCell] in
                 return response.map { PublicRepoCell.repo($0) }
             }
             .renderWithCellClass(

@@ -5,65 +5,18 @@ import UIKit
 class ChatBotTableCellUpdateInterceptor {
 
     private var isScrolledToBottom = false
-    private var oldMessageLoadKeepOffset: OldMessageLoadKeepContentOffset = .none
-
-    func isLoadingCellVisible(
-        tableView: UITableView,
-        state: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
-    ) -> Bool {
-        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
-        return visibleIndexPaths.contains(where: { visibleIndexPath in
-            guard let visibleCell = state.items?[visibleIndexPath.row] else { return false }
-            switch visibleCell {
-            case let .baseItem(chatBotCell):
-                switch chatBotCell {
-                case .oldMessagesLoading:
-                    return true
-                case .message, .header, .error:
-                    return false
-                }
-            case .loading, .error, .noResults:
-                return false
-            }
-        })
-    }
-
-    func firstVisibleMessageCell(
-        tableView: UITableView,
-        state: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
-        ) -> (IdiomaticItemModel<ChatBotCell>, UITableViewCell)? {
-        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
-        return visibleIndexPaths.compactMap { visibleIndexPath
-            -> (IdiomaticItemModel<ChatBotCell>, UITableViewCell)? in
-
-            guard let visibleCell = state.items?[visibleIndexPath.row] else { return nil }
-            switch visibleCell {
-            case let .baseItem(chatBotCell):
-                switch chatBotCell {
-                case .message:
-                    if let tableViewCell = tableView.cellForRow(at: visibleIndexPath) {
-                        return (visibleCell, tableViewCell)
-                    } else {
-                        return nil
-                    }
-                case .oldMessagesLoading, .header, .error:
-                    return nil
-                }
-            case .loading, .error, .noResults:
-                return  nil
-            }
-        }.first
-    }
+    private var preserveCellTopOffset: PreserveCellTopOffset = .none
 
     func willChangeCells(
         tableView: UITableView,
-        previous: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>,
-        next: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
-        ) {
+        previous: ChatBotListViewState,
+        next: ChatBotListViewState
+    ) {
         isScrolledToBottom = self.isScrolledToBottom(tableView: tableView, state: previous)
 
         // Keep offset if next state is a `loadOldMessages` result:
-        if next.isLoadOldMessagesResult,
+
+        if ChatBotListViewState.didLoadOldMessages(previous: previous, next: next),
             let firstVisibleMessage = self.firstVisibleMessageCell(tableView: tableView, state: previous) {
 
             var offsetFromTop =
@@ -74,14 +27,15 @@ class ChatBotTableCellUpdateInterceptor {
                 offsetFromTop -= tableView.contentInset.top
             }
 
-            self.oldMessageLoadKeepOffset = OldMessageLoadKeepContentOffset
-                .keepOffset(
-                    topMostMessage: firstVisibleMessage.0,
-                    cellOffsetFromTop: offsetFromTop
+            self.preserveCellTopOffset = PreserveCellTopOffset.keepOffset(
+                topMostMessage: firstVisibleMessage.0,
+                cellOffsetFromTop: offsetFromTop
             )
         } else {
-            self.oldMessageLoadKeepOffset = .none
+            self.preserveCellTopOffset = .none
         }
+
+        // Disable animations until didChangeCells
 
         switch next {
         case .notReady:
@@ -91,27 +45,76 @@ class ChatBotTableCellUpdateInterceptor {
         }
     }
 
-    func offsetFromRootViewTopEdge(cell: UITableViewCell, tableView: UITableView) -> CGFloat? {
-        guard let superView = tableView.superview else { return nil }
-
-        return superView.convert(cell.frame, from: tableView).minY
-    }
-
     func didChangeCells(
         tableView: UITableView,
-        previous: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>,
-        next: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
-        ) {
+        previous: ChatBotListViewState,
+        next: ChatBotListViewState
+    ) {
 
-        // Keep content offset on old message prepended
+        // Keep content offset when old messages are prepended
 
-        switch oldMessageLoadKeepOffset {
+        scrollToPreserveCellTopOffset(preserveCellTopOffset, next: next, tableView: tableView)
+
+        // Re-enable animations which were probably disabled in `willChangeCells`
+
+        UIView.setAnimationsEnabled(true)
+
+        // Scroll to bottom for new message(s) appended at the bottom
+
+        let shouldScrollToBottom = self.shouldScrollToBottom(
+            tableView: tableView,
+            previous: previous,
+            next: next
+        )
+
+        switch shouldScrollToBottom {
+        case let .scrollToBottom(animated):
+            guard let items = next.items, items.isEmpty == false else { break }
+            tableView.scrollToRow(
+                at: IndexPath(row: items.count - 1, section: 0),
+                at: .bottom,
+                animated: animated
+            )
+        case .none:
+            break
+        }
+
+    }
+
+    func shouldScrollToBottom(
+        tableView: UITableView,
+        previous: ChatBotListViewState,
+        next: ChatBotListViewState
+        ) -> ScrollToBottom {
+
+        switch next {
+        case .notReady:
+            return .scrollToBottom(animated: false)
+        case .readyToDisplay:
+            if ChatBotListViewState.didLoadNewMessages(previous: previous, next: next),
+                isScrolledToBottom {
+                return .scrollToBottom(animated: true)
+            } else if ChatBotListViewState.didLoadInitially(previous: previous, next: next) {
+                return .scrollToBottom(animated: false)
+            } else {
+                return .none
+            }
+        }
+    }
+
+    func scrollToPreserveCellTopOffset(
+        _ offset: PreserveCellTopOffset,
+        next: ChatBotListViewState,
+        tableView: UITableView
+    ) {
+
+        switch preserveCellTopOffset {
         case let .keepOffset(cell, cellYPosition):
-            oldMessageLoadKeepOffset = .none // reset
+            preserveCellTopOffset = .none // reset because we only do this once for every insert
 
             if let rowToScrollTo = next.items?.firstIndex(of: cell) {
 
-                self.oldMessageLoadKeepOffset = .none
+                self.preserveCellTopOffset = .none
 
                 // Calculate total height of all rows before the row
                 // that should be scrolled to
@@ -140,68 +143,11 @@ class ChatBotTableCellUpdateInterceptor {
         case .none:
             break
         }
-
-        // Re-enable animations which were probably disabled in `willChangeCells`
-
-        UIView.setAnimationsEnabled(true)
-
-        // Scroll to bottom for new message(s) appended at the bottom
-
-        let scrollToBottom = shouldScrollToBottom(
-            tableView: tableView,
-            previous: previous,
-            next: next
-        )
-
-        switch scrollToBottom {
-        case let .scrollToBottom(animated):
-            tableView.scrollToRow(
-                at: IndexPath(row: (next.items ?? []).count - 1, section: 0),
-                at: .bottom,
-                animated: animated
-            )
-        case .none:
-            break
-        }
-
-    }
-
-    func shouldScrollToBottom(
-        tableView: UITableView,
-        previous: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>,
-        next: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
-        ) -> ScrollToBottom {
-
-        switch next {
-        case .notReady:
-            return .scrollToBottom(animated: false)
-        case let .readyToDisplay(loadImpulse, _, _):
-            switch loadImpulse.params {
-            case .loadOldMessages:
-                return .none
-            case .loadInitialMessages:
-                return .scrollToBottom(animated: false)
-            case .loadNewMessages:
-                let animated: Bool = {
-                    switch previous {
-                    case .notReady:
-                        return false
-                    case .readyToDisplay:
-                        return true
-                    }
-                }()
-                if isScrolledToBottom {
-                    return .scrollToBottom(animated: animated)
-                } else {
-                    return .none
-                }
-            }
-        }
     }
 
     func isScrolledToBottom(
         tableView: UITableView,
-        state: SingleSectionListViewState<ChatBotRequest, IdiomaticItemModel<ChatBotCell>>
+        state: ChatBotListViewState
         ) -> Bool {
         guard let lastVisibleCell = tableView.visibleCells.last,
             let lastVisibleIndexPath = tableView.indexPath(for: lastVisibleCell),
@@ -230,25 +176,208 @@ class ChatBotTableCellUpdateInterceptor {
         case none
     }
 
-    enum OldMessageLoadKeepContentOffset {
+    enum PreserveCellTopOffset {
         case none
         case keepOffset(topMostMessage: IdiomaticItemModel<ChatBotCell>, cellOffsetFromTop: CGFloat)
     }
 }
 
-extension SingleSectionListViewState where P == ChatBotRequest {
+private extension ChatBotTableCellUpdateInterceptor {
 
-    var isLoadOldMessagesResult: Bool {
-        switch self {
-        case let .readyToDisplay(loadImpulse, provisioningState, _):
-            switch (loadImpulse.params, provisioningState) {
-            case (.loadOldMessages, .result):
+    func isLoadingCellVisible(
+        tableView: UITableView,
+        state: ChatBotListViewState
+        ) -> Bool {
+        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
+        return visibleIndexPaths.contains(where: { visibleIndexPath in
+            guard let visibleCell = state.items?[visibleIndexPath.row] else { return false }
+            switch visibleCell {
+            case let .baseItem(chatBotCell):
+                switch chatBotCell {
+                case .oldMessagesLoading:
+                    return true
+                case .message, .header, .error:
+                    return false
+                }
+            case .loading, .error, .noResults:
+                return false
+            }
+        })
+    }
+
+    func firstVisibleMessageCell(
+        tableView: UITableView,
+        state: ChatBotListViewState
+        ) -> (IdiomaticItemModel<ChatBotCell>, UITableViewCell)? {
+        let visibleIndexPaths = tableView.indexPathsForVisibleRows ?? []
+        return visibleIndexPaths.compactMap { visibleIndexPath
+            -> (IdiomaticItemModel<ChatBotCell>, UITableViewCell)? in
+
+            guard let visibleCell = state.items?[visibleIndexPath.row] else { return nil }
+            switch visibleCell {
+            case let .baseItem(chatBotCell):
+                switch chatBotCell {
+                case .message:
+                    if let tableViewCell = tableView.cellForRow(at: visibleIndexPath) {
+                        return (visibleCell, tableViewCell)
+                    } else {
+                        return nil
+                    }
+                case .oldMessagesLoading, .header, .error:
+                    return nil
+                }
+            case .loading, .error, .noResults:
+                return  nil
+            }
+            }.first
+    }
+
+    func offsetFromRootViewTopEdge(cell: UITableViewCell, tableView: UITableView) -> CGFloat? {
+        guard let superView = tableView.superview else { return nil }
+
+        return superView.convert(cell.frame, from: tableView).minY
+    }
+}
+
+extension SingleSectionListViewState
+    where Value == PostInitialLoadChatBotState, P == InitialChatBotRequest, E == APIError,
+    LI == IdiomaticItemModel<ChatBotCell> {
+
+    static func didLoadOldMessages(
+        previous: SingleSectionListViewState,
+        next: SingleSectionListViewState
+    ) -> Bool {
+
+        switch (previous, next) {
+        case (_, .notReady):
+            return false
+        case let (.notReady, .readyToDisplay(nextState, _)):
+            guard let nextOldMessagesState = nextState.value?.value.oldMessagesState else { return false }
+
+            switch nextOldMessagesState.provisioningState {
+            case .result where (nextOldMessagesState.value?.value.messages.count ?? 0) > 0:
                 return true
             default:
                 return false
             }
-        case .notReady:
-            return false
+        case let (.readyToDisplay(previousState, _), .readyToDisplay(nextState, _)):
+            guard let nextOldMessagesState = nextState.value?.value.oldMessagesState else { return false }
+
+            switch nextOldMessagesState.provisioningState {
+            case .result where (nextOldMessagesState.value?.value.messages.count ?? 0) > 0:
+                guard let previousOldMessagesState = previousState.value?.value.oldMessagesState else { return true }
+                switch previousOldMessagesState.provisioningState {
+                case .loading, .notReady: return true
+                case .result:
+                    let nextOldMessages = nextOldMessagesState.value?.value.messages ?? []
+                    let previousOldMessages = previousOldMessagesState.value?.value.messages ?? []
+                    return nextOldMessages != previousOldMessages
+                }
+            default:
+                return false
+            }
         }
+    }
+
+    static func didLoadNewMessages(
+        previous: SingleSectionListViewState,
+        next: SingleSectionListViewState
+        ) -> Bool {
+
+        switch (previous, next) {
+        case (_, .notReady):
+            return false
+        case let (.notReady, .readyToDisplay(nextState, _)):
+            guard let nextNewMessagesState = nextState.value?.value.newMessagesState else { return false }
+
+            switch nextNewMessagesState.provisioningState {
+            case .result where (nextNewMessagesState.value?.value.messages.count ?? 0) > 0:
+                return true
+            default:
+                return false
+            }
+        case let (.readyToDisplay(previousState, _), .readyToDisplay(nextState, _)):
+            guard let nextNewMessagesState = nextState.value?.value.newMessagesState else { return false }
+
+            switch nextNewMessagesState.provisioningState {
+            case .result where (nextNewMessagesState.value?.value.messages.count ?? 0) > 0:
+                guard let previousNewMessagesState = previousState.value?.value.newMessagesState else { return true }
+                switch previousNewMessagesState.provisioningState {
+                case .loading, .notReady: return true
+                case .result:
+                    let nextNewMessages = nextNewMessagesState.value?.value.messages ?? []
+                    let previousNewMessages = previousNewMessagesState.value?.value.messages ?? []
+                    return nextNewMessages != previousNewMessages
+                }
+            default:
+                return false
+            }
+        }
+    }
+
+    static func didLoadInitially(
+        previous: SingleSectionListViewState,
+        next: SingleSectionListViewState
+        ) -> Bool {
+
+        switch (previous, next) {
+        case (_, .notReady):
+            return false
+        case let (.notReady, .readyToDisplay(nextState, _)):
+            switch nextState.provisioningState {
+            case .result:
+                return true
+            default:
+                return false
+            }
+        case let (.readyToDisplay(previousState, _), .readyToDisplay(nextState, _)):
+
+            switch nextState.provisioningState {
+            case .result where (nextState.value?.value.initialLoadResponse.messages.count ?? 0) > 0:
+                switch previousState.provisioningState {
+                case .loading, .notReady: return true
+                case .result:
+                    let nextMessages = nextState.value?.value.initialLoadResponse.messages ?? []
+                    let previousMessages = previousState.value?.value.initialLoadResponse.messages ?? []
+                    return nextMessages != previousMessages
+                }
+            default:
+                return false
+            }
+        }
+    }
+}
+
+extension PostInitialLoadChatBotState {
+
+    static func didLoadOldMessages(
+        previous: PostInitialLoadChatBotState,
+        next: PostInitialLoadChatBotState
+        ) -> Bool {
+
+        switch (previous.oldMessagesState.provisioningState, next.oldMessagesState.provisioningState) {
+        case (_, .loading), (_, .notReady):
+            return false
+        case (.loading, .result), (.notReady, .result):
+            return true
+        case (.result, .result):
+            return compareOptionals(
+                previous.oldMessagesState.value,
+                next.oldMessagesState.value,
+                ==
+            )
+        }
+    }
+
+}
+
+private func compareOptionals<T>(_ lhs: T?, _ rhs: T?, _ compare: (_ lhs: T, _ rhs: T) -> Bool) -> Bool {
+    switch (lhs, rhs) {
+    case let (lValue?, rValue?):
+        return compare(lValue, rValue)
+    case (nil, nil):
+        return true
+    default:
+        return false
     }
 }
