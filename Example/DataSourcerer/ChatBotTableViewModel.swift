@@ -15,8 +15,17 @@ class ChatBotTableViewModel {
             .flatMapLatest { [weak self] initialLoadState -> AnyObservable<ChatBotResourceState> in
                 guard let self = self else { return BroadcastObservable().any }
 
-                return self.newMessagesStates.states()
-                    .combine(with: self.oldMessagesStates.states())
+                let newMessages = self.newMessagesStates
+                    .states()
+                    .startWith(value: ResourceState.notReady)
+
+                let oldMessages = self.oldMessagesStates
+                    .states()
+                    .startWith(value: ResourceState.notReady)
+
+                return newMessages
+                    .startWith(value: ResourceState.notReady)
+                    .combine(with: oldMessages)
                     .map { newMessagesLoadState, oldMessagesLoadState -> ChatBotResourceState in
 
                         if let initialChatBotResponse = initialLoadState.value?.value {

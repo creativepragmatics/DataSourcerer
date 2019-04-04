@@ -27,7 +27,12 @@ class ChatBotTableViewController : UIViewController {
             .configurationForFurtherCustomization
             .showLoadingAndErrorStates(
                 noResultsText: "You have received no messages so far.",
-                loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
+                loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in
+                    let loadingCell = LoadingCell()
+                    loadingCell.loadingIndicatorView.color = .white
+                    loadingCell.backgroundColor = .clear
+                    return loadingCell
+                },
                 errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in
                     guard case let .error(error) = cell else { return ErrorTableViewCell() }
                     let tableViewCell = ErrorTableViewCell()
@@ -78,6 +83,9 @@ class ChatBotTableViewController : UIViewController {
             )
             return
         }
+
+        tableViewController.tableView.backgroundColor = UIColor(red: 0, green: 0.6, blue: 0.91, alpha: 1)
+        tableViewController.tableView.separatorStyle = .none
     }
 
     override func viewWillAppear(_ animated: Bool) {

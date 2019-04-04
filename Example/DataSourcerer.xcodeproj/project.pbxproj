@@ -40,6 +40,7 @@
 		6FE7794822549967003BF625 /* InitialChatBotStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794722549967003BF625 /* InitialChatBotStates.swift */; };
 		6FE7794A22549979003BF625 /* NewMessagesChatBotStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794922549979003BF625 /* NewMessagesChatBotStates.swift */; };
 		6FE7794C22549997003BF625 /* OldMessagesChatBotStates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794B22549997003BF625 /* OldMessagesChatBotStates.swift */; };
+		6FE7794F22555D76003BF625 /* ChatBotIncomingMessageTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6FE7794E22555D76003BF625 /* ChatBotIncomingMessageTableViewCell.swift */; };
 		B9438935A28A3CA2D08D90FE /* Pods_DataSourcerer_Tests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 373D91A51316AC04BAAEF81F /* Pods_DataSourcerer_Tests.framework */; };
 /* End PBXBuildFile section */
 
@@ -93,6 +94,7 @@
 		6FE7794722549967003BF625 /* InitialChatBotStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InitialChatBotStates.swift; sourceTree = "<group>"; };
 		6FE7794922549979003BF625 /* NewMessagesChatBotStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NewMessagesChatBotStates.swift; sourceTree = "<group>"; };
 		6FE7794B22549997003BF625 /* OldMessagesChatBotStates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OldMessagesChatBotStates.swift; sourceTree = "<group>"; };
+		6FE7794E22555D76003BF625 /* ChatBotIncomingMessageTableViewCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatBotIncomingMessageTableViewCell.swift; sourceTree = "<group>"; };
 		6FF1A99D21D78E29000D9E53 /* CachedDatasourceSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachedDatasourceSpec.swift; sourceTree = "<group>"; };
 		AF60253B6D4AE5C9DCF23DD1 /* Pods-DataSourcerer_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DataSourcerer_Example.release.xcconfig"; path = "Pods/Target Support Files/Pods-DataSourcerer_Example/Pods-DataSourcerer_Example.release.xcconfig"; sourceTree = "<group>"; };
 		BC79CBD8A5C9E2D4BEF42D16 /* Pods-DataSourcerer_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-DataSourcerer_Tests.release.xcconfig"; path = "Pods/Target Support Files/Pods-DataSourcerer_Tests/Pods-DataSourcerer_Tests.release.xcconfig"; sourceTree = "<group>"; };
@@ -242,6 +244,7 @@
 				6FB45A9B22535E7A008E78AE /* ChatBotMockStorage.swift */,
 				6FB45A9D22535E90008E78AE /* ChatBotCell.swift */,
 				6FB45A9F22535EA7008E78AE /* ChatBotRequest.swift */,
+				6FE7794E22555D76003BF625 /* ChatBotIncomingMessageTableViewCell.swift */,
 			);
 			name = "ChatBot TableView";
 			sourceTree = "<group>";
@@ -348,6 +351,7 @@
 				TargetAttributes = {
 					607FACCF1AFB9204008FA782 = {
 						CreatedOnToolsVersion = 6.3.1;
+						DevelopmentTeam = 6VT84VEY8S;
 						LastSwiftMigration = 1010;
 					};
 					607FACE41AFB9204008FA782 = {
@@ -531,6 +535,7 @@
 				6FB45A9C22535E7A008E78AE /* ChatBotMockStorage.swift in Sources */,
 				6FCC264B21DA1AC2005DE711 /* LoadingCell.swift in Sources */,
 				6F850B632221E167006D6A77 /* Watchdog.swift in Sources */,
+				6FE7794F22555D76003BF625 /* ChatBotIncomingMessageTableViewCell.swift in Sources */,
 				6FCC264721DA1AC2005DE711 /* PublicRepo.swift in Sources */,
 				607FACD61AFB9204008FA782 /* AppDelegate.swift in Sources */,
 				6FB45A9822525F06008E78AE /* ChatBotTableItemModelsProducer.swift in Sources */,
@@ -700,6 +705,7 @@
 			baseConfigurationReference = C7461E507AD0FE24652D6B76 /* Pods-DataSourcerer_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 6VT84VEY8S;
 				INFOPLIST_FILE = DataSourcerer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
@@ -715,6 +721,7 @@
 			baseConfigurationReference = AF60253B6D4AE5C9DCF23DD1 /* Pods-DataSourcerer_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				DEVELOPMENT_TEAM = 6VT84VEY8S;
 				INFOPLIST_FILE = DataSourcerer/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
