@@ -28,6 +28,7 @@ public extension LoadImpulseEmitterProtocol {
 
 public struct AnyLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol {
     public typealias P = P_
+    public typealias ObservedValue = LoadImpulse<P>
 
     private let _observe: (@escaping LoadImpulsesOverTime) -> Disposable
     private let _emit: (LoadImpulse<P>, LoadImpulseEmitterQueue) -> Void
@@ -49,6 +50,7 @@ public struct AnyLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProto
 public class SimpleLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
+    public typealias ObservedValue = LoadImpulse<P>
 
     private let initialImpulse: LoadImpulse<P>?
     private let broadcastObservable = BroadcastObservable<LI>()
@@ -83,6 +85,7 @@ public class SimpleLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterPro
 public class RecurringLoadImpulseEmitter<P_: ResourceParams>: LoadImpulseEmitterProtocol, ObservableProtocol {
     public typealias P = P_
     public typealias LI = LoadImpulse<P>
+    public typealias ObservedValue = LoadImpulse<P>
 
     private let lastLoadImpulse: LoadImpulse<P>?
     private let innerEmitter: SimpleLoadImpulseEmitter<P>

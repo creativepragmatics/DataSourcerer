@@ -12,6 +12,10 @@ class PullToRefreshTableViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
+    private var refreshControl: UIRefreshControl? {
+        return tableViewController.refreshControl
+    }
+
     private lazy var tableViewController =
         ListViewDatasourceConfiguration
             .buildSingleSectionTableView(
@@ -62,7 +66,7 @@ class PullToRefreshTableViewController : UIViewController {
             .singleSectionTableViewController
             .onPullToRefresh { [weak self] in
                 self?.viewModel.datasource.refresh(type: LoadImpulseType(mode: .fullRefresh, issuer: .user))
-                self?.tableViewController.refreshControl?.beginRefreshing()
+                self?.refreshControl?.beginRefreshing()
             }
 
     override func viewDidLoad() {
