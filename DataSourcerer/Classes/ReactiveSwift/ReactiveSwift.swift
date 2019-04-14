@@ -35,10 +35,11 @@ public extension Datasource {
     /// e.g. when a token which is part of parameters is refreshed.
     init(
         valueSignalAndLoadImpulseProducer: @escaping (LoadImpulse<P>)
-            -> SignalProducer<(Value, LoadImpulse<P>), E>,
+        -> SignalProducer<(Value, LoadImpulse<P>), E>,
         mapErrorString: @escaping (ErrorString) -> E,
         cacheBehavior: CacheBehavior,
-        loadImpulseBehavior: LoadImpulseBehavior
+        loadImpulseBehavior: LoadImpulseBehavior,
+        initialLoadingState: ((LoadImpulse<P>) -> ResourceState<Value, P, E>)? = nil
         ) {
 
         self.init(
@@ -46,7 +47,7 @@ public extension Datasource {
                 -> SignalProducer<ResourceState<Value, P, E>, NoError> in
 
                 let initial = SignalProducer<ResourceState<Value, P, E>, NoError>(
-                    value: ResourceState.loading(
+                    value: initialLoadingState?(loadImpulse) ?? ResourceState.loading(
                         loadImpulse: loadImpulse,
                         fallbackValueBox: nil,
                         fallbackError: nil

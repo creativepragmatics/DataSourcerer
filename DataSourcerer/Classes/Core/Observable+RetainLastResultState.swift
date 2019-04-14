@@ -106,6 +106,12 @@ public final class LatestSuccessAndErrorRememberingCore
         case .loading:
             guard let loadImpulse = state.loadImpulse else { return .notReady }
 
+            if let valueBox = state.value {
+                return State.loading(loadImpulse: loadImpulse,
+                                     fallbackValueBox: valueBox,
+                                     fallbackError: nil)
+            }
+
             switch self.latestResult.value {
             case let .successValue(successValue) where
                 successValue.params.isCacheCompatible(loadImpulse.params):
