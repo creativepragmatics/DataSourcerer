@@ -138,11 +138,11 @@ public extension ShareableValueStream {
 
 }
 
-public extension AnyLoadImpulseEmitter {
+public extension AnyObservable {
 
-    var reactiveSwiftSignalProducer: ReactiveSwift.SignalProducer<LoadImpulse<P>, NoError> {
+    var reactiveSwiftSignalProducer: ReactiveSwift.SignalProducer<ObservedValue, NoError> {
 
-        return SignalProducer<LoadImpulse<P>, NoError> { observer, lifetime in
+        return SignalProducer<ObservedValue, NoError> { observer, lifetime in
 
             let dataSourcererDisposable = self.observe { loadImpulse in
                 observer.send(value: loadImpulse)
