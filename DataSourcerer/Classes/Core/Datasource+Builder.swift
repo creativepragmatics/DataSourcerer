@@ -49,28 +49,47 @@ public extension Datasource.Builder where Value: Codable {
     struct LoadFromURLRequestSelected {
         let urlRequest: (LoadImpulse<P>) throws -> URLRequest
 
+        public func setRememberLatestSuccessAndErrorBehavior(_ behavior: RememberLatestSuccessAndErrorBehavior)
+            -> RememberLatestSuccessAndErrorBehaviorSelected {
+
+                return RememberLatestSuccessAndErrorBehaviorSelected(
+                    urlRequestSelected: self,
+                    rememberLatestSuccessAndErrorBehavior: behavior
+                )
+        }
+
+    }
+
+    struct RememberLatestSuccessAndErrorBehaviorSelected {
+        let urlRequestSelected: LoadFromURLRequestSelected
+        let rememberLatestSuccessAndErrorBehavior: RememberLatestSuccessAndErrorBehavior
+
         public func mapErrorToString(_ mapErrorString: @escaping (Datasource.ErrorString) -> E)
             -> LoadFromURLErrorMappingSelected {
                 return LoadFromURLErrorMappingSelected(
-                    urlRequestSelected: self,
+                    rememberLatestSuccessAndErrorBehaviorSelected: self,
                     mapErrorString: mapErrorString
                 )
         }
     }
 
     struct LoadFromURLErrorMappingSelected {
-        let urlRequestSelected: LoadFromURLRequestSelected
+        let rememberLatestSuccessAndErrorBehaviorSelected: RememberLatestSuccessAndErrorBehaviorSelected
         let mapErrorString: (Datasource.ErrorString) -> E
 
         public func loadImpulseBehavior(_ loadImpulseBehavior: Datasource.LoadImpulseBehavior)
             -> ResourceStateAndLoadImpulseEmitterSelected {
 
                 let resourceState = ValueStream<Datasource.ObservedState>(
-                    loadStatesWithURLRequest: urlRequestSelected.urlRequest,
+                    loadStatesWithURLRequest: rememberLatestSuccessAndErrorBehaviorSelected
+                        .urlRequestSelected.urlRequest,
                     mapErrorString: mapErrorString,
                     loadImpulseEmitter: loadImpulseBehavior.loadImpulseEmitter
-                    )
-                    .rememberLatestSuccessAndError()
+                )
+                .rememberLatestSuccessAndError(
+                    behavior: rememberLatestSuccessAndErrorBehaviorSelected
+                        .rememberLatestSuccessAndErrorBehavior
+                )
 
                 return ResourceStateAndLoadImpulseEmitterSelected(
                     resourceState: resourceState,
@@ -79,6 +98,7 @@ public extension Datasource.Builder where Value: Codable {
         }
 
     }
+
 }
 
 public extension Datasource where Value: Codable {

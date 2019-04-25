@@ -17,7 +17,11 @@ public extension Datasource {
             signalProducer: stateSignalProducer,
             loadImpulseEmitter: loadImpulseEmitter.any
             )
-            .rememberLatestSuccessAndError()
+            .rememberLatestSuccessAndError(
+                behavior: RememberLatestSuccessAndErrorBehavior(
+                    preferFallbackValueOverFallbackError: true
+                )
+            )
 
         let cachedStates = cacheBehavior
             .apply(on: states.any,

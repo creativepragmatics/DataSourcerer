@@ -25,7 +25,10 @@ public extension ObservableProtocol {
     /// --------------------------------------------------------------------------
     /// S > L:              Loading with fallback value from S
     /// E > L:              Loading with fallback error from E
-    /// S > E > L:          Loading with fallback error from E
+    /// S > E > L:          if preferFallbackValueOverFallbackError:
+    ///                       Loading with fallback value from S
+    ///                     else
+    ///                       Loading with fallback error from E
     /// S1 > E > S2 > L:    Loading with fallback value from S2
     /// S > E > NR > L:     Loading without any fallbacks (NR causes disruption)
     /// E1 > E2 > L:        Loading with fallback error from E2
@@ -34,12 +37,15 @@ public extension ObservableProtocol {
     /// S > E:              Error with fallback value from S
     /// S1 > S2:            Success with value from S2
     /// E1 > E2:            Error with error from E2
-    func rememberLatestSuccessAndError<Value, P: ResourceParams, E: ResourceError>()
-        -> AnyObservable<ObservedValue> where ObservedValue == ResourceState<Value, P, E> {
+    func rememberLatestSuccessAndError<Value, P: ResourceParams, E: ResourceError>(
+        behavior: RememberLatestSuccessAndErrorBehavior
+    ) -> AnyObservable<ObservedValue> where ObservedValue == ResourceState<Value, P, E> {
 
             return ValueStream { sendState, disposable in
 
-                let core = LatestSuccessAndErrorRememberingCore<Value, P, E>()
+                let core = LatestSuccessAndErrorRememberingCore<Value, P, E>(
+                    behavior: behavior
+                )
 
                 disposable += self.observe { state in
                     core.setAndEmitNext(receivedState: state, sendState: sendState)
@@ -62,8 +68,11 @@ public final class LatestSuccessAndErrorRememberingCore
 
     // Holds the latest result that was sent by the Observable.
     private let latestResult = SynchronizedMutableProperty<LatestResult>(.none)
+    private let behavior: RememberLatestSuccessAndErrorBehavior
 
-    public init() {}
+    public init(behavior: RememberLatestSuccessAndErrorBehavior) {
+        self.behavior = behavior
+    }
 
     public func setAndEmitNext(receivedState: State,
                                sendState: SendState) {
@@ -87,7 +96,12 @@ public final class LatestSuccessAndErrorRememberingCore
             }
 
             if let error = receivedState.cacheCompatibleError(for: loadImpulse) {
-                latestResult.value = .error(LatestError(params: loadImpulse.params, error: error))
+                switch latestResult.value {
+                case .successValue where behavior.preferFallbackValueOverFallbackError:
+                    break
+                case .none, .error, .successValue:
+                    latestResult.value = .error(LatestError(params: loadImpulse.params, error: error))
+                }
             } else if let successValue = receivedState.cacheCompatibleValue(for: loadImpulse) {
                 let latestSuccess = LatestSuccessValue(params: loadImpulse.params, value: successValue)
                 latestResult.value = .successValue(latestSuccess)
@@ -173,4 +187,12 @@ public final class LatestSuccessAndErrorRememberingCore
         let error: E
     }
 
+}
+
+public struct RememberLatestSuccessAndErrorBehavior {
+    public let preferFallbackValueOverFallbackError: Bool
+
+    public init(preferFallbackValueOverFallbackError: Bool) {
+        self.preferFallbackValueOverFallbackError = preferFallbackValueOverFallbackError
+    }
 }
