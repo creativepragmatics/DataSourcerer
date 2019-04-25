@@ -1,5 +1,6 @@
 # Datasourcerer Backlog
 
+- Make ResourceState an enum again?
 - Most things called "singleSection" can be deleted now?
 - Add builder pattern for Datasource? Expose only one method per step.
 - Rename State > ListState

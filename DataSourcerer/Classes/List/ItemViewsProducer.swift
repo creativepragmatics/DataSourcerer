@@ -72,43 +72,6 @@ public extension ItemViewsProducer {
         )
     }
 
-    func showLoadingAndErrorStates<ViewProducer: ItemViewProducer>(
-        loadingViewProducer: ViewProducer,
-        errorViewProducer: ViewProducer,
-        noResultsViewProducer: ViewProducer)
-        -> ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>
-        where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
-        ViewProducer.ContainingView == ContainingView,
-        ViewProducer.ProducedView == ProducedView {
-
-            return ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>(
-                produceView: { item, containingView, indexPath -> ProducedView in
-                    switch item {
-                    case let .baseItem(baseItem):
-                        return self.produceView(baseItem, containingView, indexPath)
-                    case let .error(error):
-                        return errorViewProducer.view(containingView: containingView,
-                                                      item: .error(error),
-                                                      for: indexPath)
-                    case .loading:
-                        return loadingViewProducer.view(containingView: containingView,
-                                                        item: .loading,
-                                                        for: indexPath)
-                    case let .noResults(noResultsText):
-                        return noResultsViewProducer.view(containingView: containingView,
-                                                          item: .noResults(noResultsText),
-                                                          for: indexPath)
-                    }
-                },
-                registerAtContainingView: { containingView in
-                    self.registerAtContainingView(containingView)
-                    loadingViewProducer.register(at: containingView)
-                    errorViewProducer.register(at: containingView)
-                    noResultsViewProducer.register(at: containingView)
-                }
-            )
-    }
-
 }
 
 extension ItemViewsProducer where ItemModelType == NoSupplementaryItemModel {
