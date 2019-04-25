@@ -48,6 +48,9 @@ class PullToRefreshTableViewController : UIViewController {
                 }
             }
             .showLoadingAndErrorStates(
+                behavior: ShowLoadingAndErrorsBehavior(
+                    errorsBehavior: .preferFallbackValueOverError
+                ),
                 noResultsText: "No results",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
                 errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in

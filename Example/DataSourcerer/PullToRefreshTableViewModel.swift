@@ -24,6 +24,11 @@ class PullToRefreshTableViewModel {
                 expectResponseValueType: PublicReposResponse.self,
                 failWithError: APIError.self
             )
+            .setRememberLatestSuccessAndErrorBehavior(
+                RememberLatestSuccessAndErrorBehavior(
+                    preferFallbackValueOverFallbackError: true
+                )
+            )
             .mapErrorToString { APIError.unknown(.message($0)) }
             .loadImpulseBehavior(.instance(loadImpulseEmitter.any))
             .cacheBehavior(

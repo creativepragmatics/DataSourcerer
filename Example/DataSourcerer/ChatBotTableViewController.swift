@@ -26,6 +26,9 @@ class ChatBotTableViewController : UIViewController {
             )
             .configurationForFurtherCustomization
             .showLoadingAndErrorStates(
+                behavior: ShowLoadingAndErrorsBehavior(
+                    errorsBehavior: .preferFallbackValueOverError
+                ),
                 noResultsText: "You have received no messages so far.",
                 loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in
                     let loadingCell = LoadingCell()

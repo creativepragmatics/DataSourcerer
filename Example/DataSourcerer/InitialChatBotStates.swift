@@ -51,6 +51,10 @@ struct InitialChatBotStates {
                         })
                     }
             }
-            .rememberLatestSuccessAndError()
+            .rememberLatestSuccessAndError(
+                behavior: RememberLatestSuccessAndErrorBehavior(
+                    preferFallbackValueOverFallbackError: true
+                )
+            )
     }
 }
