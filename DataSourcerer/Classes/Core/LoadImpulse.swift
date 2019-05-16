@@ -4,13 +4,16 @@ public struct LoadImpulse<P: ResourceParams>: Equatable {
 
     public var params: P
     public let type: LoadImpulseType
+    public let id: String
 
     public init(
         params: P,
-        type: LoadImpulseType
+        type: LoadImpulseType,
+        id: String = UUID().uuidString
     ) {
         self.params = params
         self.type = type
+        self.id = id
     }
 
     public func with(params: P) -> LoadImpulse<P> {

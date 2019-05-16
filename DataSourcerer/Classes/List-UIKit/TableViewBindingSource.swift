@@ -1,37 +1,64 @@
 import Foundation
 import UIKit
 
-open class TableViewDatasource
+open class TableViewBindingSource
     <Value, P: ResourceParams, E, CellModelType: ItemModel, SectionModelType: SectionModel,
     HeaderItem: SupplementaryItemModel, HeaderItemError, FooterItem: SupplementaryItemModel,
     FooterItemError>: NSObject, UITableViewDelegate,
     UITableViewDataSource where HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError,
     CellModelType.E == E {
-    public typealias Configuration = ListViewDatasourceConfiguration
+
+    public typealias ListViewDatasourceConfigurationAlias = ListViewDatasourceConfiguration
         <Value, P, E, CellModelType, UITableViewCell, SectionModelType, HeaderItem,
         UIView, HeaderItemError, FooterItem, UIView, FooterItemError, UITableView>
+    public typealias TableViewBindingSessionAlias = TableViewBindingSession
+        <Value, P, E, CellModelType, SectionModelType>
+    public typealias TableViewUpdaterAlias = ListViewUpdater
+        <Value, P, E, CellModelType, SectionModelType>
+    public typealias TableViewStateAlias = ListViewState<Value, P, E, CellModelType, SectionModelType>
 
-    public let configuration: Configuration
+    public let configuration: ListViewDatasourceConfigurationAlias
     public weak var delegate: AnyObject?
     public weak var datasource: AnyObject?
     public let hideBottomMostSeparatorWithHack: Bool
 
-    public var state: ListViewState<Value, P, E, CellModelType, SectionModelType> {
-        return configuration.state.value
+    private var bindingSession: TableViewBindingSessionAlias?
+
+    public lazy var listViewStateProperty: ShareableValueStream
+        <ListViewState<Value, P, E, CellModelType, SectionModelType>> = {
+
+        return configuration.state
+            .skipRepeats()
+            .observeOnUIThread()
+            .shareable(initialValue: .notReady)
+    }()
+
+    public var listViewState: ListViewState<Value, P, E, CellModelType, SectionModelType> {
+        return listViewStateProperty.value
     }
 
     private var numberOfSections: Int {
-        return state.sectionsWithItems?.count ?? 0
+        return listViewState.sectionsAndItems?.count ?? 0
     }
 
     public init(
-        configuration: Configuration,
-        tableView: UITableView,
+        configuration: ListViewDatasourceConfigurationAlias,
         hideBottomMostSeparatorWithHack: Bool = true
     ) {
         self.configuration = configuration
         self.hideBottomMostSeparatorWithHack = hideBottomMostSeparatorWithHack
         super.init()
+    }
+
+    open func bind(
+        tableView: UITableView,
+        tableViewUpdater: TableViewUpdaterAlias = TableViewUpdaterAlias()
+    ) {
+
+        assert(Thread.isMainThread, "bind() can only be called on main thread")
+
+        tableView.delegate = self
+        tableView.dataSource = self
 
         configuration.itemViewsProducer.registerAtContainingView(tableView)
         configuration.headerItemViewAdapter.registerAtContainingView(tableView)
@@ -40,10 +67,30 @@ open class TableViewDatasource
         if hideBottomMostSeparatorWithHack {
             tableView.tableFooterView = UIView()
         }
+
+        var previousState = listViewStateProperty.value
+
+        // Update table with most current cells
+        let disposable = listViewStateProperty
+            .skipRepeats()
+            .observe { [weak tableView] currentState in
+                guard let tableView = tableView else { return }
+
+                tableViewUpdater.updateItems(tableView, previousState, currentState)
+                previousState = currentState
+        }
+
+        // While the new bindingSession is set, any old session is released
+        // and its contained disposable is disposed.
+        bindingSession = TableViewBindingSessionAlias(
+            tableView: tableView,
+            tableViewUpdater: tableViewUpdater,
+            bindingDisposable: disposable
+        )
     }
 
     public func numberOfSections(in tableView: UITableView) -> Int {
-        return state.sectionsWithItems?.count ?? 0
+        return listViewState.sectionsAndItems?.count ?? 0
     }
 
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -131,7 +178,7 @@ open class TableViewDatasource
 
         guard let cellView = tableView.cellForRow(at: indexPath) else { return }
 
-        let itemSelection = Configuration.ItemSelection(
+        let itemSelection = ListViewDatasourceConfigurationAlias.ItemSelection(
             itemModel: configuration.item(at: indexPath),
             view: cellView,
             indexPath: indexPath,
@@ -163,18 +210,13 @@ open class TableViewDatasource
 
 }
 
-public extension TableViewDatasource where SectionModelType == NoSection {
+extension TableViewBindingSource: TableViewUnbindable {
 
-    var cellsProperty: ShareableValueStream<SingleSectionListViewState<Value, P, E, CellModelType>> {
+    public func unbind(from tableView: UITableView) {
 
-        return configuration.state
-            .map { SingleSectionListViewState<Value, P, E, CellModelType>(listViewState: $0) }
-            .skipRepeats()
-            .observeOnUIThread()
-            .shareable(initialValue: .notReady)
+        if bindingSession?.tableView === tableView {
+            bindingSession = nil
+        }
     }
 
-    var cells: SingleSectionListViewState<Value, P, E, CellModelType> {
-        return cellsProperty.value
-    }
 }

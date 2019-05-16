@@ -1,7 +1,7 @@
 import DataSourcerer
 import Foundation
 
-enum APIError : IdiomaticStateError, Codable {
+enum APIError : ResourceError, Codable {
     case unknown(StateErrorMessage)
     case unreachable
     case notConnectedToInternet

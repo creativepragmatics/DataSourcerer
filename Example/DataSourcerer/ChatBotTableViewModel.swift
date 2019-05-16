@@ -146,5 +146,5 @@ typealias InitialChatBotError = APIError // for better clarity
 typealias ChatBotResourceState = ResourceState
     <PostInitialLoadChatBotState, InitialChatBotRequest, InitialChatBotError>
 
-typealias ChatBotListViewState = SingleSectionListViewState
-    <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, IdiomaticItemModel<ChatBotCell>>
+//typealias ChatBotListViewState = SingleSectionListViewState
+//    <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, IdiomaticItemModel<ChatBotCell>>

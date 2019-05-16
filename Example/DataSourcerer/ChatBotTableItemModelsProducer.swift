@@ -5,17 +5,17 @@ struct ChatBotTableItemModelsProducer {
 
     func make()
         -> ItemModelsProducer
-        <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, ChatBotCell, NoSection> {
+        <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, ChatBotCell, SingleSection> {
 
             return ItemModelsProducer(baseValueToListViewStateTransformer: valueToListViewStateTransformer())
     }
 
     private func valueToListViewStateTransformer()
         -> ValueToListViewStateTransformer
-        <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, ChatBotCell, NoSection> {
+        <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, ChatBotCell, SingleSection> {
             return ValueToListViewStateTransformer { value, resourceState
                 -> ListViewState
-                <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, ChatBotCell, NoSection> in
+                <PostInitialLoadChatBotState, InitialChatBotRequest, APIError, ChatBotCell, SingleSection> in
 
                 let initialRequestProvisioningState = resourceState.provisioningState
                 switch initialRequestProvisioningState {
@@ -34,7 +34,7 @@ struct ChatBotTableItemModelsProducer {
                         allCells = [ChatBotCell.oldMessagesLoading] + allCells
                     }
 
-                    let sectionAndItems = SectionAndItems(NoSection(), allCells)
+                    let sectionAndItems = SectionAndItems(SingleSection(), allCells)
                     return ListViewState.readyToDisplay(resourceState, [sectionAndItems])
                 }
             }

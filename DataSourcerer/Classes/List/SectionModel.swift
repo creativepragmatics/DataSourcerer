@@ -16,6 +16,6 @@ public struct PlainSectionModel : SectionModel {
 /// To be used when a list view shall have no _visible_ sections at all.
 /// This is mainly for matching generics such that a SingleSection*Controller
 /// can be created cleanly.
-public struct NoSection: SectionModel {
+public struct SingleSection: SectionModel {
     public init() {}
 }

@@ -114,14 +114,14 @@ FooterItemView == UIView {
         datasource: Datasource<Value, P, E>,
         itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
         itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
-        ) {
+    ) {
 
         self.init(
             datasource: datasource,
             itemModelProducer: itemModelProducer,
             itemViewsProducer: itemViewsProducer,
-            headerItemViewAdapter: .noSupplementaryViewAdapter,
-            footerItemViewAdapter: .noSupplementaryViewAdapter,
+            headerItemViewAdapter: .noSupplementaryItemViewsProducer,
+            footerItemViewAdapter: .noSupplementaryItemViewsProducer,
             headerItemAtIndexPath: nil,
             footerItemAtIndexPath: nil,
             titleForHeaderInSection: nil,
@@ -139,7 +139,7 @@ FooterItemView == UIView {
 public extension ListViewDatasourceConfiguration {
 
     func section(at index: Int) -> SectionAndItems<ItemModelType, SectionModelType> {
-        let rawSection = state.value.sectionedValues.sectionsAndValues[index]
+        let rawSection = state.value.dwifftSectionedValues.sectionsAndValues[index]
         return SectionAndItems(rawSection.0, rawSection.1)
     }
 
@@ -148,7 +148,7 @@ public extension ListViewDatasourceConfiguration {
     }
 
     func items(in section: Int) -> [ItemModelType] {
-        let sections = state.value.sectionedValues.sectionsAndValues[section].1
+        let sections = state.value.dwifftSectionedValues.sectionsAndValues[section].1
         return sections
     }
 
@@ -207,59 +207,4 @@ public extension ListViewDatasourceConfiguration {
         mutableSelf.willDisplayItem = willDisplayItem
         return mutableSelf
     }
-}
-
-public typealias TableViewDatasourceConfiguration
-    <Value, P: ResourceParams, E, Cell: ItemModel, CellView: UITableViewCell,
-    Section: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
-    HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemView: UIView,
-    FooterItemError>
-    =
-    ListViewDatasourceConfiguration
-    <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView, HeaderItemError,
-    FooterItem, FooterItemView, FooterItemError, UITableView>
-    where Cell.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError
-
-public extension TableViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
-    HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
-FooterItemView == UIView, ItemView == UITableViewCell {
-
-    static func withBaseTableViewCell(
-        datasource: Datasource<Value, P, E>,
-        itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
-        cellClass `class`: ItemView.Type,
-        reuseIdentifier: String,
-        configure: @escaping (ItemModelType, ItemView) -> Void)
-        -> TableViewDatasourceConfiguration
-        <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
-        NoResourceError, NoSupplementaryItemModel, UIView, NoResourceError> {
-
-            return TableViewDatasourceConfiguration(
-                datasource: datasource,
-                itemModelProducer: itemModelProducer,
-                itemViewsProducer: TableViewCellAdapter<ItemModelType>.tableViewCell(
-                    withCellClass: ItemView.self,
-                    reuseIdentifier: reuseIdentifier, configure: configure
-                )
-            )
-    }
-
-}
-
-// TODO: Move to List-UIKit folder as soon as XCode 10.2 is available:
-// https://github.com/apple/swift/pull/18168
-/// Builder.Complete for single section tableviews
-public extension ListViewDatasourceConfiguration
-    where Value: Equatable,
-    ItemView == UITableViewCell,
-    ContainingView == UITableView,
-    HeaderItemView == UIView,
-    FooterItemView == UIView,
-SectionModelType == NoSection {
-
-    var singleSectionTableViewController: SingleSectionTableViewController
-        <Value, P, E, ItemModelType, HeaderItem, HeaderItemError, FooterItem, FooterItemError> {
-        return SingleSectionTableViewController(configuration: self)
-    }
-
 }

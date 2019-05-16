@@ -1,7 +1,7 @@
 import Foundation
 import UIKit
 
-public enum SimpleTableViewCellProducer<Cell: ItemModel>: ItemViewProducer {
+public enum TableViewCellProducer<Cell: ItemModel>: ItemViewProducer {
     public typealias ItemModel = Cell
     public typealias ProducedView = UITableViewCell
     public typealias ContainingView = UITableView
