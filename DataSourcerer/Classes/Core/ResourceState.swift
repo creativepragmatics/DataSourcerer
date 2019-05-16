@@ -24,6 +24,29 @@ public struct ResourceState<Value, P: ResourceParams, E: ResourceError>: Equatab
 
 public extension ResourceState {
 
+    public func mapValue<NewValue>(_ map: (Value) -> NewValue)
+        -> ResourceState<NewValue, P, E> {
+
+        if let value = self.value?.value {
+            return ResourceState<NewValue, P, E>(
+                provisioningState: provisioningState,
+                loadImpulse: loadImpulse,
+                value: EquatableBox<NewValue>(map(value)),
+                error: error
+            )
+        } else {
+            return ResourceState<NewValue, P, E>(
+                provisioningState: provisioningState,
+                loadImpulse: loadImpulse,
+                value: nil,
+                error: error
+            )
+        }
+    }
+}
+
+public extension ResourceState {
+
     /// Datasource is not ready to provide data.
     static var notReady: ResourceState {
         return ResourceState(provisioningState: .notReady, loadImpulse: nil, value: nil, error: nil)
