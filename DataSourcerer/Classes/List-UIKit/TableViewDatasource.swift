@@ -6,7 +6,7 @@ open class TableViewDatasource
     HeaderItem: SupplementaryItemModel, HeaderItemError, FooterItem: SupplementaryItemModel,
     FooterItemError>: NSObject, UITableViewDelegate,
     UITableViewDataSource where HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError,
-    CellModelType.E == E {
+CellModelType.E == E {
     public typealias Configuration = ListViewDatasourceConfiguration
         <Value, P, E, CellModelType, UITableViewCell, SectionModelType, HeaderItem,
         UIView, HeaderItemError, FooterItem, UIView, FooterItemError, UITableView>
@@ -28,7 +28,7 @@ open class TableViewDatasource
         configuration: Configuration,
         tableView: UITableView,
         hideBottomMostSeparatorWithHack: Bool = true
-    ) {
+        ) {
         self.configuration = configuration
         self.hideBottomMostSeparatorWithHack = hideBottomMostSeparatorWithHack
         super.init()
@@ -78,7 +78,7 @@ open class TableViewDatasource
         let height = configuration.footerSize(
             at: IndexPath(row: 0, section: section),
             in: tableView
-        ).height
+            ).height
 
         if height == 0, hideBottomMostSeparatorWithHack, section == numberOfSections - 1 {
             return 0.001
@@ -118,7 +118,7 @@ open class TableViewDatasource
                           forSection section: Int) {
         let indexPath = IndexPath(row: 0, section: section)
         if let footerItem = configuration.footerItemAtIndexPath?(indexPath) {
-                configuration.willDisplayFooterItem?(view, footerItem, indexPath)
+            configuration.willDisplayFooterItem?(view, footerItem, indexPath)
         }
 
         if let delegate = delegate,
@@ -142,6 +142,15 @@ open class TableViewDatasource
         if let delegate = delegate,
             delegate.responds(to: #selector(tableView(_:didSelectRowAt:))) {
             delegate.tableView!(tableView, didSelectRowAt: indexPath)
+        }
+    }
+
+    public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        if let delegate = delegate,
+            delegate.responds(to: #selector(tableView(_:heightForRowAt:))) {
+            return delegate.tableView(tableView, heightForRowAt: indexPath)
+        } else {
+            return UITableView.automaticDimension
         }
     }
 
