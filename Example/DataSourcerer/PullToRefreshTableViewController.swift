@@ -127,6 +127,18 @@ class PullToRefreshTableViewController : UIViewController {
             )
             .bind()
 
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(onPullToRefresh), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+
+        viewModel.datasource.state.observe { [weak refreshControl] state in
+            switch state.provisioningState {
+            case .notReady, .loading:
+                break
+            case .result:
+                refreshControl?.endRefreshing()
+            }
+        }.disposed(by: self.disposeBag)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -149,6 +161,11 @@ class PullToRefreshTableViewController : UIViewController {
 
     func repoSelected(repo: PublicRepo) {
         print("Repo selected")
+    }
+
+    @objc
+    func onPullToRefresh() {
+        viewModel.loadImpulseEmitter.emit(type: LoadImpulseType(mode: .fullRefresh, issuer: .user), on: .current)
     }
 
 }
