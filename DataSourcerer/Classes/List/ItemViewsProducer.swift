@@ -1,19 +1,33 @@
 import Foundation
+import UIKit
 
-public struct ItemViewsProducer<ItemModelType: Equatable, ProducedView: UIView, ContainingView: UIView> {
+public struct ItemViewsProducer<ItemModelType: ItemModel, ProducedView: UIView, ContainingView: UIView> {
 
     public let produceView: (ItemModelType, ContainingView, IndexPath) -> ProducedView
+    public let configureView: (ItemModelType, ProducedView, ContainingView, IndexPath) -> Void
     public let registerAtContainingView: (ContainingView) -> Void
-    public let itemViewSize: ((ItemModelType, ContainingView) -> CGSize)?
+    public let itemViewSize: ((ItemModelType, ContainingView, IndexPath) -> CGSize)?
 
     public init(
         produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
+        configureView: @escaping (ItemModelType, ProducedView, ContainingView, IndexPath) -> Void,
         registerAtContainingView: @escaping (ContainingView) -> Void,
-        itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil
+        itemViewSize: ((ItemModelType, ContainingView, IndexPath) -> CGSize)? = nil
     ) {
         self.produceView = produceView
+        self.configureView = configureView
         self.registerAtContainingView = registerAtContainingView
         self.itemViewSize = itemViewSize
+    }
+
+    public func produceAndConfigureView(
+        itemModel: ItemModelType,
+        containingView: ContainingView,
+        indexPath: IndexPath
+    ) -> ProducedView {
+        let view = produceView(itemModel, containingView, indexPath)
+        configureView(itemModel, view, containingView, indexPath)
+        return view
     }
 }
 
@@ -27,12 +41,17 @@ public extension ItemViewsProducer where ItemModelType: MultiViewTypeItemModel {
 
     init(
         forMultiViewTypeWithProducer producer: @escaping (ItemModelType.ItemViewType) -> ItemViewsProducer,
-        itemViewSize: ((ItemModelType, ContainingView) -> CGSize)? = nil
+        itemViewSize: ((ItemModelType, ContainingView, IndexPath) -> CGSize)? = nil
     ) {
 
         self.produceView = { itemModel, containingView, indexPath -> ProducedView in
             return producer(itemModel.itemViewType)
                 .produceView(itemModel, containingView, indexPath)
+        }
+
+        self.configureView = { itemModel, producedView, containingView, indexPath in
+            producer(itemModel.itemViewType)
+                .configureView(itemModel, producedView, containingView, indexPath)
         }
 
         self.registerAtContainingView = { containingView in
@@ -71,6 +90,7 @@ extension ItemViewsProducer where ItemModelType == NoSupplementaryItemModel {
 
             return ItemViewsProducer<NoSupplementaryItemModel, UIView, ContainingView>(
                 produceView: { _, _, _ in UIView() },
+                configureView: { _, _, _, _ in return },
                 registerAtContainingView: { _ in }
             )
     }
@@ -79,33 +99,35 @@ extension ItemViewsProducer where ItemModelType == NoSupplementaryItemModel {
 public typealias TableViewCellAdapter<Cell: ItemModel>
     = ItemViewsProducer<Cell, UITableViewCell, UITableView>
 
-public extension ItemViewsProducer where ProducedView == UITableViewCell, ContainingView == UITableView {
+public extension ItemViewsProducer {
 
     static func tableViewCellWithClass<Cell: ItemModel, CellView: UITableViewCell>(
         _ `class`: CellView.Type,
         reuseIdentifier: String = UUID().uuidString,
-        configure: @escaping (Cell, UITableViewCell) -> Void
+        configureView: @escaping (Cell, UITableViewCell, UITableView, IndexPath) -> Void,
+        cellSize: ((Cell, UITableView, IndexPath) -> CGSize)? = nil
     ) -> ItemViewsProducer<Cell, UITableViewCell, UITableView> {
 
         return ItemViewsProducer<Cell, UITableViewCell, UITableView>(
             produceView: { itemModel, tableView, indexPath -> UITableViewCell in
-                let tableViewCell = tableView.dequeueReusableCell(
+                return tableView.dequeueReusableCell(
                     withIdentifier: reuseIdentifier,
                     for: indexPath
                 )
-                configure(itemModel, tableViewCell)
-                return tableViewCell
             },
+            configureView: configureView,
             registerAtContainingView: { tableView in
                 tableView.register(`class`, forCellReuseIdentifier: reuseIdentifier)
-            }
+            },
+            itemViewSize: cellSize
         )
     }
 
     static func tableViewCellWithNib<Cell: ItemModel>(
         _ nib: UINib,
         reuseIdentifier: String = UUID().uuidString,
-        configure: @escaping (Cell, UITableViewCell) -> Void
+        configureView: @escaping (Cell, UITableViewCell, UITableView, IndexPath) -> Void,
+        cellSize: ((Cell, UITableView, IndexPath) -> CGSize)? = nil
     ) -> ItemViewsProducer<Cell, UITableViewCell, UITableView> {
 
         return ItemViewsProducer<Cell, UITableViewCell, UITableView>(
@@ -114,13 +136,33 @@ public extension ItemViewsProducer where ProducedView == UITableViewCell, Contai
                     withIdentifier: reuseIdentifier,
                     for: indexPath
                 )
-                configure(itemModel, tableViewCell)
                 return tableViewCell
             },
+            configureView: configureView,
             registerAtContainingView: { tableView in
                 tableView.register(nib, forCellReuseIdentifier: reuseIdentifier)
-            }
+            },
+            itemViewSize: cellSize
+        )
+    }
+
+    static func tableViewCellWithoutReuse<Cell: ItemModel>(
+        create: @escaping (Cell, UITableView, IndexPath) -> UITableViewCell,
+        configureView: @escaping (Cell, UITableViewCell, UITableView, IndexPath) -> Void = { _, _, _, _ in },
+        cellSize: ((Cell, UITableView, IndexPath) -> CGSize)? = nil
+    ) -> ItemViewsProducer<Cell, UITableViewCell, UITableView> {
+
+        return ItemViewsProducer<Cell, UITableViewCell, UITableView>(
+            produceView: { itemModel, tableView, indexPath -> UITableViewCell in
+                return create(itemModel, tableView, indexPath)
+            },
+            configureView: configureView,
+            registerAtContainingView: { _ in },
+            itemViewSize: cellSize
         )
     }
 
 }
+
+public typealias TableViewCellProducer<ItemModelType: ItemModel> =
+    ItemViewsProducer<ItemModelType, UITableViewCell, UITableView>

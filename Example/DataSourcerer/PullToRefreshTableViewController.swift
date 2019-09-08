@@ -12,10 +12,6 @@ class PullToRefreshTableViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
-//    private var refreshControl: UIRefreshControl? {
-//        return tableViewController.refreshControl
-//    }
-
     private lazy var tableView: UITableView = {
         let view = UITableView()
         self.view.addSubview(view)
@@ -28,68 +24,12 @@ class PullToRefreshTableViewController : UIViewController {
         return view
     }()
 
-//    private lazy var tableViewController =
-//        ListViewDatasourceConfiguration
-//            .buildSingleSectionTableView(
-//                datasource: viewModel.datasource,
-//                withCellModelType: PublicRepoCell.self
-//            )
-//            .mapSingleSectionItemModels { response, _ -> [PublicRepoCell] in
-//                return response.map { PublicRepoCell.repo($0) }
-//            }
-//            .renderWithCellClass(
-//                cellType: UITableViewCell.self,
-//                dequeueIdentifier: "cell",
-//                configure: { repo, cellView in
-//                    cellView.textLabel?.text = {
-//                        switch repo {
-//                        case let .repo(repo): return repo.name
-//                        case .error: return nil
-//                        }
-//                    }()
-//                }
-//            )
-//            .configurationForFurtherCustomization
-//            .onDidSelectItem { [weak self] itemSelection in
-//                itemSelection.containingView.deselectRow(at: itemSelection.indexPath, animated: true)
-//                switch itemSelection.itemModel {
-//                case let .repo(repo):
-//                    self?.repoSelected(repo: repo)
-//                case .error:
-//                    return
-//                }
-//            }
-//            .showLoadingAndErrorStates(
-//                configuration: ShowLoadingAndErrorsConfiguration(
-//                    errorsConfiguration: .ignoreErrorIfCachedValueAvailable
-//                ),
-//                noResultsText: "No results",
-//                loadingViewProducer: TableViewCellProducer.instantiate { _ in return LoadingCell() },
-//                errorViewProducer: TableViewCellProducer.instantiate { cell in
-//                    guard case let .error(error) = cell else { return ErrorTableViewCell() }
-//                    let tableViewCell = ErrorTableViewCell()
-//                    tableViewCell.content = error.errorMessage
-//                    return tableViewCell
-//                },
-//                noResultsViewProducer: TableViewCellProducer.instantiate { _ in
-//                    let tableViewCell = ErrorTableViewCell()
-//                    tableViewCell.content = StateErrorMessage
-//                        .message("Strangely, there are no public repos on Github.")
-//                    return tableViewCell
-//                }
-//            )
-//            .singleSectionTableViewController
-//            .onPullToRefresh { [weak self] in
-//                self?.viewModel.datasource.refresh(type: LoadImpulseType(mode: .fullRefresh, issuer: .user))
-//                self?.refreshControl?.beginRefreshing()
-//            }
-
     override func viewDidLoad() {
         super.viewDidLoad()
 
         title = "TableView with Pull to Refresh"
 
-        let bindingSource = tableView.sourcerer
+        tableView.sourcerer
             .prepareBindingToDatasource(
                 self.viewModel.datasource,
                 baseItemModelType: PublicRepoCell.self,
@@ -98,32 +38,45 @@ class PullToRefreshTableViewController : UIViewController {
             .singleSection { response, _ -> [PublicRepoCell] in
                 response.map { PublicRepoCell.repo($0) }
             }
-            .cellsWithClass(UITableViewCell.self) { repo, cellView in
-                cellView.textLabel?.text = {
-                    switch repo {
-                    case let .repo(repo): return repo.name
-                    case .error: return nil
-                    }
-                }()
-            }
+            .cellsWithClass(
+                UITableViewCell.self,
+                configure: { repo, cellView, _, _ in
+                    cellView.textLabel?.text = {
+                        switch repo {
+                        case let .repo(repo): return repo.name
+                        case .error: return nil
+                        }
+                    }()
+                }
+            )
             .showLoadingAndErrors(
                 configuration: ShowLoadingAndErrorsConfiguration(
                     errorsConfiguration: .ignoreErrorIfCachedValueAvailable
                 ),
-                loadingViewProducer: TableViewCellProducer.instantiate { _ in return LoadingCell() },
-                errorViewProducer: TableViewCellProducer.instantiate { cell in
-                    guard case let .error(error) = cell else { return ErrorTableViewCell() }
-                    let tableViewCell = ErrorTableViewCell()
-                    tableViewCell.content = error.errorMessage
-                    return tableViewCell
-                },
-                noResultsViewProducer: TableViewCellProducer.instantiate { _ in
-                    let tableViewCell = ErrorTableViewCell()
-                    tableViewCell.content = StateErrorMessage
-                        .message("Strangely, there are no public repos on Github.")
-                    return tableViewCell
-                },
-                noResultsText: "No results"
+                loadingViewProducer: .tableViewCellWithoutReuse(
+                    create: { (cell: IdiomaticItemModel<PublicRepoCell>, tableView: UITableView, indexPath: IndexPath)
+                        -> UITableViewCell in return LoadingCell(frame: .zero)
+                    }
+                ),
+                errorViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in
+                        return ErrorTableViewCell()
+                    },
+                    configureView: { model, cell, _, _ in
+                        guard case let .error(error) = model else { return }
+                        (cell as? ErrorTableViewCell)?.content = error.errorMessage
+                    }
+                ),
+                noResultsViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in
+                        return ErrorTableViewCell()
+                    },
+                    configureView: { model, cell, _, _ in
+                        (cell as? ErrorTableViewCell)?.content = StateErrorMessage
+                            .message("Strangely, there are no public repos on Github.")
+                        return
+                    }
+                )
             )
             .bind()
 

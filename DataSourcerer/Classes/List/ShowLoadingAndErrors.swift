@@ -13,11 +13,11 @@ public struct ShowLoadingAndErrorsConfiguration {
     }
 }
 
-public enum IdiomaticItemModel<BaseItem: ItemModel> : ItemModel {
+public enum IdiomaticItemModel<BaseItem: ItemModel>: ItemModel {
     case baseItem(BaseItem)
     case loading
     case error(BaseItem.E)
-    case noResults(String)
+    case noResults
 
     public init(error: BaseItem.E) {
         self = .error(error)
@@ -176,8 +176,7 @@ public extension ResourceState {
     func addLoadingAndErrorStates<BaseItemModelType, SectionModelType: SectionModel>(
         configuration: ShowLoadingAndErrorsConfiguration,
         valueToIdiomaticListViewStateTransformer: ValueToListViewStateTransformer
-            <Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
-        noResultsText: String
+            <Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType>
     ) -> ListViewState<Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
@@ -187,7 +186,7 @@ public extension ResourceState {
                 loadingSection: { _ in SectionAndItems(SectionModelType(), [IdiomaticItemModel.loading]) },
                 errorSection: { SectionAndItems(SectionModelType(), [IdiomaticItemModel.error($0)]) },
                 noResultsSection: { _ in
-                    SectionAndItems(SectionModelType(), [IdiomaticItemModel.noResults(noResultsText)])
+                    SectionAndItems(SectionModelType(), [IdiomaticItemModel.noResults])
                 }
             )
     }
@@ -196,15 +195,15 @@ public extension ResourceState {
 
 public extension ItemViewsProducer {
 
-    func showLoadingAndErrorStates<ViewProducer: ItemViewProducer>(
+    typealias IdiomaticItemViewsProducerAlias =
+        ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>
+
+    func showLoadingAndErrorStates(
         configuration: ShowLoadingAndErrorsConfiguration,
-        loadingViewProducer: ViewProducer,
-        errorViewProducer: ViewProducer,
-        noResultsViewProducer: ViewProducer
-    ) -> ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>
-        where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
-        ViewProducer.ContainingView == ContainingView,
-        ViewProducer.ProducedView == ProducedView {
+        loadingViewProducer: IdiomaticItemViewsProducerAlias,
+        errorViewProducer: IdiomaticItemViewsProducerAlias,
+        noResultsViewProducer: IdiomaticItemViewsProducerAlias
+    ) -> ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView> {
 
             return ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ProducedView, ContainingView>(
                 produceView: { item, containingView, indexPath -> ProducedView in
@@ -212,24 +211,57 @@ public extension ItemViewsProducer {
                     case let .baseItem(baseItem):
                         return self.produceView(baseItem, containingView, indexPath)
                     case let .error(error):
-                        return errorViewProducer.view(containingView: containingView,
-                                                      item: .error(error),
-                                                      for: indexPath)
+                        return errorViewProducer.produceView(
+                            .error(error),
+                            containingView,
+                            indexPath
+                        )
                     case .loading:
-                        return loadingViewProducer.view(containingView: containingView,
-                                                        item: .loading,
-                                                        for: indexPath)
-                    case let .noResults(noResultsText):
-                        return noResultsViewProducer.view(containingView: containingView,
-                                                          item: .noResults(noResultsText),
-                                                          for: indexPath)
+                        return errorViewProducer.produceView(
+                            .loading,
+                            containingView,
+                            indexPath
+                        )
+                    case .noResults:
+                        return errorViewProducer.produceView(
+                            .noResults,
+                            containingView,
+                            indexPath
+                        )
+                    }
+                },
+                configureView: { item, producedView, containingView, indexPath in
+                    switch item {
+                    case let .baseItem(baseItem):
+                        return self.configureView(baseItem, producedView, containingView, indexPath)
+                    case let .error(error):
+                        return errorViewProducer.configureView(
+                            .error(error),
+                            producedView,
+                            containingView,
+                            indexPath
+                        )
+                    case .loading:
+                        return errorViewProducer.configureView(
+                            .loading,
+                            producedView,
+                            containingView,
+                            indexPath
+                        )
+                    case .noResults:
+                        return errorViewProducer.configureView(
+                            .noResults,
+                            producedView,
+                            containingView,
+                            indexPath
+                        )
                     }
                 },
                 registerAtContainingView: { containingView in
                     self.registerAtContainingView(containingView)
-                    loadingViewProducer.register(at: containingView)
-                    errorViewProducer.register(at: containingView)
-                    noResultsViewProducer.register(at: containingView)
+                    loadingViewProducer.registerAtContainingView(containingView)
+                    errorViewProducer.registerAtContainingView(containingView)
+                    noResultsViewProducer.registerAtContainingView(containingView)
                 }
             )
     }
@@ -238,8 +270,7 @@ public extension ItemViewsProducer {
 public extension ItemModelsProducer {
     
     func showLoadingAndErrorStates(
-        configuration: ShowLoadingAndErrorsConfiguration,
-        noResultsText: String
+        configuration: ShowLoadingAndErrorsConfiguration
     ) -> ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
         return ItemModelsProducer<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType>(
@@ -248,8 +279,7 @@ public extension ItemModelsProducer {
 
                 return state.addLoadingAndErrorStates(
                     configuration: configuration,
-                    valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
-                    noResultsText: noResultsText
+                    valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer
                 )
         },
             valueToListViewStateTransformer: valueToListViewStateTransformer.showLoadingAndErrorStates()
@@ -293,20 +323,18 @@ public extension ListViewDatasourceConfiguration {
         HeaderItem, HeaderItemView, HeaderItemError, FooterItem, FooterItemView, FooterItemError,
         ContainingView>
 
-    func showLoadingAndErrorStates<ViewProducer: ItemViewProducer>(
+    typealias IdiomaticItemViewsProducerAlias =
+        ItemViewsProducer<IdiomaticItemModel<ItemModelType>, ItemView, ContainingView>
+
+    func showLoadingAndErrorStates(
         configuration: ShowLoadingAndErrorsConfiguration,
-        noResultsText: String,
-        loadingViewProducer: ViewProducer,
-        errorViewProducer: ViewProducer,
-        noResultsViewProducer: ViewProducer
-    ) -> ConfigurationWithLoadingAndErrorStates
-        where ViewProducer.ItemModelType == IdiomaticItemModel<ItemModelType>,
-        ViewProducer.ProducedView == ItemView,
-        ViewProducer.ContainingView == ContainingView, ItemModelType.E == E {
+        loadingViewProducer: IdiomaticItemViewsProducerAlias,
+        errorViewProducer: IdiomaticItemViewsProducerAlias,
+        noResultsViewProducer: IdiomaticItemViewsProducerAlias
+    ) -> ConfigurationWithLoadingAndErrorStates {
 
             let idiomaticItemModelsProducer = self.itemModelProducer.showLoadingAndErrorStates(
-                configuration: configuration,
-                noResultsText: noResultsText
+                configuration: configuration
             )
 
             let idiomaticItemViewAdapter = self.itemViewsProducer.showLoadingAndErrorStates(

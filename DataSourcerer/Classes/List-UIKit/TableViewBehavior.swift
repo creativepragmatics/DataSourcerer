@@ -5,7 +5,8 @@ public struct TableViewBehavior
     where ItemModelType.E == E {
 
     public typealias ItemViewsProducerAlias = ItemViewsProducer<ItemModelType, UITableViewCell, UITableView>
-    public typealias ItemModelsProducerAlias = ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
+    public typealias ItemModelsProducerAlias =
+        ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
 
     let itemModelsProducer: ItemModelsProducerAlias
     let itemViewsProducer: ItemViewsProducerAlias
@@ -15,13 +16,19 @@ public struct TableViewBehavior
         self.itemViewsProducer = itemViewsProducer
     }
 
+}
+
+public extension TableViewBehavior {
+
+    typealias IdiomaticItemViewsProducerAlias =
+        ItemViewsProducer<IdiomaticItemModel<ItemModelType>, UITableViewCell, UITableView>
+
     func showLoadingAndErrors(
         configuration: ShowLoadingAndErrorsConfiguration,
-        loadingViewProducer: TableViewCellProducer<IdiomaticItemModel<ItemModelType>>,
-        errorViewProducer: TableViewCellProducer<IdiomaticItemModel<ItemModelType>>,
-        noResultsViewProducer: TableViewCellProducer<IdiomaticItemModel<ItemModelType>>,
-        noResultsText: String
-        ) -> TableViewBehavior<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
+        loadingViewProducer: IdiomaticItemViewsProducerAlias,
+        errorViewProducer: IdiomaticItemViewsProducerAlias,
+        noResultsViewProducer: IdiomaticItemViewsProducerAlias
+    ) -> TableViewBehavior<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
         let itemViewsProducer = self.itemViewsProducer.showLoadingAndErrorStates(
             configuration: configuration,
@@ -31,7 +38,7 @@ public struct TableViewBehavior
         )
 
         let itemModelsProducer = self.itemModelsProducer.showLoadingAndErrorStates(
-            configuration: configuration, noResultsText: noResultsText
+            configuration: configuration
         )
 
         return TableViewBehavior<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType>(

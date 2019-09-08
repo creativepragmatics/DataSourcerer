@@ -1,21 +1,21 @@
 PODS:
   - Cache (5.2.0)
-  - DataSourcerer (0.2.6):
-    - DataSourcerer/Core (= 0.2.6)
-    - DataSourcerer/List (= 0.2.6)
-    - DataSourcerer/List-UIKit (= 0.2.6)
-    - DataSourcerer/Persister-Cache (= 0.2.6)
-    - DataSourcerer/ReactiveSwift (= 0.2.6)
-  - DataSourcerer/Core (0.2.6)
-  - DataSourcerer/List (0.2.6):
+  - DataSourcerer (0.2.7):
+    - DataSourcerer/Core (= 0.2.7)
+    - DataSourcerer/List (= 0.2.7)
+    - DataSourcerer/List-UIKit (= 0.2.7)
+    - DataSourcerer/Persister-Cache (= 0.2.7)
+    - DataSourcerer/ReactiveSwift (= 0.2.7)
+  - DataSourcerer/Core (0.2.7)
+  - DataSourcerer/List (0.2.7):
     - DataSourcerer/Core
-  - DataSourcerer/List-UIKit (0.2.6):
+  - DataSourcerer/List-UIKit (0.2.7):
     - DataSourcerer/List
     - Dwifft (~> 0.9)
-  - DataSourcerer/Persister-Cache (0.2.6):
+  - DataSourcerer/Persister-Cache (0.2.7):
     - Cache (~> 5.2.0)
     - DataSourcerer/Core
-  - DataSourcerer/ReactiveSwift (0.2.6):
+  - DataSourcerer/ReactiveSwift (0.2.7):
     - DataSourcerer/List
     - ReactiveSwift (~> 4.0)
   - Dwifft (0.9)
@@ -51,7 +51,7 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   Cache: 807c5d86d01a177f06ede9865add3aea269bbfd4
-  DataSourcerer: 43f3a5b2de58eb43be92f9e642a2f9ea4fdb553f
+  DataSourcerer: 888e18fddf47e1747ec9dce569980b8d3e0b21bc
   Dwifft: 42912068ed2a8146077d1a1404df18625bd086e1
   Nimble: 051e3d8912d40138fa5591c78594f95fb172af37
   Quick: f4f7f063c524394c73ed93ac70983c609805d481

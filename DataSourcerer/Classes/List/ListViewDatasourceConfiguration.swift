@@ -12,7 +12,7 @@ public struct ListViewDatasourceConfiguration
     FooterItemError, ContainingView: UIView> where ItemModelType.E == E, HeaderItem.E == HeaderItemError,
 FooterItem.E == FooterItemError {
     public typealias State = ListViewState<Value, P, E, ItemModelType, SectionModelType>
-    public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
+    public typealias ItemViewsProducerAlias = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
     public typealias FooterItemViewAdapter = ItemViewsProducer<FooterItem, FooterItemView, ContainingView>
     public struct ItemSelection {
@@ -41,7 +41,7 @@ FooterItem.E == FooterItemError {
     public let datasource: Datasource<Value, P, E>
     public let itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
     public let state: ShareableValueStream<State>
-    public let itemViewsProducer: ItemViewAdapter
+    public let itemViewsProducer: ItemViewsProducerAlias
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
 
@@ -61,7 +61,7 @@ FooterItem.E == FooterItemError {
 
     public init(datasource: Datasource<Value, P, E>,
                 itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
-                itemViewsProducer: ItemViewAdapter,
+                itemViewsProducer: ItemViewsProducerAlias,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
                 headerItemAtIndexPath: HeaderItemAtIndexPath?,
@@ -153,7 +153,12 @@ public extension ListViewDatasourceConfiguration {
     }
 
     func itemView(at indexPath: IndexPath, in containingView: ContainingView) -> ItemView {
-        return itemViewsProducer.produceView(item(at: indexPath), containingView, indexPath)
+        let itemModel = item(at: indexPath)
+        return itemViewsProducer.produceAndConfigureView(
+            itemModel: itemModel,
+            containingView: containingView,
+            indexPath: indexPath
+        )
     }
 
     func headerView(at indexPath: IndexPath,
@@ -162,7 +167,11 @@ public extension ListViewDatasourceConfiguration {
             return nil
         }
 
-        return headerItemViewAdapter.produceView(item, containingView, indexPath)
+        return headerItemViewAdapter.produceAndConfigureView(
+            itemModel: item,
+            containingView: containingView,
+            indexPath: indexPath
+        )
     }
 
     func footerView(at indexPath: IndexPath,
@@ -171,7 +180,11 @@ public extension ListViewDatasourceConfiguration {
             return nil
         }
 
-        return footerItemViewAdapter.produceView(item, containingView, indexPath)
+        return footerItemViewAdapter.produceAndConfigureView(
+            itemModel: item,
+            containingView: containingView,
+            indexPath: indexPath
+        )
     }
 
     func headerSize(at indexPath: IndexPath,
@@ -180,7 +193,7 @@ public extension ListViewDatasourceConfiguration {
             return .zero
         }
 
-        return headerItemViewAdapter.itemViewSize?(item, containingView) ?? .zero
+        return headerItemViewAdapter.itemViewSize?(item, containingView, indexPath) ?? .zero
     }
 
     func footerSize(at indexPath: IndexPath,
@@ -189,7 +202,7 @@ public extension ListViewDatasourceConfiguration {
             return .zero
         }
 
-        return footerItemViewAdapter.itemViewSize?(item, containingView) ?? .zero
+        return footerItemViewAdapter.itemViewSize?(item, containingView, indexPath) ?? .zero
     }
 
 }

@@ -50,7 +50,7 @@ open class TableViewBindingSource
         super.init()
     }
 
-    open func bind(
+    open func bind( 
         tableView: UITableView,
         tableViewUpdater: TableViewUpdaterAlias = TableViewUpdaterAlias()
     ) {
@@ -78,7 +78,7 @@ open class TableViewBindingSource
 
                 tableViewUpdater.updateItems(tableView, previousState, currentState)
                 previousState = currentState
-        }
+            }
 
         // While the new bindingSession is set, any old session is released
         // and its contained disposable is disposed.

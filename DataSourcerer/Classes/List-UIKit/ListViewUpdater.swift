@@ -1,6 +1,6 @@
+import Dwifft
 import Foundation
 import UIKit
-import Dwifft
 
 public struct ListViewUpdater
 <Value, P: ResourceParams, E: ResourceError, ItemModelType: ItemModel, SectionModelType: SectionModel> {

@@ -2,8 +2,7 @@ import Foundation
 
 /// A supplementary item is the pendant of a section header
 /// of UITableView, or a supplementary view of UICollectionView.
-public protocol SupplementaryItemModel: Equatable {
-    associatedtype E: ResourceError
+public protocol SupplementaryItemModel: ItemModel {
 
     // Required to display configuration or system errors
     // for easier debugging.

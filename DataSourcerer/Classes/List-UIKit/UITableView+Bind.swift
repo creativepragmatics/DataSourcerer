@@ -8,13 +8,13 @@ public extension SourcererExtension where Base: UITableView {
     @discardableResult
     func bindToDatasource
         <Value, P: ResourceParams, E: ResourceError, BaseItemModelType,
-        SectionModelType, FinalItemModelType: ItemModel>
-    (
+        SectionModelType, FinalItemModelType: ItemModel> (
         _ dataSource: Datasource<Value, P, E>,
         itemModelsProducer: ItemModelsProducer<Value, P, E, BaseItemModelType, SectionModelType>,
         itemViewsProducer: ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>,
         configureBehavior: (TableViewBehavior<Value, P, E, BaseItemModelType, SectionModelType>)
-            -> TableViewBehavior<Value, P, E, FinalItemModelType, SectionModelType>
+            -> TableViewBehavior<Value, P, E, FinalItemModelType, SectionModelType>,
+        tableViewUpdater: ListViewUpdater<Value, P, E, FinalItemModelType, SectionModelType> = .init()
     ) -> TableViewBindingSource
         <Value, P, E, FinalItemModelType, SectionModelType,
         NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
@@ -38,7 +38,7 @@ public extension SourcererExtension where Base: UITableView {
                 configuration: configuration
             )
 
-            tableViewBindingSource.bind(tableView: base)
+            tableViewBindingSource.bind(tableView: base, tableViewUpdater: tableViewUpdater)
 
             // Retain tableViewBindingSource until it is actively unbound,
             // or bind() is called again.
@@ -74,7 +74,8 @@ public extension SourcererExtension where Base: UITableView {
         _ dataSource: Datasource<Value, P, E>,
         baseItemModelType: BaseItemModelType.Type,
         sectionModelType: SectionModelType.Type
-    ) -> TableViewBindingStepOne<Value, P, E, BaseItemModelType, SectionModelType> where BaseItemModelType.E == E {
+    ) -> TableViewBindingStepOne<Value, P, E, BaseItemModelType, SectionModelType>
+        where BaseItemModelType.E == E {
 
         return TableViewBindingStepOne(tableView: base, dataSource: dataSource)
     }
@@ -89,7 +90,11 @@ public extension SourcererExtension where Base: UITableView {
         public func setItemModelsProducer(
             _ producer: ItemModelsProducer<Value, P, E, BaseItemModelType, SectionModelType>
         ) -> TableViewBindingStepTwo<Value, P, E, BaseItemModelType, SectionModelType> {
-            return TableViewBindingStepTwo(tableView: tableView, dataSource: dataSource, itemModelsProducer: producer)
+            return TableViewBindingStepTwo(
+                tableView: tableView,
+                dataSource: dataSource,
+                itemModelsProducer: producer
+            )
         }
     }
 
@@ -123,13 +128,18 @@ public extension SourcererExtension where Base: UITableView {
         let itemModelsProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
         let itemViewsProducer: ItemViewsProducer<ItemModelType, UITableViewCell, UITableView>
 
-        public func bind() -> TableViewBindingSource
+        @discardableResult
+        public func bind(
+            tableViewUpdater: ListViewUpdater<Value, P, E, ItemModelType, SectionModelType> = .init()
+        ) -> TableViewBindingSource
             <Value, P, E, ItemModelType, SectionModelType,
             NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
             return tableView.sourcerer.bindToDatasource(
                 dataSource,
                 itemModelsProducer: itemModelsProducer,
-                itemViewsProducer: itemViewsProducer
+                itemViewsProducer: itemViewsProducer,
+                configureBehavior: { $0 },
+                tableViewUpdater: tableViewUpdater
             )
         }
     }
@@ -159,16 +169,36 @@ public extension SourcererExtension.TableViewBindingStepTwo {
     func cellsWithClass<CellView: UITableViewCell>(
         _ `class`: CellView.Type,
         reuseIdentifier: String = UUID().uuidString,
-        configure: @escaping (BaseItemModelType, UITableViewCell) -> Void
+        configure: @escaping (BaseItemModelType, UITableViewCell, UITableView, IndexPath) -> Void
     ) -> SourcererExtension.TableViewBindingReady<Value, P, E, BaseItemModelType, SectionModelType> {
 
         let itemViewsProducer = ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>
             .tableViewCellWithClass(
                 `class`,
                 reuseIdentifier: reuseIdentifier,
-                configure: configure
+                configureView: configure
             )
-        
+
+        return SourcererExtension.TableViewBindingReady(
+            tableView: tableView, dataSource: dataSource,
+            itemModelsProducer: itemModelsProducer,
+            itemViewsProducer: itemViewsProducer
+        )
+    }
+
+    func multiCellsWithClass<CellView: UITableViewCell>(
+        _ `class`: CellView.Type,
+        reuseIdentifier: String = UUID().uuidString,
+        configure: @escaping (BaseItemModelType, UITableViewCell, UITableView, IndexPath) -> Void
+        ) -> SourcererExtension.TableViewBindingReady<Value, P, E, BaseItemModelType, SectionModelType> {
+
+        let itemViewsProducer = ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>
+            .tableViewCellWithClass(
+                `class`,
+                reuseIdentifier: reuseIdentifier,
+                configureView: configure
+            )
+
         return SourcererExtension.TableViewBindingReady(
             tableView: tableView, dataSource: dataSource,
             itemModelsProducer: itemModelsProducer,
@@ -179,13 +209,16 @@ public extension SourcererExtension.TableViewBindingStepTwo {
 
 public extension SourcererExtension.TableViewBindingReady {
 
+    typealias TableViewCellProducerAlias =
+        TableViewCellProducer<IdiomaticItemModel<ItemModelType>>
+
     func showLoadingAndErrors(
         configuration: ShowLoadingAndErrorsConfiguration,
-        loadingViewProducer: TableViewCellProducer<IdiomaticItemModel<ItemModelType>>,
-        errorViewProducer: TableViewCellProducer<IdiomaticItemModel<ItemModelType>>,
-        noResultsViewProducer: TableViewCellProducer<IdiomaticItemModel<ItemModelType>>,
-        noResultsText: String
-        ) -> SourcererExtension.TableViewBindingReady<Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
+        loadingViewProducer: TableViewCellProducerAlias,
+        errorViewProducer: TableViewCellProducerAlias,
+        noResultsViewProducer: TableViewCellProducerAlias
+    ) -> SourcererExtension.TableViewBindingReady
+        <Value, P, E, IdiomaticItemModel<ItemModelType>, SectionModelType> {
 
         let itemViewsProducer = self.itemViewsProducer.showLoadingAndErrorStates(
             configuration: configuration,
@@ -195,7 +228,7 @@ public extension SourcererExtension.TableViewBindingReady {
         )
 
         let itemModelsProducer = self.itemModelsProducer.showLoadingAndErrorStates(
-            configuration: configuration, noResultsText: noResultsText
+            configuration: configuration
         )
 
         return SourcererExtension.TableViewBindingReady(
@@ -205,7 +238,7 @@ public extension SourcererExtension.TableViewBindingReady {
             itemViewsProducer: itemViewsProducer
         )
     }
-    
+
 }
 
 /// Conforming classes can be bound to a UITableView, therefore
