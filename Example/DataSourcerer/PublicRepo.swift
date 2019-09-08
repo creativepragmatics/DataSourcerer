@@ -61,4 +61,24 @@ enum PublicRepoCell : ItemModel {
     init(error: APIError) {
         self = .error(error)
     }
+
+    var differenceIdentifier: String {
+        switch self {
+        case let .repo(repo):
+            return "__repo__\(repo.id)"
+        case let .error(error):
+            return "__error__\(error.differenceIdentifier)"
+        }
+    }
+
+    func isContentEqual(to source: PublicRepoCell) -> Bool {
+        switch (self, source) {
+        case let (.repo(lhs), .repo(rhs)):
+            return lhs.id == rhs.id
+        case let (.error(lhs), .error(rhs)):
+            return lhs.isContentEqual(to: rhs)
+        default:
+            return false
+        }
+    }
 }

@@ -13,8 +13,7 @@ public extension SourcererExtension where Base: UITableView {
         itemModelsProducer: ItemModelsProducer<Value, P, E, BaseItemModelType, SectionModelType>,
         itemViewsProducer: ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>,
         configureBehavior: (TableViewBehavior<Value, P, E, BaseItemModelType, SectionModelType>)
-            -> TableViewBehavior<Value, P, E, FinalItemModelType, SectionModelType>,
-        tableViewUpdater: ListViewUpdater<Value, P, E, FinalItemModelType, SectionModelType> = .init()
+            -> TableViewBehavior<Value, P, E, FinalItemModelType, SectionModelType>
     ) -> TableViewBindingSource
         <Value, P, E, FinalItemModelType, SectionModelType,
         NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
@@ -38,7 +37,7 @@ public extension SourcererExtension where Base: UITableView {
                 configuration: configuration
             )
 
-            tableViewBindingSource.bind(tableView: base, tableViewUpdater: tableViewUpdater)
+            tableViewBindingSource.bind(tableView: base)
 
             // Retain tableViewBindingSource until it is actively unbound,
             // or bind() is called again.
@@ -129,17 +128,14 @@ public extension SourcererExtension where Base: UITableView {
         let itemViewsProducer: ItemViewsProducer<ItemModelType, UITableViewCell, UITableView>
 
         @discardableResult
-        public func bind(
-            tableViewUpdater: ListViewUpdater<Value, P, E, ItemModelType, SectionModelType> = .init()
-        ) -> TableViewBindingSource
+        public func bind() -> TableViewBindingSource
             <Value, P, E, ItemModelType, SectionModelType,
             NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
             return tableView.sourcerer.bindToDatasource(
                 dataSource,
                 itemModelsProducer: itemModelsProducer,
                 itemViewsProducer: itemViewsProducer,
-                configureBehavior: { $0 },
-                tableViewUpdater: tableViewUpdater
+                configureBehavior: { $0 }
             )
         }
     }

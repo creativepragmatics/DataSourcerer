@@ -1,3 +1,4 @@
+import DifferenceKit
 import Foundation
 import UIKit
 
@@ -13,46 +14,56 @@ open class TableViewBindingSource
         UIView, HeaderItemError, FooterItem, UIView, FooterItemError, UITableView>
     public typealias TableViewBindingSessionAlias = TableViewBindingSession
         <Value, P, E, CellModelType, SectionModelType>
-    public typealias TableViewUpdaterAlias = ListViewUpdater
-        <Value, P, E, CellModelType, SectionModelType>
     public typealias TableViewStateAlias = ListViewState<Value, P, E, CellModelType, SectionModelType>
+    public typealias AnimateTableViewCellChange =
+        (UITableView, _ previous: TableViewStateAlias, _ next: TableViewStateAlias) -> Bool
+    public typealias TableViewCellsChange =
+        (UITableView, _ previous: TableViewStateAlias, _ next: TableViewStateAlias) -> Void
+
 
     public let configuration: ListViewDatasourceConfigurationAlias
     public weak var delegate: AnyObject?
     public weak var datasource: AnyObject?
     public let hideBottomMostSeparatorWithHack: Bool
 
+    private let isUpdateAnimated: AnimateTableViewCellChange
+    private let willChangeCellsInView: TableViewCellsChange?
+    private let didChangeCellsInView: TableViewCellsChange?
     private var bindingSession: TableViewBindingSessionAlias?
 
     public lazy var listViewStateProperty: ShareableValueStream
         <ListViewState<Value, P, E, CellModelType, SectionModelType>> = {
 
         return configuration.state
-            .skipRepeats()
+//            .skipRepeats()
             .observeOnUIThread()
             .shareable(initialValue: .notReady)
     }()
+
+    public var currentSections: [ArraySection<SectionModelType, CellModelType>] = []
 
     public var listViewState: ListViewState<Value, P, E, CellModelType, SectionModelType> {
         return listViewStateProperty.value
     }
 
-    private var numberOfSections: Int {
-        return listViewState.sectionsAndItems?.count ?? 0
-    }
-
     public init(
         configuration: ListViewDatasourceConfigurationAlias,
-        hideBottomMostSeparatorWithHack: Bool = true
+        hideBottomMostSeparatorWithHack: Bool = true,
+        isUpdateAnimated: @escaping AnimateTableViewCellChange = { _, _, _ in true },
+        willChangeCellsInView: TableViewCellsChange? = nil,
+        didChangeCellsInView: TableViewCellsChange? = nil
     ) {
         self.configuration = configuration
         self.hideBottomMostSeparatorWithHack = hideBottomMostSeparatorWithHack
+        self.isUpdateAnimated = isUpdateAnimated
+        self.willChangeCellsInView = willChangeCellsInView
+        self.didChangeCellsInView = didChangeCellsInView
+
         super.init()
     }
 
     open func bind( 
-        tableView: UITableView,
-        tableViewUpdater: TableViewUpdaterAlias = TableViewUpdaterAlias()
+        tableView: UITableView
     ) {
 
         assert(Thread.isMainThread, "bind() can only be called on main thread")
@@ -72,11 +83,11 @@ open class TableViewBindingSource
 
         // Update table with most current cells
         let disposable = listViewStateProperty
-            .skipRepeats()
-            .observe { [weak tableView] currentState in
-                guard let tableView = tableView else { return }
+//            .skipRepeats()
+            .observe { [weak tableView, weak self] currentState in
+                guard let tableView = tableView, let self = self else { return }
 
-                tableViewUpdater.updateItems(tableView, previousState, currentState)
+                self.updateCells(currentState: currentState, previousState: previousState, tableView: tableView)
                 previousState = currentState
             }
 
@@ -84,21 +95,67 @@ open class TableViewBindingSource
         // and its contained disposable is disposed.
         bindingSession = TableViewBindingSessionAlias(
             tableView: tableView,
-            tableViewUpdater: tableViewUpdater,
             bindingDisposable: disposable
         )
     }
 
+    private func updateCells(
+        currentState: ListViewState<Value, P, E, CellModelType, SectionModelType>,
+        previousState: ListViewState<Value, P, E, CellModelType, SectionModelType>,
+        tableView: UITableView
+    ) {
+        assert(Thread.isMainThread, "ListViewUpdater.updateItems must be called on main thread")
+
+        var isViewVisible: Bool {
+            return tableView.window != nil
+        }
+
+        switch previousState {
+        case .readyToDisplay where isViewVisible &&
+            isUpdateAnimated(tableView, previousState, currentState):
+
+            // Previous state was .readyToDisplay. Next state may be either .notReady
+            // (in which case we reset the view to an empty state without any cells),
+            // or .readyToDisplay (which usually results in cells being displayed).
+
+            willChangeCellsInView?(tableView, previousState, currentState)
+            let changeset = StagedChangeset(source: currentSections, target: currentState.sections ?? [])
+            tableView.reload(using: changeset, with: .fade) { sections in
+                self.currentSections = sections
+            }
+            didChangeCellsInView?(tableView, previousState, currentState)
+
+        case .readyToDisplay, .notReady:
+
+            // Animations disabled or view invisible - skip animations.
+
+            currentSections = currentState.sections ?? []
+
+            DispatchQueue.main.async { [weak tableView, weak self] in
+                guard let tableView = tableView else { return }
+                self?.willChangeCellsInView?(tableView, previousState, currentState)
+                tableView.reloadData()
+                self?.didChangeCellsInView?(tableView, previousState, currentState)
+            }
+        }
+
+    }
+
     public func numberOfSections(in tableView: UITableView) -> Int {
-        return listViewState.sectionsAndItems?.count ?? 0
+        return currentSections.count
     }
 
     public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return configuration.section(at: section).items.count
+        return currentSections[section].elements.count
     }
 
     public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        return configuration.itemView(at: indexPath, in: tableView)
+
+        return configuration.itemViewsProducer.produceAndConfigureView(
+            itemModel: currentSections[indexPath.section].elements[indexPath.row],
+            containingView: tableView,
+            indexPath: indexPath
+        )
     }
 
     public func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -113,7 +170,7 @@ open class TableViewBindingSource
     public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let footerView = configuration.footerView(at: IndexPath(row: 0, section: section), in: tableView)
 
-        if footerView == nil, hideBottomMostSeparatorWithHack, section == numberOfSections - 1 {
+        if footerView == nil, hideBottomMostSeparatorWithHack, section == currentSections.count - 1 {
             return UIView()
         } else {
             return footerView
@@ -127,7 +184,7 @@ open class TableViewBindingSource
             in: tableView
         ).height
 
-        if height == 0, hideBottomMostSeparatorWithHack, section == numberOfSections - 1 {
+        if height == 0, hideBottomMostSeparatorWithHack, section == currentSections.count - 1 {
             return 0.001
         } else {
             return height
@@ -138,7 +195,7 @@ open class TableViewBindingSource
                           willDisplay cell: UITableViewCell,
                           forRowAt indexPath: IndexPath) {
 
-        configuration.willDisplayItem?(cell, configuration.item(at: indexPath), indexPath)
+        configuration.willDisplayItem?(cell, currentSections[indexPath.section].elements[indexPath.row], indexPath)
 
         if let delegate = delegate,
             delegate.responds(to: #selector(tableView(_:willDisplay:forRowAt:))) {
@@ -179,7 +236,7 @@ open class TableViewBindingSource
         guard let cellView = tableView.cellForRow(at: indexPath) else { return }
 
         let itemSelection = ListViewDatasourceConfigurationAlias.ItemSelection(
-            itemModel: configuration.item(at: indexPath),
+            itemModel: currentSections[indexPath.section].elements[indexPath.row],
             view: cellView,
             indexPath: indexPath,
             containingView: tableView

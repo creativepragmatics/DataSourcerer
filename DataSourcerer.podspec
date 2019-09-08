@@ -39,12 +39,12 @@ The missing link between API Calls (any data provider actually) and your UITable
   s.subspec 'List' do |ss|
     ss.source_files = 'DataSourcerer/Classes/List/**/*'
     ss.dependency 'DataSourcerer/Core'
+    ss.dependency 'DifferenceKit', '~> 1.1.3'
   end
 
   s.subspec 'List-UIKit' do |ss|
     ss.source_files = 'DataSourcerer/Classes/List-UIKit/**/*'
     ss.dependency 'DataSourcerer/List'
-    ss.dependency 'Dwifft', '~> 0.9'
   end
 
   s.subspec 'Persister-Cache' do |ss|

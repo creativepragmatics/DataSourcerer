@@ -1,3 +1,4 @@
+import DifferenceKit
 import Foundation
 
 // Holds closures of essential list view callbacks (mostly a minimal intersection
@@ -116,7 +117,7 @@ FooterItemView == UIView {
         itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     ) {
 
-        self.init(
+        self = ListViewDatasourceConfiguration(
             datasource: datasource,
             itemModelProducer: itemModelProducer,
             itemViewsProducer: itemViewsProducer,
@@ -137,29 +138,6 @@ FooterItemView == UIView {
 }
 
 public extension ListViewDatasourceConfiguration {
-
-    func section(at index: Int) -> SectionAndItems<ItemModelType, SectionModelType> {
-        let rawSection = state.value.dwifftSectionedValues.sectionsAndValues[index]
-        return SectionAndItems(rawSection.0, rawSection.1)
-    }
-
-    func item(at indexPath: IndexPath) -> ItemModelType {
-        return items(in: indexPath.section)[indexPath.row]
-    }
-
-    func items(in section: Int) -> [ItemModelType] {
-        let sections = state.value.dwifftSectionedValues.sectionsAndValues[section].1
-        return sections
-    }
-
-    func itemView(at indexPath: IndexPath, in containingView: ContainingView) -> ItemView {
-        let itemModel = item(at: indexPath)
-        return itemViewsProducer.produceAndConfigureView(
-            itemModel: itemModel,
-            containingView: containingView,
-            indexPath: indexPath
-        )
-    }
 
     func headerView(at indexPath: IndexPath,
                     in containingView: ContainingView) -> HeaderItemView? {

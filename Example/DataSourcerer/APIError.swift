@@ -1,4 +1,5 @@
 import DataSourcerer
+import DifferenceKit
 import Foundation
 
 enum APIError : ResourceError, Codable {
@@ -129,4 +130,32 @@ extension APIError {
         }
     }
 
+}
+
+extension APIError: Differentiable {
+    typealias DifferenceIdentifier = String
+
+    var differenceIdentifier: String {
+        switch self {
+        case let .unknown(text):
+            return "__unknown__\(text)"
+        case .unreachable:
+            return "__unreachable__"
+        case .notConnectedToInternet:
+            return "__notConnectedToInternet__"
+        case .deserializationFailed(let path, let debugDescription, let responseSize):
+            return "__deserializationFailed__\(path ?? "")_\(debugDescription ?? "")_\(responseSize)"
+        case .requestTagsChanged:
+            return "__requestTagsChanged__"
+        case .notAuthenticated:
+            return "__notAuthenticated__"
+        case let .cacheCouldNotLoad(errorMessage):
+            switch errorMessage {
+            case .default:
+                return "__cacheCouldNotLoad__default_"
+            case let .message(message):
+                return "__cacheCouldNotLoad__\(message)"
+            }
+        }
+    }
 }

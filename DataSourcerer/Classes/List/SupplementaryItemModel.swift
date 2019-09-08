@@ -19,10 +19,15 @@ public enum SupplementaryItemModelType {
 
 public struct NoSupplementaryItemModel: SupplementaryItemModel {
     public typealias E = NoResourceError
+    
+    public let differenceIdentifier: String = "noSupplementaryItemModel"
+    public var type: SupplementaryItemModelType {
+        return .default
+    }
 
     public init(error: E) {}
 
-    public var type: SupplementaryItemModelType {
-        return .default
+    public func isContentEqual(to source: NoSupplementaryItemModel) -> Bool {
+        return source.differenceIdentifier == self.differenceIdentifier
     }
 }

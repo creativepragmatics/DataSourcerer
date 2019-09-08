@@ -1,3 +1,4 @@
+import DifferenceKit
 import Foundation
 
 public struct ItemModelsProducer
@@ -83,7 +84,7 @@ public struct ValueToListViewStateTransformer
 
     public init(
         valueToSections: @escaping (Value, ResourceState<Value, P, E>)
-        -> [SectionAndItems<ItemModelType, SectionModelType>]
+        -> [ArraySection<SectionModelType, ItemModelType>]
     ) {
         self.valueToListViewState = { value, resourceState in
             return ListViewState.readyToDisplay(
@@ -101,11 +102,11 @@ public extension ValueToListViewStateTransformer where SectionModelType == Singl
         valueToSingleSectionItems: @escaping (Value, ResourceState<Value, P, E>) -> [ItemModelType]
     ) {
         self.valueToListViewState = { value, state in
-            let sectionAndItems = SectionAndItems(
-                SingleSection(),
-                valueToSingleSectionItems(value, state)
+            let section = ArraySection(
+                model: SingleSection(),
+                elements: valueToSingleSectionItems(value, state)
             )
-            return ListViewState.readyToDisplay(state, [sectionAndItems])
+            return ListViewState.readyToDisplay(state, [section])
         }
     }
 }

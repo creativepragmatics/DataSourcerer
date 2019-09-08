@@ -1,3 +1,4 @@
+import DifferenceKit
 import Foundation
 
 public struct ShowLoadingAndErrorsConfiguration {
@@ -22,6 +23,35 @@ public enum IdiomaticItemModel<BaseItem: ItemModel>: ItemModel {
     public init(error: BaseItem.E) {
         self = .error(error)
     }
+
+    /// An identifier value for difference calculation.
+    public var differenceIdentifier: String {
+        switch self {
+        case let .baseItem(item):
+            return item.differenceIdentifier
+        case .loading:
+            return "__loading__"
+        case let .error(error):
+            return "__error__\(error.differenceIdentifier)"
+        case .noResults:
+            return "__noResults__"
+        }
+    }
+
+    public func isContentEqual(to source: IdiomaticItemModel<BaseItem>) -> Bool {
+        switch (self, source) {
+        case let (.baseItem(lhs), .baseItem(rhs)):
+            return lhs.isContentEqual(to: rhs)
+        case (.loading, .loading):
+            return true
+        case let (.error(lhs), .error(rhs)):
+            return lhs.isContentEqual(to: rhs)
+        case (.noResults, .noResults):
+            return true
+        default:
+            return false
+        }
+    }
 }
 
 public extension ResourceState {
@@ -36,13 +66,13 @@ public extension ResourceState {
             <Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
         loadingSection:
             @escaping (ResourceState)
-            -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+            -> ArraySection<SectionModelType, IdiomaticItemModel<BaseItemModelType>>,
         errorSection:
             @escaping (E)
-            -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>,
+            -> ArraySection<SectionModelType, IdiomaticItemModel<BaseItemModelType>>,
         noResultsSection:
             @escaping (ResourceState)
-            -> SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>
+            -> ArraySection<SectionModelType, IdiomaticItemModel<BaseItemModelType>>
     ) -> ListViewState<Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType>
         where BaseItemModelType.E == E {
 
@@ -51,22 +81,22 @@ public extension ResourceState {
             }
 
             func boxedValueToSections(_ box: EquatableBox<Value>?)
-                -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? {
+                -> [ArraySection<SectionModelType, IdiomaticItemModel<BaseItemModelType>>]? {
 
                     return (box?.value).flatMap { value
-                        -> [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]? in
+                        -> [ArraySection<SectionModelType, IdiomaticItemModel<BaseItemModelType>>]? in
 
                         return valueToIdiomaticListViewStateTransformer.valueToListViewState(
                             value,
                             self
-                        ).sectionsAndItems
+                        ).sections
                     }
             }
 
             func numberOfItems(
-                _ sections: [SectionAndItems<IdiomaticItemModel<BaseItemModelType>, SectionModelType>]
+                _ sections: [ArraySection<SectionModelType, IdiomaticItemModel<BaseItemModelType>>]
                 ) -> Int {
-                return sections.map({ $0.items.count }).reduce(0, +)
+                return sections.map({ $0.elements.count }).reduce(0, +)
             }
 
             var noResults: ListViewState<Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
@@ -79,7 +109,7 @@ public extension ResourceState {
             var empty: ListViewState<Value, P, E, IdiomaticItemModel<BaseItemModelType>, SectionModelType> {
                 return ListViewState.readyToDisplay(
                     self,
-                    [SectionAndItems(SectionModelType(), [])]
+                    [ArraySection(model: SectionModelType(), elements: [])]
                 )
             }
 
@@ -183,10 +213,14 @@ public extension ResourceState {
             return addLoadingAndErrorStates(
                 configuration: configuration,
                 valueToIdiomaticListViewStateTransformer: valueToIdiomaticListViewStateTransformer,
-                loadingSection: { _ in SectionAndItems(SectionModelType(), [IdiomaticItemModel.loading]) },
-                errorSection: { SectionAndItems(SectionModelType(), [IdiomaticItemModel.error($0)]) },
+                loadingSection: { _ in
+                    ArraySection(model: SectionModelType(), elements: [IdiomaticItemModel.loading])
+                },
+                errorSection: {
+                    ArraySection(model: SectionModelType(), elements: [IdiomaticItemModel.error($0)])
+                },
                 noResultsSection: { _ in
-                    SectionAndItems(SectionModelType(), [IdiomaticItemModel.noResults])
+                    ArraySection(model: SectionModelType(), elements: [IdiomaticItemModel.noResults])
                 }
             )
     }
@@ -299,13 +333,14 @@ public extension ValueToListViewStateTransformer {
 
                     let innerListViewState = self.valueToListViewState(value, state)
                     switch innerListViewState {
-                    case let .readyToDisplay(state, sectionsWithItems):
+                    case let .readyToDisplay(state, sections):
                         return ListViewState.readyToDisplay(
                             state,
-                            sectionsWithItems.map { sectionAndItems in
-                                return SectionAndItems(
-                                    sectionAndItems.section,
-                                    sectionAndItems.items.map { IdiomaticItemModel.baseItem($0) }
+                            sections.map { section in
+                                return ArraySection(
+                                    model: section.model,
+                                    elements: section.elements
+                                        .map { IdiomaticItemModel.baseItem($0) }
                                 )
                             }
                         )

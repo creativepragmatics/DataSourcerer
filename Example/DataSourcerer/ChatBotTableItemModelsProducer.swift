@@ -1,5 +1,6 @@
-import Foundation
 import DataSourcerer
+import DifferenceKit
+import Foundation
 
 struct ChatBotTableItemModelsProducer {
 
@@ -34,8 +35,8 @@ struct ChatBotTableItemModelsProducer {
                         allCells = [ChatBotCell.oldMessagesLoading] + allCells
                     }
 
-                    let sectionAndItems = SectionAndItems(SingleSection(), allCells)
-                    return ListViewState.readyToDisplay(resourceState, [sectionAndItems])
+                    let section = ArraySection(model: SingleSection(), elements: allCells)
+                    return ListViewState.readyToDisplay(resourceState, [section])
                 }
             }
     }
