@@ -74,7 +74,7 @@ enum PublicRepoCell : ItemModel {
     func isContentEqual(to source: PublicRepoCell) -> Bool {
         switch (self, source) {
         case let (.repo(lhs), .repo(rhs)):
-            return lhs.id == rhs.id
+            return lhs.id == rhs.id && lhs.name == rhs.name
         case let (.error(lhs), .error(rhs)):
             return lhs.isContentEqual(to: rhs)
         default:

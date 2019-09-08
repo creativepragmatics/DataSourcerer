@@ -20,7 +20,6 @@ open class TableViewBindingSource
     public typealias TableViewCellsChange =
         (UITableView, _ previous: TableViewStateAlias, _ next: TableViewStateAlias) -> Void
 
-
     public let configuration: ListViewDatasourceConfigurationAlias
     public weak var delegate: AnyObject?
     public weak var datasource: AnyObject?
@@ -30,6 +29,7 @@ open class TableViewBindingSource
     private let willChangeCellsInView: TableViewCellsChange?
     private let didChangeCellsInView: TableViewCellsChange?
     private var bindingSession: TableViewBindingSessionAlias?
+    private let animateCellContentChange: (CellModelType, UITableView, IndexPath) -> Bool
 
     public lazy var listViewStateProperty: ShareableValueStream
         <ListViewState<Value, P, E, CellModelType, SectionModelType>> = {
@@ -50,12 +50,14 @@ open class TableViewBindingSource
         configuration: ListViewDatasourceConfigurationAlias,
         hideBottomMostSeparatorWithHack: Bool = true,
         isUpdateAnimated: @escaping AnimateTableViewCellChange = { _, _, _ in true },
+        animateCellContentChange: @escaping (CellModelType, UITableView, IndexPath) -> Bool = { _, _, _ in false },
         willChangeCellsInView: TableViewCellsChange? = nil,
         didChangeCellsInView: TableViewCellsChange? = nil
     ) {
         self.configuration = configuration
         self.hideBottomMostSeparatorWithHack = hideBottomMostSeparatorWithHack
         self.isUpdateAnimated = isUpdateAnimated
+        self.animateCellContentChange = animateCellContentChange
         self.willChangeCellsInView = willChangeCellsInView
         self.didChangeCellsInView = didChangeCellsInView
 
@@ -120,9 +122,29 @@ open class TableViewBindingSource
 
             willChangeCellsInView?(tableView, previousState, currentState)
             let changeset = StagedChangeset(source: currentSections, target: currentState.sections ?? [])
-            tableView.reload(using: changeset, with: .fade) { sections in
-                self.currentSections = sections
-            }
+            tableView.sourcerer.reload(
+                using: changeset,
+                with: .fade,
+                updateCell: { indexPath, tableView -> TableViewCellUpdateMode in
+                    let item = currentSections[indexPath.section].elements[indexPath.row]
+                    if animateCellContentChange(item, tableView, indexPath) {
+                        return .reload
+                    } else {
+                        return .reconfigure { [weak self] tableViewCell in
+                            guard let self = self else { return }
+                            self.configuration.itemViewsProducer.configureView(
+                                item,
+                                tableViewCell,
+                                tableView,
+                                indexPath
+                            )
+                        }
+                    }
+                },
+                setData: { sections in
+                    self.currentSections = sections
+                }
+            )
             didChangeCellsInView?(tableView, previousState, currentState)
 
         case .readyToDisplay, .notReady:
