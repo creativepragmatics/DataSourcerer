@@ -6,7 +6,7 @@ public struct ItemViewsProducer<ItemModelType: ItemModel, ProducedView: UIView, 
     public let produceView: (ItemModelType, ContainingView, IndexPath) -> ProducedView
     public let configureView: (ItemModelType, ProducedView, ContainingView, IndexPath) -> Void
     public let registerAtContainingView: (ContainingView) -> Void
-    public let itemViewSize: ((ItemModelType, ContainingView, IndexPath) -> CGSize)?
+    public let itemViewSize: ((ItemModelType, ContainingView, IndexPath) -> CGSize?)?
 
     public init(
         produceView: @escaping (ItemModelType, ContainingView, IndexPath) -> ProducedView,
@@ -32,7 +32,7 @@ public struct ItemViewsProducer<ItemModelType: ItemModel, ProducedView: UIView, 
 }
 
 public protocol MultiViewTypeItemModel: ItemModel {
-    associatedtype ItemViewType: CaseIterable
+    associatedtype ItemViewType: CaseIterable, Hashable
 
     var itemViewType: ItemViewType { get }
 }
@@ -40,28 +40,42 @@ public protocol MultiViewTypeItemModel: ItemModel {
 public extension ItemViewsProducer where ItemModelType: MultiViewTypeItemModel {
 
     init(
-        forMultiViewTypeWithProducer producer: @escaping (ItemModelType.ItemViewType) -> ItemViewsProducer,
+        multiViewTypeWithProducer createProducers: @escaping (ItemModelType.ItemViewType) -> ItemViewsProducer,
         itemViewSize: ((ItemModelType, ContainingView, IndexPath) -> CGSize)? = nil
     ) {
 
+        var viewProducersCache: [ItemModelType.ItemViewType: ItemViewsProducer] = [:]
+        func cachedProducer(_ viewType: ItemModelType.ItemViewType) -> ItemViewsProducer {
+            if let producer = viewProducersCache[viewType] {
+                return producer
+            } else {
+                let producer = createProducers(viewType)
+                viewProducersCache[viewType] = producer
+                return producer
+            }
+        }
+
         self.produceView = { itemModel, containingView, indexPath -> ProducedView in
-            return producer(itemModel.itemViewType)
+            return cachedProducer(itemModel.itemViewType)
                 .produceView(itemModel, containingView, indexPath)
         }
 
         self.configureView = { itemModel, producedView, containingView, indexPath in
-            producer(itemModel.itemViewType)
+            cachedProducer(itemModel.itemViewType)
                 .configureView(itemModel, producedView, containingView, indexPath)
         }
 
         self.registerAtContainingView = { containingView in
             ItemModelType.ItemViewType.allCases.forEach {
-                let viewProducer = producer($0)
+                let viewProducer = cachedProducer($0)
                 viewProducer.registerAtContainingView(containingView)
             }
         }
 
-        self.itemViewSize = itemViewSize
+        self.itemViewSize = { itemModel, containingView, indexPath -> CGSize? in
+            return cachedProducer(itemModel.itemViewType)
+                .itemViewSize?(itemModel, containingView, indexPath)
+        }
     }
 }
 

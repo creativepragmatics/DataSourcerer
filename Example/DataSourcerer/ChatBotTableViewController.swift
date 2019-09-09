@@ -12,6 +12,19 @@ class ChatBotTableViewController : UIViewController {
     private lazy var cellUpdateInterceptor = ChatBotTableCellUpdateInterceptor()
     private var loadOldMessagesTimer: Timer?
 
+    private lazy var tableView: UITableView = {
+        let view = UITableView()
+        self.view.addSubview(view)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
+        view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
+        view.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
+        view.rightAnchor.constraint(equalTo: self.view.rightAnchor).isActive = true
+
+        return view
+    }()
+
+
 //    private lazy var tableViewController =
 //        ListViewDatasourceConfiguration
 //            .buildSingleSectionTableView(
@@ -55,6 +68,73 @@ class ChatBotTableViewController : UIViewController {
         super.viewDidLoad()
 
         title = "Chatbot TableView"
+
+        tableView.sourcerer
+            .prepareBindingToDatasource(
+                self.viewModel.datasource,
+                baseItemModelType: ChatBotCell.self,
+                sectionModelType: SingleSection.self
+            )
+            .singleSection { state, _ -> [ChatBotCell] in
+                let oldMessages = state.oldMessagesState.value?.value.messages ?? []
+                let initialMessages = state.initialLoadResponse.messages
+                let newMessages = state.newMessagesState.value?.value.messages ?? []
+                let allMessages = oldMessages + initialMessages + newMessages
+                return allMessages.map { ChatBotCell.message($0) }
+            }
+            .multipleCellTypes(
+                createProducer: { viewType
+                    -> ItemViewsProducer<ChatBotCell, UITableViewCell, UITableView> in
+                    switch viewType {
+                    case .message:
+                        return .tableViewCellWithClass(
+                            ChatBotIncomingMessageTableViewCell.self,
+                            configureView: { cell, cellView, tableView, indexPath in
+                                (cellView as? ChatBotIncomingMessageTableViewCell)?.messageLabel.text = {
+                                    switch cell {
+                                    case let .message(message): return message.message
+                                    case let .header(title): return title
+                                    case .error, .oldMessagesLoading: return nil
+                                    }
+                                }()
+                            }
+                        )
+                    case .loadOldMessages:
+                        return .tableViewCellWithClass(
+                            LoadingCell.self,
+                            configureView: { _, _, _, _ in }
+                        )
+                    }
+                }
+            )
+            .showLoadingAndErrors(
+                configuration: ShowLoadingAndErrorsConfiguration(
+                    errorsConfiguration: .ignoreErrorIfCachedValueAvailable
+                ),
+                loadingViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in return LoadingCell(frame: .zero) }
+                ),
+                errorViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in
+                        return ErrorTableViewCell()
+                    },
+                    configureView: { model, cell, _, _ in
+                        guard case let .error(error) = model else { return }
+                        (cell as? ErrorTableViewCell)?.content = error.errorMessage
+                    }
+                ),
+                noResultsViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in
+                        return ErrorTableViewCell()
+                    },
+                    configureView: { model, cell, _, _ in
+                        (cell as? ErrorTableViewCell)?.content = StateErrorMessage
+                            .message("Strangely, there are no public repos on Github.")
+                        return
+                    }
+                )
+            )
+            .bind()
 //        tableViewController.supportPullToRefresh = false
 //
 //        tableViewController.willMove(toParent: self)
@@ -94,16 +174,16 @@ class ChatBotTableViewController : UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
 
-//        viewModel.startReceivingNewMessages()
-//        loadOldMessagesTimer?.invalidate()
-//        loadOldMessagesTimer = Timer.scheduledTimer(
-//            withTimeInterval: 0.3,
-//            repeats: true,
-//            block: { [weak self] _ in
-//                guard let tableView = self?.tableViewController.tableView else { return }
-//                self?.viewModel.tryLoadOldMessages(tableView: tableView)
-//            }
-//        )
+        viewModel.startReceivingNewMessages()
+        loadOldMessagesTimer?.invalidate()
+        loadOldMessagesTimer = Timer.scheduledTimer(
+            withTimeInterval: 0.3,
+            repeats: true,
+            block: { [weak self] _ in
+                guard let tableView = self?.tableView else { return }
+                self?.viewModel.tryLoadOldMessages(tableView: tableView)
+            }
+        )
     }
 
     override func viewDidAppear(_ animated: Bool) {

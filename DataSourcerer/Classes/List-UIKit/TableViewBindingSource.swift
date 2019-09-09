@@ -64,7 +64,7 @@ open class TableViewBindingSource
         super.init()
     }
 
-    open func bind( 
+    open func bind(
         tableView: UITableView
     ) {
 

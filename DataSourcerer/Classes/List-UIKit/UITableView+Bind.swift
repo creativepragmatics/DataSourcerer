@@ -191,18 +191,18 @@ public extension SourcererExtension.TableViewBindingStepTwo {
         )
     }
 
-    func multiCellsWithClass<CellView: UITableViewCell>(
-        _ `class`: CellView.Type,
-        reuseIdentifier: String = UUID().uuidString,
-        configure: @escaping (BaseItemModelType, UITableViewCell, UITableView, IndexPath) -> Void
+}
+
+public extension SourcererExtension.TableViewBindingStepTwo where BaseItemModelType: MultiViewTypeItemModel {
+
+    func multipleCellTypes(
+        createProducer: @escaping (BaseItemModelType.ItemViewType)
+            -> ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>
         ) -> SourcererExtension.TableViewBindingReady<Value, P, E, BaseItemModelType, SectionModelType> {
 
-        let itemViewsProducer = ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>
-            .tableViewCellWithClass(
-                `class`,
-                reuseIdentifier: reuseIdentifier,
-                configureView: configure
-            )
+        let itemViewsProducer = ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>(
+            multiViewTypeWithProducer: createProducer
+        )
 
         return SourcererExtension.TableViewBindingReady(
             tableView: tableView, dataSource: dataSource,
@@ -210,6 +210,7 @@ public extension SourcererExtension.TableViewBindingStepTwo {
             itemViewsProducer: itemViewsProducer
         )
     }
+
 }
 
 public extension SourcererExtension.TableViewBindingReady {
