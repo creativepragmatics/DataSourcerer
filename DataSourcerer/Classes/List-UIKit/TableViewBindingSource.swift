@@ -26,8 +26,8 @@ open class TableViewBindingSource
     public let hideBottomMostSeparatorWithHack: Bool
 
     private let isUpdateAnimated: AnimateTableViewCellChange
-    private let willChangeCellsInView: TableViewCellsChange?
-    private let didChangeCellsInView: TableViewCellsChange?
+    public var willChangeCellsInView: TableViewCellsChange?
+    public var didChangeCellsInView: TableViewCellsChange?
     private var bindingSession: TableViewBindingSessionAlias?
     private let animateCellContentChange: (CellModelType, UITableView, IndexPath) -> Bool
 
