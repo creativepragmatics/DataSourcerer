@@ -145,6 +145,8 @@ public extension SourcererExtension where Base: UITableView {
         let itemViewsProducer: ItemViewsProducer<ItemModelType, UITableViewCell, UITableView>
         let tweakConfiguration: (inout ListViewDatasourceConfigurationAlias) -> Void
 
+        /// Calling this multiple times will override previous tweaks, because the changes
+        /// are only applied on binding.
         public func tweak(_ tweakConfiguration: @escaping (inout ListViewDatasourceConfigurationAlias) -> Void)
             -> TableViewBindingReady {
                 return TableViewBindingReady(

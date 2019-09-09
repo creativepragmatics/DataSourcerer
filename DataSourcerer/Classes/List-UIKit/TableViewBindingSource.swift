@@ -23,7 +23,7 @@ open class TableViewBindingSource
     public private(set) var configuration: ListViewDatasourceConfigurationAlias
     public weak var delegate: AnyObject?
     public weak var datasource: AnyObject?
-    public let hideBottomMostSeparatorWithHack: Bool
+    public let hideBottomMostSeparatorByOverridingFooters: Bool
 
     private let isUpdateAnimated: AnimateTableViewCellChange
     public var willChangeCellsInView: TableViewCellsChange?
@@ -48,14 +48,14 @@ open class TableViewBindingSource
 
     public init(
         configuration: ListViewDatasourceConfigurationAlias,
-        hideBottomMostSeparatorWithHack: Bool = true,
+        hideBottomMostSeparatorByOverridingFooters: Bool = true,
         isUpdateAnimated: @escaping AnimateTableViewCellChange = { _, _, _ in true },
         animateCellContentChange: @escaping (CellModelType, UITableView, IndexPath) -> Bool = { _, _, _ in false },
         willChangeCellsInView: TableViewCellsChange? = nil,
         didChangeCellsInView: TableViewCellsChange? = nil
     ) {
         self.configuration = configuration
-        self.hideBottomMostSeparatorWithHack = hideBottomMostSeparatorWithHack
+        self.hideBottomMostSeparatorByOverridingFooters = hideBottomMostSeparatorByOverridingFooters
         self.isUpdateAnimated = isUpdateAnimated
         self.animateCellContentChange = animateCellContentChange
         self.willChangeCellsInView = willChangeCellsInView
@@ -83,10 +83,6 @@ open class TableViewBindingSource
         configuration.itemViewsProducer.registerAtContainingView(tableView)
         configuration.headerItemViewAdapter.registerAtContainingView(tableView)
         configuration.footerItemViewAdapter.registerAtContainingView(tableView)
-
-        if hideBottomMostSeparatorWithHack {
-            tableView.tableFooterView = UIView()
-        }
 
         var previousState = listViewStateProperty.value
 
@@ -199,7 +195,7 @@ open class TableViewBindingSource
     public func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let footerView = configuration.footerView(at: IndexPath(row: 0, section: section), in: tableView)
 
-        if footerView == nil, hideBottomMostSeparatorWithHack, section == currentSections.count - 1 {
+        if footerView == nil, hideBottomMostSeparatorByOverridingFooters, section == currentSections.count - 1 {
             return UIView()
         } else {
             return footerView
@@ -213,7 +209,7 @@ open class TableViewBindingSource
             in: tableView
         ).height
 
-        if height == 0, hideBottomMostSeparatorWithHack, section == currentSections.count - 1 {
+        if height == 0, hideBottomMostSeparatorByOverridingFooters, section == currentSections.count - 1 {
             return 0.001
         } else {
             return height
