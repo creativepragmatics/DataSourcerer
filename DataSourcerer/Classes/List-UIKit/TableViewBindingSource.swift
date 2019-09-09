@@ -20,7 +20,7 @@ open class TableViewBindingSource
     public typealias TableViewCellsChange =
         (UITableView, _ previous: TableViewStateAlias, _ next: TableViewStateAlias) -> Void
 
-    public let configuration: ListViewDatasourceConfigurationAlias
+    public private(set) var configuration: ListViewDatasourceConfigurationAlias
     public weak var delegate: AnyObject?
     public weak var datasource: AnyObject?
     public let hideBottomMostSeparatorWithHack: Bool
@@ -62,6 +62,13 @@ open class TableViewBindingSource
         self.didChangeCellsInView = didChangeCellsInView
 
         super.init()
+    }
+
+    open func tweak(
+        _ configure: (ListViewDatasourceConfigurationAlias) -> ListViewDatasourceConfigurationAlias
+    ) {
+        assert(bindingSession == nil, "Tweak TableViewBindingSource before binding it")
+        configuration = configure(configuration)
     }
 
     open func bind(

@@ -251,7 +251,7 @@ public extension ItemViewsProducer {
                             indexPath
                         )
                     case .loading:
-                        return errorViewProducer.produceView(
+                        return loadingViewProducer.produceView(
                             .loading,
                             containingView,
                             indexPath

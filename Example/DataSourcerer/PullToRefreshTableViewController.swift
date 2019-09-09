@@ -55,7 +55,8 @@ class PullToRefreshTableViewController : UIViewController {
                 ),
                 loadingViewProducer: .tableViewCellWithoutReuse(
                     create: { (cell: IdiomaticItemModel<PublicRepoCell>, tableView: UITableView, indexPath: IndexPath)
-                        -> UITableViewCell in return LoadingCell(frame: .zero)
+                        -> UITableViewCell in
+                        return LoadingCell(frame: .zero)
                     }
                 ),
                 errorViewProducer: .tableViewCellWithoutReuse(
@@ -78,6 +79,11 @@ class PullToRefreshTableViewController : UIViewController {
                     }
                 )
             )
+            .tweak { configuration in
+                configuration.didSelectItem = { itemSelection in
+                    print("Item selected: \(type(of: itemSelection.itemModel))")
+                }
+            }
             .bind()
 
         let refreshControl = UIRefreshControl()

@@ -14,7 +14,11 @@ public extension SourcererExtension where Base: UITableView {
         itemViewsProducer: ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>,
         configureBehavior: (TableViewBehavior<Value, P, E, BaseItemModelType, SectionModelType>)
             -> TableViewBehavior<Value, P, E, FinalItemModelType, SectionModelType>,
-        animateCellContentChange: @escaping (FinalItemModelType, UITableView, IndexPath) -> Bool
+        animateCellContentChange: @escaping (FinalItemModelType, UITableView, IndexPath) -> Bool,
+        tweakConfiguration: @escaping (inout
+            ListViewDatasourceConfiguration<Value, P, E, FinalItemModelType, UITableViewCell,
+            SectionModelType, NoSupplementaryItemModel, UIView, NoResourceError, NoSupplementaryItemModel,
+            UIView, NoResourceError, UITableView>) -> Void
     ) -> TableViewBindingSource
         <Value, P, E, FinalItemModelType, SectionModelType,
         NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
@@ -28,11 +32,13 @@ public extension SourcererExtension where Base: UITableView {
 
             let finalBehavior = configureBehavior(baseBehavior)
 
-            let configuration = ListViewDatasourceConfiguration(
+            var configuration = ListViewDatasourceConfiguration(
                 datasource: dataSource,
                 itemModelProducer: finalBehavior.itemModelsProducer,
                 itemViewsProducer: finalBehavior.itemViewsProducer
             )
+
+            tweakConfiguration(&configuration)
 
             let tableViewBindingSource = TableViewBindingSource(
                 configuration: configuration,
@@ -48,28 +54,28 @@ public extension SourcererExtension where Base: UITableView {
             return tableViewBindingSource
     }
 
-    @discardableResult
-    func bindToDatasource
-        <Value, P: ResourceParams, E: ResourceError, BaseItemModelType,
-        SectionModelType>
-    (
-        _ dataSource: Datasource<Value, P, E>,
-        itemModelsProducer: ItemModelsProducer<Value, P, E, BaseItemModelType, SectionModelType>,
-        itemViewsProducer: ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>,
-        animateCellContentChange: @escaping (BaseItemModelType, UITableView, IndexPath)
-            -> Bool = { _, _, _ in false }
-    ) -> TableViewBindingSource
-        <Value, P, E, BaseItemModelType, SectionModelType,
-        NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
-
-            return bindToDatasource(
-                dataSource,
-                itemModelsProducer: itemModelsProducer,
-                itemViewsProducer: itemViewsProducer,
-                configureBehavior: { $0 },
-                animateCellContentChange: animateCellContentChange
-            )
-    }
+//    @discardableResult
+//    func bindToDatasource
+//        <Value, P: ResourceParams, E: ResourceError, BaseItemModelType,
+//        SectionModelType>
+//    (
+//        _ dataSource: Datasource<Value, P, E>,
+//        itemModelsProducer: ItemModelsProducer<Value, P, E, BaseItemModelType, SectionModelType>,
+//        itemViewsProducer: ItemViewsProducer<BaseItemModelType, UITableViewCell, UITableView>,
+//        animateCellContentChange: @escaping (BaseItemModelType, UITableView, IndexPath)
+//            -> Bool = { _, _, _ in false }
+//    ) -> TableViewBindingSource
+//        <Value, P, E, BaseItemModelType, SectionModelType,
+//        NoSupplementaryItemModel, NoResourceError, NoSupplementaryItemModel, NoResourceError> {
+//
+//            return bindToDatasource(
+//                dataSource,
+//                itemModelsProducer: itemModelsProducer,
+//                itemViewsProducer: itemViewsProducer,
+//                configureBehavior: { $0 },
+//                animateCellContentChange: animateCellContentChange
+//            )
+//    }
 
     func prepareBindingToDatasource
         <Value, P: ResourceParams, E: ResourceError, BaseItemModelType,
@@ -118,7 +124,8 @@ public extension SourcererExtension where Base: UITableView {
                 tableView: tableView,
                 dataSource: dataSource,
                 itemModelsProducer: itemModelsProducer,
-                itemViewsProducer: producer
+                itemViewsProducer: producer,
+                tweakConfiguration: { _ in }
             )
         }
     }
@@ -127,10 +134,27 @@ public extension SourcererExtension where Base: UITableView {
         <Value, P: ResourceParams, E, ItemModelType: ItemModel,
         SectionModelType: SectionModel> where ItemModelType.E == E {
 
+        public typealias ListViewDatasourceConfigurationAlias = ListViewDatasourceConfiguration
+            <Value, P, E, ItemModelType, UITableViewCell,
+            SectionModelType, NoSupplementaryItemModel, UIView, NoResourceError, NoSupplementaryItemModel,
+            UIView, NoResourceError, UITableView>
+
         let tableView: UITableView
         let dataSource: Datasource<Value, P, E>
         let itemModelsProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
         let itemViewsProducer: ItemViewsProducer<ItemModelType, UITableViewCell, UITableView>
+        let tweakConfiguration: (inout ListViewDatasourceConfigurationAlias) -> Void
+
+        public func tweak(_ tweakConfiguration: @escaping (inout ListViewDatasourceConfigurationAlias) -> Void)
+            -> TableViewBindingReady {
+                return TableViewBindingReady(
+                    tableView: tableView,
+                    dataSource: dataSource,
+                    itemModelsProducer: itemModelsProducer,
+                    itemViewsProducer: itemViewsProducer,
+                    tweakConfiguration: tweakConfiguration
+                )
+        }
 
         @discardableResult
         public func bind(
@@ -144,7 +168,8 @@ public extension SourcererExtension where Base: UITableView {
                 itemModelsProducer: itemModelsProducer,
                 itemViewsProducer: itemViewsProducer,
                 configureBehavior: { $0 },
-                animateCellContentChange: animateCellContentChange
+                animateCellContentChange: animateCellContentChange,
+                tweakConfiguration: tweakConfiguration
             )
         }
     }
@@ -187,7 +212,8 @@ public extension SourcererExtension.TableViewBindingStepTwo {
         return SourcererExtension.TableViewBindingReady(
             tableView: tableView, dataSource: dataSource,
             itemModelsProducer: itemModelsProducer,
-            itemViewsProducer: itemViewsProducer
+            itemViewsProducer: itemViewsProducer,
+            tweakConfiguration: { _ in }
         )
     }
 
@@ -207,7 +233,8 @@ public extension SourcererExtension.TableViewBindingStepTwo where BaseItemModelT
         return SourcererExtension.TableViewBindingReady(
             tableView: tableView, dataSource: dataSource,
             itemModelsProducer: itemModelsProducer,
-            itemViewsProducer: itemViewsProducer
+            itemViewsProducer: itemViewsProducer,
+            tweakConfiguration: { _ in }
         )
     }
 
@@ -241,7 +268,8 @@ public extension SourcererExtension.TableViewBindingReady {
             tableView: tableView,
             dataSource: dataSource,
             itemModelsProducer: itemModelsProducer,
-            itemViewsProducer: itemViewsProducer
+            itemViewsProducer: itemViewsProducer,
+            tweakConfiguration: { _ in }
         )
     }
 
