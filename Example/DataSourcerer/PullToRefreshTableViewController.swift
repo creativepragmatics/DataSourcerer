@@ -12,23 +12,35 @@ class PullToRefreshTableViewController : UIViewController {
 
     private let disposeBag = DisposeBag()
 
-    private var refreshControl: UIRefreshControl? {
-        return tableViewController.refreshControl
-    }
+    private lazy var tableView: UITableView = {
+        let view = UITableView()
+        self.view.addSubview(view)
+        view.translatesAutoresizingMaskIntoConstraints = false
+        view.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
+        view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
+        view.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
+        view.rightAnchor.constraint(equalTo: self.view.rightAnchor).isActive = true
 
-    private lazy var tableViewController =
-        ListViewDatasourceConfiguration
-            .buildSingleSectionTableView(
-                datasource: viewModel.datasource,
-                withCellModelType: PublicRepoCell.self
+        return view
+    }()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        title = "TableView with Pull to Refresh"
+
+        tableView.sourcerer
+            .prepareBindingToDatasource(
+                self.viewModel.datasource,
+                baseItemModelType: PublicRepoCell.self,
+                sectionModelType: SingleSection.self
             )
-            .mapSingleSectionItemModels { response, _ -> [PublicRepoCell] in
-                return response.map { PublicRepoCell.repo($0) }
+            .singleSection { response, _ -> [PublicRepoCell] in
+                response.map { PublicRepoCell.repo($0) }
             }
-            .renderWithCellClass(
-                cellType: UITableViewCell.self,
-                dequeueIdentifier: "cell",
-                configure: { repo, cellView in
+            .cellsWithClass(
+                UITableViewCell.self,
+                configure: { repo, cellView, _, _ in
                     cellView.textLabel?.text = {
                         switch repo {
                         case let .repo(repo): return repo.name
@@ -37,63 +49,49 @@ class PullToRefreshTableViewController : UIViewController {
                     }()
                 }
             )
-            .configurationForFurtherCustomization
-            .onDidSelectItem { [weak self] itemSelection in
-                itemSelection.containingView.deselectRow(at: itemSelection.indexPath, animated: true)
-                switch itemSelection.itemModel {
-                case let .repo(repo):
-                    self?.repoSelected(repo: repo)
-                case .error:
-                    return
-                }
-            }
-            .showLoadingAndErrorStates(
-                behavior: ShowLoadingAndErrorsBehavior(
-                    errorsBehavior: .preferFallbackValueOverError
+            .showLoadingAndErrors(
+                configuration: ShowLoadingAndErrorsConfiguration(
+                    errorsConfiguration: .ignoreErrorIfCachedValueAvailable
                 ),
-                noResultsText: "No results",
-                loadingViewProducer: SimpleTableViewCellProducer.instantiate { _ in return LoadingCell() },
-                errorViewProducer: SimpleTableViewCellProducer.instantiate { cell in
-                    guard case let .error(error) = cell else { return ErrorTableViewCell() }
-                    let tableViewCell = ErrorTableViewCell()
-                    tableViewCell.content = error.errorMessage
-                    return tableViewCell
-                },
-                noResultsViewProducer: SimpleTableViewCellProducer.instantiate { _ in
-                    let tableViewCell = ErrorTableViewCell()
-                    tableViewCell.content = StateErrorMessage
-                        .message("Strangely, there are no public repos on Github.")
-                    return tableViewCell
-                }
+                loadingViewProducer: .tableViewCellWithoutReuse(
+                    create: { (cell: IdiomaticItemModel<PublicRepoCell>, tableView: UITableView, indexPath: IndexPath)
+                        -> UITableViewCell in return LoadingCell(frame: .zero)
+                    }
+                ),
+                errorViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in
+                        return ErrorTableViewCell()
+                    },
+                    configureView: { model, cell, _, _ in
+                        guard case let .error(error) = model else { return }
+                        (cell as? ErrorTableViewCell)?.content = error.errorMessage
+                    }
+                ),
+                noResultsViewProducer: .tableViewCellWithoutReuse(
+                    create: { _, _, _ in
+                        return ErrorTableViewCell()
+                    },
+                    configureView: { model, cell, _, _ in
+                        (cell as? ErrorTableViewCell)?.content = StateErrorMessage
+                            .message("Strangely, there are no public repos on Github.")
+                        return
+                    }
+                )
             )
-            .singleSectionTableViewController
-            .onPullToRefresh { [weak self] in
-                self?.viewModel.datasource.refresh(type: LoadImpulseType(mode: .fullRefresh, issuer: .user))
-                self?.refreshControl?.beginRefreshing()
+            .bind()
+
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(onPullToRefresh), for: .valueChanged)
+        tableView.refreshControl = refreshControl
+
+        viewModel.datasource.state.observe { [weak refreshControl] state in
+            switch state.provisioningState {
+            case .notReady, .loading:
+                break
+            case .result:
+                refreshControl?.endRefreshing()
             }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-
-        title = "TableView with Pull to Refresh"
-
-        tableViewController.willMove(toParent: self)
-        self.addChild(tableViewController)
-        self.view.addSubview(tableViewController.view)
-
-        let view = tableViewController.view!
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.topAnchor.constraint(equalTo: self.view.topAnchor).isActive = true
-        view.bottomAnchor.constraint(equalTo: self.view.bottomAnchor).isActive = true
-        view.leftAnchor.constraint(equalTo: self.view.leftAnchor).isActive = true
-        view.rightAnchor.constraint(equalTo: self.view.rightAnchor).isActive = true
-
-        tableViewController.didMove(toParent: self)
-
-        // Hide pull to refresh when loading finishes
-        tableViewController.refreshControl?.sourcerer
-            .endRefreshingOnLoadingEnded(viewModel.datasource)
-            .disposed(by: disposeBag)
+        }.disposed(by: self.disposeBag)
     }
 
     override func viewWillAppear(_ animated: Bool) {
@@ -116,6 +114,11 @@ class PullToRefreshTableViewController : UIViewController {
 
     func repoSelected(repo: PublicRepo) {
         print("Repo selected")
+    }
+
+    @objc
+    func onPullToRefresh() {
+        viewModel.loadImpulseEmitter.emit(type: LoadImpulseType(mode: .fullRefresh, issuer: .user), on: .current)
     }
 
 }

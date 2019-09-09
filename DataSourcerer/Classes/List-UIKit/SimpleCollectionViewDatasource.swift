@@ -20,7 +20,7 @@ import UIKit
 //    }
 //
 //    public func numberOfSections(in collectionView: UICollectionView) -> Int {
-//        return configuration.sections.sectionedValues.sectionsAndValues.count
+//        return configuration.sections.dwifftSectionedValues.sectionsAndValues.count
 //    }
 //
 //    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int)

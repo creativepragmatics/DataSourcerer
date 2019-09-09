@@ -1,3 +1,4 @@
+import DifferenceKit
 import Foundation
 
 // Holds closures of essential list view callbacks (mostly a minimal intersection
@@ -12,7 +13,7 @@ public struct ListViewDatasourceConfiguration
     FooterItemError, ContainingView: UIView> where ItemModelType.E == E, HeaderItem.E == HeaderItemError,
 FooterItem.E == FooterItemError {
     public typealias State = ListViewState<Value, P, E, ItemModelType, SectionModelType>
-    public typealias ItemViewAdapter = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
+    public typealias ItemViewsProducerAlias = ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     public typealias HeaderItemViewAdapter = ItemViewsProducer<HeaderItem, HeaderItemView, ContainingView>
     public typealias FooterItemViewAdapter = ItemViewsProducer<FooterItem, FooterItemView, ContainingView>
     public struct ItemSelection {
@@ -41,7 +42,7 @@ FooterItem.E == FooterItemError {
     public let datasource: Datasource<Value, P, E>
     public let itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>
     public let state: ShareableValueStream<State>
-    public let itemViewsProducer: ItemViewAdapter
+    public let itemViewsProducer: ItemViewsProducerAlias
     public let headerItemViewAdapter: HeaderItemViewAdapter
     public let footerItemViewAdapter: FooterItemViewAdapter
 
@@ -61,7 +62,7 @@ FooterItem.E == FooterItemError {
 
     public init(datasource: Datasource<Value, P, E>,
                 itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
-                itemViewsProducer: ItemViewAdapter,
+                itemViewsProducer: ItemViewsProducerAlias,
                 headerItemViewAdapter: HeaderItemViewAdapter,
                 footerItemViewAdapter: FooterItemViewAdapter,
                 headerItemAtIndexPath: HeaderItemAtIndexPath?,
@@ -114,14 +115,14 @@ FooterItemView == UIView {
         datasource: Datasource<Value, P, E>,
         itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
         itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
-        ) {
+    ) {
 
-        self.init(
+        self = ListViewDatasourceConfiguration(
             datasource: datasource,
             itemModelProducer: itemModelProducer,
             itemViewsProducer: itemViewsProducer,
-            headerItemViewAdapter: .noSupplementaryViewAdapter,
-            footerItemViewAdapter: .noSupplementaryViewAdapter,
+            headerItemViewAdapter: .noSupplementaryItemViewsProducer,
+            footerItemViewAdapter: .noSupplementaryItemViewsProducer,
             headerItemAtIndexPath: nil,
             footerItemAtIndexPath: nil,
             titleForHeaderInSection: nil,
@@ -138,31 +139,17 @@ FooterItemView == UIView {
 
 public extension ListViewDatasourceConfiguration {
 
-    func section(at index: Int) -> SectionAndItems<ItemModelType, SectionModelType> {
-        let rawSection = state.value.sectionedValues.sectionsAndValues[index]
-        return SectionAndItems(rawSection.0, rawSection.1)
-    }
-
-    func item(at indexPath: IndexPath) -> ItemModelType {
-        return items(in: indexPath.section)[indexPath.row]
-    }
-
-    func items(in section: Int) -> [ItemModelType] {
-        let sections = state.value.sectionedValues.sectionsAndValues[section].1
-        return sections
-    }
-
-    func itemView(at indexPath: IndexPath, in containingView: ContainingView) -> ItemView {
-        return itemViewsProducer.produceView(item(at: indexPath), containingView, indexPath)
-    }
-
     func headerView(at indexPath: IndexPath,
                     in containingView: ContainingView) -> HeaderItemView? {
         guard let item = headerItemAtIndexPath?(indexPath) else {
             return nil
         }
 
-        return headerItemViewAdapter.produceView(item, containingView, indexPath)
+        return headerItemViewAdapter.produceAndConfigureView(
+            itemModel: item,
+            containingView: containingView,
+            indexPath: indexPath
+        )
     }
 
     func footerView(at indexPath: IndexPath,
@@ -171,7 +158,11 @@ public extension ListViewDatasourceConfiguration {
             return nil
         }
 
-        return footerItemViewAdapter.produceView(item, containingView, indexPath)
+        return footerItemViewAdapter.produceAndConfigureView(
+            itemModel: item,
+            containingView: containingView,
+            indexPath: indexPath
+        )
     }
 
     func headerSize(at indexPath: IndexPath,
@@ -180,7 +171,7 @@ public extension ListViewDatasourceConfiguration {
             return .zero
         }
 
-        return headerItemViewAdapter.itemViewSize?(item, containingView) ?? .zero
+        return headerItemViewAdapter.itemViewSize?(item, containingView, indexPath) ?? .zero
     }
 
     func footerSize(at indexPath: IndexPath,
@@ -189,7 +180,7 @@ public extension ListViewDatasourceConfiguration {
             return .zero
         }
 
-        return footerItemViewAdapter.itemViewSize?(item, containingView) ?? .zero
+        return footerItemViewAdapter.itemViewSize?(item, containingView, indexPath) ?? .zero
     }
 
 }
@@ -207,59 +198,4 @@ public extension ListViewDatasourceConfiguration {
         mutableSelf.willDisplayItem = willDisplayItem
         return mutableSelf
     }
-}
-
-public typealias TableViewDatasourceConfiguration
-    <Value, P: ResourceParams, E, Cell: ItemModel, CellView: UITableViewCell,
-    Section: SectionModel, HeaderItem: SupplementaryItemModel, HeaderItemView: UIView,
-    HeaderItemError, FooterItem: SupplementaryItemModel, FooterItemView: UIView,
-    FooterItemError>
-    =
-    ListViewDatasourceConfiguration
-    <Value, P, E, Cell, CellView, Section, HeaderItem, HeaderItemView, HeaderItemError,
-    FooterItem, FooterItemView, FooterItemError, UITableView>
-    where Cell.E == E, HeaderItem.E == HeaderItemError, FooterItem.E == FooterItemError
-
-public extension TableViewDatasourceConfiguration where HeaderItem == NoSupplementaryItemModel,
-    HeaderItemView == UIView, FooterItem == NoSupplementaryItemModel,
-FooterItemView == UIView, ItemView == UITableViewCell {
-
-    static func withBaseTableViewCell(
-        datasource: Datasource<Value, P, E>,
-        itemModelProducer: ItemModelsProducer<Value, P, E, ItemModelType, SectionModelType>,
-        cellClass `class`: ItemView.Type,
-        reuseIdentifier: String,
-        configure: @escaping (ItemModelType, ItemView) -> Void)
-        -> TableViewDatasourceConfiguration
-        <Value, P, E, ItemModelType, ItemView, SectionModelType, NoSupplementaryItemModel, UIView,
-        NoResourceError, NoSupplementaryItemModel, UIView, NoResourceError> {
-
-            return TableViewDatasourceConfiguration(
-                datasource: datasource,
-                itemModelProducer: itemModelProducer,
-                itemViewsProducer: TableViewCellAdapter<ItemModelType>.tableViewCell(
-                    withCellClass: ItemView.self,
-                    reuseIdentifier: reuseIdentifier, configure: configure
-                )
-            )
-    }
-
-}
-
-// TODO: Move to List-UIKit folder as soon as XCode 10.2 is available:
-// https://github.com/apple/swift/pull/18168
-/// Builder.Complete for single section tableviews
-public extension ListViewDatasourceConfiguration
-    where Value: Equatable,
-    ItemView == UITableViewCell,
-    ContainingView == UITableView,
-    HeaderItemView == UIView,
-    FooterItemView == UIView,
-SectionModelType == NoSection {
-
-    var singleSectionTableViewController: SingleSectionTableViewController
-        <Value, P, E, ItemModelType, HeaderItem, HeaderItemError, FooterItem, FooterItemError> {
-        return SingleSectionTableViewController(configuration: self)
-    }
-
 }

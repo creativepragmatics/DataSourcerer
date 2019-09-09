@@ -1,3 +1,4 @@
+import DifferenceKit
 import Foundation
 
 public struct ItemModelsProducer
@@ -38,28 +39,31 @@ where ItemModelType.E == E {
         self.valueToListViewStateTransformer = baseValueToListViewStateTransformer
     }
 
-    public static func withSingleSectionItems<P: ResourceParams>(
-        _ singleSectionItems: @escaping (Value, ResourceState<Value, P, E>) -> [ItemModelType]
-        ) -> ItemModelsProducer<Value, P, E, ItemModelType, NoSection> where ItemModelType.E == E {
-
-        let valueToListViewStateTransformer =
-            ValueToListViewStateTransformer<Value, P, E, ItemModelType, NoSection>(
-                valueToSingleSectionItems: { value, state in
-                    return singleSectionItems(value, state)
-                }
-            )
-
-        return ItemModelsProducer<Value, P, E, ItemModelType, NoSection>(
-            baseValueToListViewStateTransformer: valueToListViewStateTransformer
-        )
-    }
-
     public func listViewState(with state: ResourceState<Value, P, E>)
         -> ListViewState<Value, P, E, ItemModelType, SectionModelType> {
 
             return stateToListViewState(state, valueToListViewStateTransformer)
     }
 
+}
+
+public extension ItemModelsProducer where SectionModelType == SingleSection {
+
+    static func singleSectionItems(
+        _ singleSectionItems: @escaping (Value, ResourceState<Value, P, E>) -> [ItemModelType]
+        ) -> ItemModelsProducer<Value, P, E, ItemModelType, SingleSection> {
+
+        let valueToListViewStateTransformer =
+            ValueToListViewStateTransformer<Value, P, E, ItemModelType, SingleSection>(
+                valueToSingleSectionItems: { value, state in
+                    return singleSectionItems(value, state)
+            }
+        )
+
+        return ItemModelsProducer<Value, P, E, ItemModelType, SingleSection>(
+            baseValueToListViewStateTransformer: valueToListViewStateTransformer
+        )
+    }
 }
 
 public struct ValueToListViewStateTransformer
@@ -80,7 +84,7 @@ public struct ValueToListViewStateTransformer
 
     public init(
         valueToSections: @escaping (Value, ResourceState<Value, P, E>)
-        -> [SectionAndItems<ItemModelType, SectionModelType>]
+        -> [ArraySection<SectionModelType, ItemModelType>]
     ) {
         self.valueToListViewState = { value, resourceState in
             return ListViewState.readyToDisplay(
@@ -92,17 +96,17 @@ public struct ValueToListViewStateTransformer
 
 }
 
-public extension ValueToListViewStateTransformer where SectionModelType == NoSection {
+public extension ValueToListViewStateTransformer where SectionModelType == SingleSection {
 
     init(
         valueToSingleSectionItems: @escaping (Value, ResourceState<Value, P, E>) -> [ItemModelType]
     ) {
         self.valueToListViewState = { value, state in
-            let sectionAndItems = SectionAndItems(
-                NoSection(),
-                valueToSingleSectionItems(value, state)
+            let section = ArraySection(
+                model: SingleSection(),
+                elements: valueToSingleSectionItems(value, state)
             )
-            return ListViewState.readyToDisplay(state, [sectionAndItems])
+            return ListViewState.readyToDisplay(state, [section])
         }
     }
 }
