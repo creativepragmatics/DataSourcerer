@@ -117,7 +117,7 @@ FooterItemView == UIView {
         itemViewsProducer: ItemViewsProducer<ItemModelType, ItemView, ContainingView>
     ) {
 
-        self = ListViewDatasourceConfiguration(
+        self.init(
             datasource: datasource,
             itemModelProducer: itemModelProducer,
             itemViewsProducer: itemViewsProducer,
