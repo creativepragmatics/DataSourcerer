@@ -257,7 +257,7 @@ public extension ItemViewsProducer {
                             indexPath
                         )
                     case .noResults:
-                        return errorViewProducer.produceView(
+                        return noResultsViewProducer.produceView(
                             .noResults,
                             containingView,
                             indexPath
@@ -283,7 +283,7 @@ public extension ItemViewsProducer {
                             indexPath
                         )
                     case .noResults:
-                        return errorViewProducer.configureView(
+                        return noResultsViewProducer.configureView(
                             .noResults,
                             producedView,
                             containingView,
