@@ -156,11 +156,12 @@ open class TableViewBindingSource
 
             currentSections = currentState.sections ?? []
 
-            DispatchQueue.main.async { [weak tableView, weak self] in
-                guard let tableView = tableView else { return }
-                self?.willChangeCellsInView?(tableView, previousState, currentState)
-                tableView.reloadData()
-                self?.didChangeCellsInView?(tableView, previousState, currentState)
+            if isViewVisible {
+                willChangeCellsInView?(tableView, previousState, currentState)
+            }
+            tableView.reloadData()
+            if isViewVisible {
+                didChangeCellsInView?(tableView, previousState, currentState)
             }
         }
 
