@@ -257,6 +257,15 @@ open class TableViewBindingSource
         }
     }
 
+    public func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        if let delegate = delegate,
+            delegate.responds(to: #selector(tableView(_:heightForRowAt:))) {
+            return delegate.tableView(tableView, heightForRowAt: indexPath)
+        } else {
+            return UITableView.automaticDimension
+        }
+    }
+
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 
         guard let cellView = tableView.cellForRow(at: indexPath) else { return }
