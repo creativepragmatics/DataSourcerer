@@ -283,6 +283,28 @@ open class TableViewBindingSource
             delegate.tableView!(tableView, didSelectRowAt: indexPath)
         }
     }
+    
+    public func tableView(_ tableView: UITableView,
+                          trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
+        -> UISwipeActionsConfiguration? {
+            if let delegate = delegate,
+                delegate.responds(to: #selector(tableView(_:trailingSwipeActionsConfigurationForRowAt:))) {
+                return delegate.tableView!(tableView, trailingSwipeActionsConfigurationForRowAt: indexPath)
+            } else {
+                return nil
+            }
+    }
+    
+    public func tableView(_ tableView: UITableView,
+                          leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath)
+        -> UISwipeActionsConfiguration? {
+            if let delegate = delegate,
+                delegate.responds(to: #selector(tableView(_:leadingSwipeActionsConfigurationForRowAt:))) {
+                return delegate.tableView!(tableView, leadingSwipeActionsConfigurationForRowAt: indexPath)
+            } else {
+                return nil
+            }
+    }
 
     open override func responds(to aSelector: Selector!) -> Bool {
         return super.responds(to: aSelector)
