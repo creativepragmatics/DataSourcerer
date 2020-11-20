@@ -1,11 +1,10 @@
 import Foundation
 import ReactiveSwift
-import Result
 
 public extension Datasource {
 
     init(
-        stateSignalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedState, NoError>,
+        stateSignalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedState, Never>,
         mapErrorString: @escaping (ErrorString) -> E,
         cacheBehavior: CacheBehavior,
         loadImpulseBehavior: LoadImpulseBehavior
@@ -48,9 +47,9 @@ public extension Datasource {
 
         self.init(
             stateSignalProducer: { loadImpulse
-                -> SignalProducer<ResourceState<Value, P, E>, NoError> in
+                -> SignalProducer<ResourceState<Value, P, E>, Never> in
 
-                let initial = SignalProducer<ResourceState<Value, P, E>, NoError>(
+                let initial = SignalProducer<ResourceState<Value, P, E>, Never>(
                     value: initialLoadingState?(loadImpulse) ?? ResourceState.loading(
                         loadImpulse: loadImpulse,
                         fallbackValueBox: nil,
@@ -68,7 +67,7 @@ public extension Datasource {
                                 fallbackError: nil
                             )
                     }
-                    .flatMapError { error -> SignalProducer<ResourceState<Value, P, E>, NoError> in
+                    .flatMapError { error -> SignalProducer<ResourceState<Value, P, E>, Never> in
                         return SignalProducer(
                             value: ResourceState<Value, P, E>
                                 .error(error: error, loadImpulse: loadImpulse, fallbackValueBox: nil
@@ -87,7 +86,7 @@ public extension Datasource {
 
 public extension ValueStream {
 
-    init(signalProducer: SignalProducer<ObservedValue, NoError>) {
+    init(signalProducer: SignalProducer<ObservedValue, Never>) {
 
         self.init { sendValue, disposable in
             let reactiveSwiftDisposable = signalProducer.startWithValues { value in
@@ -102,7 +101,7 @@ public extension ValueStream {
 
     /// Initializes a ValueStream with a ReactiveSwift.SignalProducer.
     init<StateValue, P: ResourceParams, E: ResourceError>(
-        signalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedValue, NoError>,
+        signalProducer: @escaping (LoadImpulse<P>) -> SignalProducer<ObservedValue, Never>,
         loadImpulseEmitter: AnyLoadImpulseEmitter<P>
         ) where ObservedValue == ResourceState<StateValue, P, E> {
 
@@ -125,7 +124,7 @@ public extension ShareableValueStream {
     /// Initializes a ValueStream with a ReactiveSwift.SignalProducer.
     var reactiveSwiftProperty: ReactiveSwift.Property<ObservedValue> {
 
-        let signalProducer = SignalProducer<ObservedValue, NoError> { observer, lifetime in
+        let signalProducer = SignalProducer<ObservedValue, Never> { observer, lifetime in
 
             let dataSourcererDisposable = self.skip(first: 1)
                 .observe { value in
@@ -144,9 +143,9 @@ public extension ShareableValueStream {
 
 public extension AnyObservable {
 
-    var reactiveSwiftSignalProducer: ReactiveSwift.SignalProducer<ObservedValue, NoError> {
+    var reactiveSwiftSignalProducer: ReactiveSwift.SignalProducer<ObservedValue, Never> {
 
-        return SignalProducer<ObservedValue, NoError> { observer, lifetime in
+        return SignalProducer<ObservedValue, Never> { observer, lifetime in
 
             let dataSourcererDisposable = self.observe { loadImpulse in
                 observer.send(value: loadImpulse)
