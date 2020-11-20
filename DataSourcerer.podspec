@@ -56,7 +56,7 @@ The missing link between API Calls (any data provider actually) and your UITable
   s.subspec 'ReactiveSwift' do |ss|
     ss.source_files = 'DataSourcerer/Classes/ReactiveSwift/**/*'
     ss.dependency 'DataSourcerer/List'
-    ss.dependency 'ReactiveSwift', '~> 4.0'
+    ss.dependency 'ReactiveSwift', '~> 6.0'
   end
   
 end
