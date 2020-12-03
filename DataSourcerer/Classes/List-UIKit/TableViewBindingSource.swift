@@ -291,7 +291,7 @@ open class TableViewBindingSource
                 delegate.responds(to: #selector(tableView(_:trailingSwipeActionsConfigurationForRowAt:))) {
                 return delegate.tableView!(tableView, trailingSwipeActionsConfigurationForRowAt: indexPath)
             } else {
-                return nil
+                return UISwipeActionsConfiguration(actions: [])
             }
     }
     
@@ -302,7 +302,7 @@ open class TableViewBindingSource
                 delegate.responds(to: #selector(tableView(_:leadingSwipeActionsConfigurationForRowAt:))) {
                 return delegate.tableView!(tableView, leadingSwipeActionsConfigurationForRowAt: indexPath)
             } else {
-                return nil
+                return UISwipeActionsConfiguration(actions: [])
             }
     }
 
