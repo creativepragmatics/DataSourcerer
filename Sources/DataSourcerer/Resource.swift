@@ -1,11 +1,12 @@
 import Foundation
 import ReactiveSwift
 
-/// Describes a Resource which is fetched from outside of memory,
+/// Describes a Resource which can be fetched from outside of memory,
 /// e.g. from an API or on-disk cache.
 public enum Resource<Value, Query: Cacheable, Failure: Equatable> {
     public typealias ValueType = Value
     public typealias QueryType = Query
+    public typealias FailureType = Failure
 }
 
 public extension Resource {
@@ -20,8 +21,13 @@ public extension Resource {
     }
 }
 
+/// A helper to be used as `Resource.Query` if the Resource has no
+/// relevant Query parameters (e.g. for an API call without any
+/// changing parameters).
 public struct NoQuery: Cacheable {
     public func isCacheCompatible(to other: NoQuery) -> Bool {
         true
     }
+
+    public init() {}
 }

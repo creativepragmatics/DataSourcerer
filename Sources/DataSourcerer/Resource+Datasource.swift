@@ -3,6 +3,10 @@ import ReactiveSwift
 
 public extension Resource where Failure: Equatable {
 
+    /// A Datasource hosts Resource states and a load impulse emitter.
+    /// Whenever a load impulse is emitted, the Resource state is
+    /// expected to change (e.g. by loading from an API or other
+    /// off-memory location).
     struct Datasource {
         public let loadImpulseEmitter: Resource.LoadImpulseEmitter
         public let state: Property<Resource.State>
@@ -18,8 +22,11 @@ public extension Resource where Failure: Equatable {
 }
 
 public extension Resource.Datasource {
-    
-    func resultAndRefreshIfNoDataAvailable(
+
+    /// Convenience method for getting the first Resource state (no matter
+    /// whether a value is available), and performing a full refresh if no
+    /// value is currently available.
+    func firstStateAndRefreshIfNoValue(
         query: Resource.QueryType,
         emitTime: Resource.LoadImpulseEmitter.EmitTime = .now
     ) -> SignalProducer<Resource.State, Never> {
@@ -40,12 +47,19 @@ public extension Resource.Datasource {
             })
     }
 
+    /// Refreshes the Resource by sending a load impulse.
+    /// - Parameters:
+    ///   - query: The query to be used for the refresh.
+    ///   - skipIfSuccessfullyLoaded: If true, the refresh is not performed
+    ///      if a value and **no** error is available.
+    /// - Returns: A SignalProducer which sends a value when the refreshing
+    ///      has ended.
     func refresh(
         query: Resource.QueryType,
-        skipIfResultAvailable: Bool
+        skipIfSuccessfullyLoaded: Bool
     ) -> SignalProducer<RefreshingEnded, Never> {
         let skip: Bool = {
-            guard skipIfResultAvailable else { return false }
+            guard skipIfSuccessfullyLoaded else { return false }
             switch state.value.provisioningState {
             case .loading, .notReady:
                 return false
@@ -88,15 +102,40 @@ public extension Resource.Datasource {
             }
         }
     }
+
+    /// Sends `Void` whenever a `.result` provisioning state
+    /// is reached.
+    func loadingEnded() -> Signal<Void, Never> {
+        state.signal
+            .filter { state in
+                switch state.provisioningState {
+                case .result:
+                    return true
+                case .notReady, .loading:
+                    return false
+                }
+            }
+            .map(value: ())
+    }
 }
 
 public extension Resource.Datasource where Query == NoQuery {
-    func resultAndRefreshIfNoDataAvailable() -> SignalProducer<Resource.State, Never> {
-        resultAndRefreshIfNoDataAvailable(query: NoQuery())
+
+    /// Convenience method for getting the first Resource state (no matter
+    /// whether a value is available), and performing a full refresh if no
+    /// value is currently available.
+    func firstStateAndRefreshIfNoValue() -> SignalProducer<Resource.State, Never> {
+        firstStateAndRefreshIfNoValue(query: NoQuery())
     }
 
-    func refresh(skipIfResultAvailable: Bool) -> SignalProducer<RefreshingEnded, Never> {
-        refresh(query: NoQuery(), skipIfResultAvailable: skipIfResultAvailable)
+    /// Refreshes the Resource by sending a load impulse.
+    /// - Parameters:
+    ///   - skipIfSuccessfullyLoaded: If true, the refresh is not performed
+    ///      if a value and **no** error is available.
+    /// - Returns: A SignalProducer which sends a value when the refreshing
+    ///      has ended.
+    func refresh(skipIfSuccessfullyLoaded: Bool) -> SignalProducer<RefreshingEnded, Never> {
+        refresh(query: NoQuery(), skipIfSuccessfullyLoaded: skipIfSuccessfullyLoaded)
     }
 }
 
@@ -203,6 +242,8 @@ public extension Resource.Datasource where Failure: Error {
                 preferFallbackValueOverFallbackError: preferFallbackValueOverFallbackError
             )
         }
+
+        statesProducer = statesProducer.observe(on: UIScheduler())
 
         self.init(
             loadImpulseEmitter: loadImpulseEmitter,

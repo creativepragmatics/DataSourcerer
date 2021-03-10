@@ -1,5 +1,9 @@
 import Foundation
 
+/// Conformance to this type lets callers determine whether
+/// `Self` is cache-compatible with another instance.
+///
+/// See `isCacheCompatible(to:)` for more documentation.
 public protocol Cacheable: Equatable {
 
     /// Returns true if `other` can be used as a
@@ -8,8 +12,15 @@ public protocol Cacheable: Equatable {
     /// fine. But since this is important to consider for all
     /// models, no default implementation is provided.
     ///
-    /// Consider the case that the authenticated user has changed
-    /// between requests - the old user's data must not be shown
+    /// Example scenario:
+    /// An app uses authentication. It has successfully loaded resources
+    /// from the API with a token that is stored inside a `Cacheable`
+    /// query. Now the token changes. It is expected that the resources
+    /// loaded with the previous token shall not be shown anymore.
+    /// In order to discard those (now invalid) resources, the app
+    /// needs to have a way of determining whether a resource is still
+    /// valid. That's what
+    /// changed between requests - the old user's data must not be shown
     /// anymore. The cache must discard the old stored response.
     /// In order to do so, the cache will use this function to
     /// compare the cached response's parameters with the new

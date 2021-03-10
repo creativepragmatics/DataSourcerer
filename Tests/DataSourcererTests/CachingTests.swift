@@ -3,7 +3,6 @@ import XCTest
 import ReactiveSwift
 
 class CachingTests: XCTestCase {
-
     private typealias ResourceType = Resource<String, NoQuery, TestError>
 
     func testAPIResultOverridesCacheResult() throws {
