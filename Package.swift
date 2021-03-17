@@ -14,6 +14,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ReactiveCocoa/ReactiveSwift.git", from: "6.5.0"),
+        .package(url: "https://github.com/ReactiveCocoa/ReactiveCocoa.git", from: "11.1.0"),
         .package(url: "https://github.com/krzysztofzablocki/Difference.git", from: "0.6.0"),
         .package(url: "https://github.com/ra1028/DifferenceKit.git", from: "1.1.5")
     ],
@@ -39,7 +40,7 @@ let package = Package(
         ),
         .testTarget(
             name: "DataSourcererUITests",
-            dependencies: ["DataSourcererUI", "MulticastDelegate", "Difference"]
+            dependencies: ["DataSourcererUI", "MulticastDelegate", "Difference", "ReactiveCocoa"]
         )
     ]
 )

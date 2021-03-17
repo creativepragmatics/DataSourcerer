@@ -27,9 +27,7 @@ public extension Resource.ListBinding where View == UITableViewCell, ContainerVi
         datasource: (NSObject & UITableViewDataSource)? = nil,
         animateTableViewCellChange: @escaping AnimateTableViewCellChange = { _, _, _ in true },
         animateTableViewCellContentChange: @escaping AnimateTableViewCellContentChange =
-            { _, _, _ in false },
-        willChangeCellsInView: TableViewCellsChange? = nil,
-        didChangeCellsInView: TableViewCellsChange? = nil
+            { _, _, _ in false }
     ) -> Disposable {
         assert(Thread.isMainThread, "bind() can only be called on the main thread")
 
@@ -60,8 +58,9 @@ public extension Resource.ListBinding where View == UITableViewCell, ContainerVi
         disposable += listViewState.producer
             .combinePrevious()
             .combineLatest(with: itemViewMakerWithSideEffects)
+            .combineLatest(with: supplementaryViewMaker)
             .startWithValues { args in
-                let ((previous, current), itemViewMaker) = args
+                let (((previous, current), itemViewMaker), _) = args
                 updateCells(
                     currentState: current,
                     previousState: previous,
@@ -222,9 +221,7 @@ where View == UITableViewCell, ContainerView == UITableView, Query == NoQuery {
         datasource: (NSObject & UITableViewDataSource)? = nil,
         animateTableViewCellChange: @escaping AnimateTableViewCellChange = { _, _, _ in true },
         animateTableViewCellContentChange: @escaping AnimateTableViewCellContentChange =
-            { _, _, _ in false },
-        willChangeCellsInView: TableViewCellsChange? = nil,
-        didChangeCellsInView: TableViewCellsChange? = nil
+            { _, _, _ in false }
     ) -> Disposable {
         bind(
             to: tableView,
@@ -233,9 +230,7 @@ where View == UITableViewCell, ContainerView == UITableView, Query == NoQuery {
             delegate: delegate,
             datasource: datasource,
             animateTableViewCellChange: animateTableViewCellChange,
-            animateTableViewCellContentChange: animateTableViewCellContentChange,
-            willChangeCellsInView: willChangeCellsInView,
-            didChangeCellsInView: didChangeCellsInView
+            animateTableViewCellContentChange: animateTableViewCellContentChange
         )
     }
 }
