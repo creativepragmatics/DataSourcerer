@@ -3,7 +3,7 @@ import ReactiveSwift
 
 public extension Resource {
     struct CacheReader {
-        public let getCachedState: (LoadImpulse) -> SignalProducer<State, Never>
+        public let getCachedState: (QueryType) -> SignalProducer<State, Never>
     }
 
     struct CachePersister {
@@ -13,6 +13,37 @@ public extension Resource {
     struct Cache {
         public let reader: CacheReader
         public let persister: CachePersister
+    }
+}
+
+public extension Resource.Cache {
+    func modifyCachedState(
+        for query: Resource.QueryType,
+        _ modify: @escaping (inout Resource.State) -> Void
+    ) -> SignalProducer<Never, Never> {
+        reader
+            .getCachedState(query)
+            .map {
+                var state = $0
+                modify(&state)
+                return state
+            }
+            .flatMap(.latest, persister.persistCachedState)
+            .take(first: 1)
+    }
+}
+
+public extension Resource.Cache {
+    func modifyCachedValue(
+        for query: Resource.QueryType,
+        _ modify: @escaping (inout Resource.ValueType) -> Void
+    ) -> SignalProducer<Never, Never> {
+        modifyCachedState(for: query) { state in
+            if var value = state.value?.value {
+                modify(&value)
+                state.value = .init(value)
+            }
+        }
     }
 }
 
@@ -28,6 +59,7 @@ public extension SignalProducer {
             .skipRepeats()
             .skipNil()
         let cachedStates = loadImpulsesForCache
+            .map(\.query)
             .flatMap(.latest, cacheReader.getCachedState)
             .prefix(value: .notReady)
         return upstreamStates
