@@ -152,9 +152,10 @@ public extension Resource.Datasource where Failure: Error {
     ///       initialLoadImpulse is set. Set to `nil` if the Datasource should wait with
     ///       loading until `additionalLoadImpulses` sends a load impulse, or
     ///       `refresh(skipIfResultAvailable:)` is called.
-    ///   - additionalLoadImpulses: SignalProducer sending additional load impulses. Use this
+    ///   - systemLoadImpulses: SignalProducer sending additional load impulses. Use this
     ///       to send load impulses which are not sent imperatively via
-    ///       `refresh(skipIfResultAvailable:)`.
+    ///       `refresh(skipIfResultAvailable:)`. If the Datasource shall fetch data
+    ///       immediately, then a load impulse should be sent synchronously.
     ///   - combinePreviousStateMode: Determine whether the Datasource should carry over
     ///       success and/or error values from the current resource state to the next resource
     ///       state. If set to `.none`, the result will be that e.g. a list displaying the
@@ -167,17 +168,13 @@ public extension Resource.Datasource where Failure: Error {
         makeApiRequest: @escaping (Resource.LoadImpulse)
             -> SignalProducer<Resource.ValueType, Failure>,
         cache: Resource.Cache?,
-        initialLoadImpulse: Resource.LoadImpulse?,
-        additionalLoadImpulses: SignalProducer<Resource.LoadImpulse, Never> = .never,
+        systemLoadImpulses: SignalProducer<Resource.LoadImpulse, Never> = .never,
         combinePreviousStateMode: CombinePreviousStateMode =
             .combine(preferFallbackValueOverFallbackError: true)
     ) {
         let pipe = Signal<Resource.LoadImpulse, Never>.pipe()
-        var loadImpulses = pipe.output.producer
-            .merge(with: additionalLoadImpulses)
-        if let initialLoadImpulse = initialLoadImpulse {
-            loadImpulses = loadImpulses.prefix(value: initialLoadImpulse)
-        }
+        let loadImpulses = pipe.output.producer
+            .merge(with: systemLoadImpulses)
 
         let loadImpulseEmitter = Resource.LoadImpulseEmitter(
             loadImpulses: loadImpulses,
@@ -257,4 +254,11 @@ public typealias RefreshingEnded = Void
 public enum CombinePreviousStateMode {
     case none
     case combine(preferFallbackValueOverFallbackError: Bool)
+}
+
+public extension SignalProducer {
+    static func makeInitialLoadImpulse<Value, Failure: Swift.Error>()
+    -> SignalProducer<Resource<Value, NoQuery, Failure>.LoadImpulse, Never> {
+        .init(value: .initial)
+    }
 }
