@@ -4,15 +4,35 @@ import ReactiveSwift
 public extension Resource {
     struct CacheReader {
         public let getCachedState: (QueryType) -> SignalProducer<State, Never>
+
+        public init(
+            getCachedState: @escaping (QueryType) -> SignalProducer<State, Never>
+        ) {
+            self.getCachedState = getCachedState
+        }
     }
 
     struct CachePersister {
         public let persistCachedState: (State) -> SignalProducer<Never, Never>
+
+        public init(
+            persistCachedState: @escaping (State) -> SignalProducer<Never, Never>
+        ) {
+            self.persistCachedState = persistCachedState
+        }
     }
 
     struct Cache {
         public let reader: CacheReader
         public let persister: CachePersister
+
+        public init(
+            reader: Resource<Value, Query, Failure>.CacheReader,
+            persister: Resource<Value, Query, Failure>.CachePersister
+        ) {
+            self.reader = reader
+            self.persister = persister
+        }
     }
 }
 
@@ -48,7 +68,6 @@ public extension Resource.Cache {
 }
 
 public extension SignalProducer {
-
     func combineWithCachedStates<ResourceValue, Query: Cacheable, Failure: Equatable>(
         from cacheReader: Resource<ResourceValue, Query, Failure>.CacheReader
     ) -> SignalProducer
