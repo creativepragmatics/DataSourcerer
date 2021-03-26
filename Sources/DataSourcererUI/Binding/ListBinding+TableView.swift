@@ -56,6 +56,7 @@ public extension Resource.ListBinding where View == UITableViewCell, ContainerVi
         let disposable = CompositeDisposable()
 
         disposable += listViewState.producer
+            .prefix(value: .notReady) // Ensures that the first value isn't swallowed by combinePrevious
             .combinePrevious()
             .combineLatest(with: itemViewMakerWithSideEffects)
             .combineLatest(with: supplementaryViewMaker)
