@@ -4,7 +4,7 @@ import Foundation
 import ReactiveSwift
 import UIKit
 
-struct SingleSectionTableViewModel {
+struct SingleSectionViewModel {
     typealias PublicRepos = Resource<[PublicRepo], NoQuery, APIError>
     typealias ListBinding = PublicRepos.ListBinding<
         PublicRepoCell,
@@ -23,7 +23,7 @@ struct SingleSectionTableViewModel {
                 return PublicRepos.loadURLRequest(URLRequest(url: url))
             },
             cache: nil,
-            initialLoadImpulse: .initial
+            systemLoadImpulses: .makeInitialLoadImpulse()
         )
 
         let sortAscendingStorage = MutableProperty(true)

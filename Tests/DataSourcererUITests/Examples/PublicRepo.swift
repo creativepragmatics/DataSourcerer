@@ -53,7 +53,10 @@ struct PublicRepo : Codable, Equatable {
 
 typealias PublicReposResponse = [PublicRepo]
 
-enum PublicRepoCell: Equatable, ItemModel {
+enum PublicRepoCell: Equatable, MultiViewTypeItemModel {
+
+    typealias ItemViewType = PublicRepoCellViewType
+
     typealias E = APIError
 
     case repo(PublicRepo)
@@ -68,7 +71,22 @@ enum PublicRepoCell: Equatable, ItemModel {
         }
     }
 
+    var itemViewType: PublicRepoCellViewType {
+        switch self {
+        case let .repo(repo):
+            guard let firstChar = repo.name?.first else { return .cellTypeA }
+            return firstChar < "b" ? .cellTypeA : .cellTypeB
+        case .error:
+            return .cellTypeA
+        }
+    }
+
     init(error: APIError) {
         self = .error(error)
     }
+}
+
+enum PublicRepoCellViewType: String, CaseIterable, Hashable {
+    case cellTypeA
+    case cellTypeB
 }

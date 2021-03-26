@@ -5,7 +5,7 @@ import Foundation
 import ReactiveSwift
 import UIKit
 
-struct MultiSectionViewModel {
+struct MultiViewTypeMultiSectionViewModel {
     typealias PublicRepos = Resource<[PublicRepo], NoQuery, APIError>
     typealias BaseListBinding = PublicRepos.ListBinding<
         PublicRepoCell,
@@ -42,17 +42,34 @@ struct MultiSectionViewModel {
                         return .init(model: RepoSection(title: firstChar), elements: repos)
                     }
                 },
-                makeBaseTableViewCell: .reusable(
-                    UITableViewCell.self,
-                    configure: { repo, cellView, tableView, indexPath in
-                        cellView.textLabel?.text = {
-                            switch repo {
-                            case let .repo(repo): return repo.name
-                            case .error: return nil
+                makeMultiBaseTableViewCells: { viewType in
+                    switch viewType {
+                    case .cellTypeA:
+                        return .reusable(
+                            UITableViewCell.self,
+                            configure: { repo, cellView, tableView, indexPath in
+                                cellView.textLabel?.text = {
+                                    switch repo {
+                                    case let .repo(repo): return repo.name
+                                    case .error: return nil
+                                    }
+                                }()
                             }
-                        }()
+                        )
+                    case .cellTypeB:
+                        return .reusable(
+                            AlternativeTableViewCell.self,
+                            configure: { repo, cellView, tableView, indexPath in
+                                (cellView as? AlternativeTableViewCell)?.label.text = {
+                                    switch repo {
+                                    case let .repo(repo): return repo.name
+                                    case .error: return nil
+                                    }
+                                }()
+                            }
+                        )
                     }
-                ),
+                },
                 makeSectionHeader: .constant(
                     .make { sectionModel, indexPath, tableView -> BaseListBinding.SupplementaryView in
                         .uiView(
@@ -73,26 +90,18 @@ struct MultiSectionViewModel {
                 makeSectionFooter: .constant(.none),
                 errorsConfiguration: .constant(.alwaysShowError),
                 makeLoadingTableViewCell: .reusable(LoadingTableViewCell.self),
-                makeErrorTableViewCell: .reusable(ErrorTableViewCell.self, configure: { itemModel, cellView, _, _ in
-                    switch itemModel {
-                    case let .error(error):
-                        (cellView as? ErrorTableViewCell)?.content = error.errorMessage
-                    case .baseItem, .loading, .noResults:
-                        break
+                makeErrorTableViewCell: .reusable(
+                    ErrorTableViewCell.self,
+                    configure: { itemModel, cellView, _, _ in
+                        switch itemModel {
+                        case let .error(error):
+                            (cellView as? ErrorTableViewCell)?.content = error.errorMessage
+                        case .baseItem, .loading, .noResults:
+                            break
+                        }
                     }
-                }),
+                ),
                 makeNoResultsTableViewCell: .reusable(NoResultsTableViewCell.self)
             )
-    }
-}
-
-struct RepoSection: Equatable {
-    let title: String
-    var differenceIdentifier: String { title }
-}
-
-extension RepoSection: SectionModel {
-    init() {
-        title = "Loading or Error Section"
     }
 }

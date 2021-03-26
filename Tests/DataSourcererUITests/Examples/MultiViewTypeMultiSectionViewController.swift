@@ -3,8 +3,8 @@ import ReactiveCocoa
 import ReactiveSwift
 import UIKit
 
-class SingleSectionTableViewController: UIViewController {
-    let viewModel = SingleSectionViewModel()
+class MultiViewTypeMultiSectionViewController: UIViewController {
+    let viewModel = MultiViewTypeMultiSectionViewModel()
 
     @IBOutlet var tableView: UITableView!
 
