@@ -41,16 +41,16 @@ public protocol MultiViewTypeItemModel: ItemModel {
 public extension Resource.ListBinding.UIViewItemMaker
 where ItemModelType: MultiViewTypeItemModel {
     init(
-        makeItemViewMaker: @escaping (ItemModelType.ItemViewType) -> Self
+        makeMultItemViewMaker: @escaping (ItemModelType.ItemViewType) -> Self
     ) {
         var viewMakersCache: [ItemModelType.ItemViewType: Self] = [:]
         func cachedViewMaker(_ viewType: ItemModelType.ItemViewType) -> Self {
-            if let producer = viewMakersCache[viewType] {
-                return producer
+            if let viewMaker = viewMakersCache[viewType] {
+                return viewMaker
             } else {
-                let producer = makeItemViewMaker(viewType)
-                viewMakersCache[viewType] = producer
-                return producer
+                let viewMaker = makeMultItemViewMaker(viewType)
+                viewMakersCache[viewType] = viewMaker
+                return viewMaker
             }
         }
 

@@ -40,3 +40,23 @@ public enum EnhancedItemModel<BaseItem: ItemModel>: ItemModel {
         }
     }
 }
+
+extension EnhancedItemModel: MultiViewTypeItemModel where BaseItem: MultiViewTypeItemModel {
+    public enum EnhancedItemViewType: CaseIterable, Hashable {
+        case enhancementItem
+        case baseItem(BaseItem.ItemViewType)
+
+        public static var allCases: [EnhancedItemModel<BaseItem>.EnhancedItemViewType] {
+            return [.enhancementItem] + BaseItem.ItemViewType.allCases.map(EnhancedItemViewType.baseItem)
+        }
+    }
+
+    public var itemViewType: EnhancedItemViewType {
+        switch self {
+        case .error, .loading, .noResults:
+            return .enhancementItem
+        case let .baseItem(baseItem):
+            return .baseItem(baseItem.itemViewType)
+        }
+    }
+}

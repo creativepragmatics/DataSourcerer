@@ -36,6 +36,7 @@ public extension Resource.TableViewScope.MultiSectionScope {
         Property<Resource.TableViewScope.TableViewSupplementaryViewMaker<ItemModelType, SectionModelType>>
     where ItemModelType.Failure == Resource.FailureType
 
+    /// Creates a binding for a single base cell view type within multiple sections.
     func makeBinding<ItemModelType: ItemModel, SectionModelType: SectionModel>(
         makeBaseModelsWithResource: Property<
             MakeBaseSectionsWithResource<ItemModelType, SectionModelType>
@@ -53,6 +54,30 @@ public extension Resource.TableViewScope.MultiSectionScope {
             .makeBinding(
                 cellModelMaker: makeMultiSectionListViewState,
                 cellViewMaker: makeBaseTableViewCell.itemMaker,
+                sectionHeaderMaker: makeSectionHeader,
+                sectionFooterMaker: makeSectionFooter
+            )
+    }
+
+    /// Creates a binding for multiple base cell view types within multiple sections.
+    func makeBinding<ItemModelType: MultiViewTypeItemModel, SectionModelType: SectionModel>(
+        makeBaseModelsWithResource: Property<
+            MakeBaseSectionsWithResource<ItemModelType, SectionModelType>
+        >,
+        multiCellViewMaker: (ItemModelType.ItemViewType)
+            -> Property<BaseListBinding<ItemModelType, SectionModelType>.UIViewItemMaker>,
+        makeSectionHeader: SupplementaryViewMakerType<ItemModelType, SectionModelType>,
+        makeSectionFooter: SupplementaryViewMakerType<ItemModelType, SectionModelType>
+    ) -> Resource.ListBinding<ItemModelType, SectionModelType, UITableViewCell, UITableView>
+    where Resource.FailureType == ItemModelType.Failure {
+
+        let makeMultiSectionListViewState = BaseListBinding.ListViewStateMaker
+            .multiSectionItems(makeBaseModelsWithResource)
+
+        return tableViewScope
+            .makeBinding(
+                cellModelMaker: makeMultiSectionListViewState,
+                multiCellViewMaker: multiCellViewMaker,
                 sectionHeaderMaker: makeSectionHeader,
                 sectionFooterMaker: makeSectionFooter
             )
@@ -118,6 +143,46 @@ public extension Resource.TableViewScope.MultiSectionScope.EnhancedScope {
             .makeBinding(
                 cellModelMaker: makeMultiSectionListViewState,
                 cellViewMaker: makeBaseTableViewCell.itemMaker,
+                sectionHeaderMaker: makeSectionHeader,
+                sectionFooterMaker: makeSectionFooter
+            )
+        return baseListBinding.enhance(
+            errorsConfiguration: errorsConfiguration,
+            loadingViewMaker: makeLoadingTableViewCell?.itemMaker,
+            errorViewMaker: makeErrorTableViewCell?.itemMaker,
+            noResultsViewMaker: makeNoResultsTableViewCell?.itemMaker
+        )
+    }
+
+    func makeBinding<ItemModelType: MultiViewTypeItemModel, SectionModelType: SectionModel>(
+        makeBaseSectionsWithResource:
+            Property<MakeBaseSectionsWithResource<ItemModelType, SectionModelType>>,
+        makeMultiBaseTableViewCells: (ItemModelType.ItemViewType)
+            -> CellMaker<ItemModelType, SectionModelType>,
+        makeSectionHeader: SupplementaryViewMakerType<ItemModelType, SectionModelType>,
+        makeSectionFooter: SupplementaryViewMakerType<ItemModelType, SectionModelType>,
+        errorsConfiguration: Property<EnhancedListViewStateErrorsConfiguration>,
+        makeLoadingTableViewCell: EnhancedCellMaker<ItemModelType, SectionModelType>?,
+        makeErrorTableViewCell: EnhancedCellMaker<ItemModelType, SectionModelType>?,
+        makeNoResultsTableViewCell: EnhancedCellMaker<ItemModelType, SectionModelType>?
+    ) -> EnhancedListBinding<ItemModelType, SectionModelType>
+    where Resource.FailureType == ItemModelType.Failure {
+
+        let makeMultiSectionListViewState = BaseListBinding.ListViewStateMaker
+            .multiSectionItems(makeBaseSectionsWithResource)
+
+        typealias TargetMultiCellMaker = (ItemModelType.ItemViewType)
+            -> Property<BaseListBinding<ItemModelType, SectionModelType>.UIViewItemMaker>
+
+        let multiCellViewMaker: TargetMultiCellMaker = { itemViewType in
+            makeMultiBaseTableViewCells(itemViewType).itemMaker
+        }
+
+        let baseListBinding: BaseListBinding = multiSectionScope
+            .tableViewScope
+            .makeBinding(
+                cellModelMaker: makeMultiSectionListViewState,
+                multiCellViewMaker: multiCellViewMaker,
                 sectionHeaderMaker: makeSectionHeader,
                 sectionFooterMaker: makeSectionFooter
             )

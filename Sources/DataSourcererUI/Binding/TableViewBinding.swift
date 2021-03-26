@@ -93,6 +93,7 @@ public extension Resource.TableViewScope {
             UITableView
         > where Resource.FailureType == ItemModelType.Failure
 
+    /// Creates a binding for a single base cell view type.
     func makeBinding<ItemModelType: ItemModel, SectionModelType: SectionModel>(
         cellModelMaker: Property<Binding<ItemModelType, SectionModelType>.ListViewStateMaker>,
         cellViewMaker: Property<Binding<ItemModelType, SectionModelType>.UIViewItemMaker>,
@@ -117,6 +118,56 @@ public extension Resource.TableViewScope {
             listViewStateMaker: cellModelMaker,
             itemViewMaker: cellViewMaker,
             supplementaryViewMaker: supplementaryViewMaker
+        )
+    }
+
+    /// Creates a binding for multiple base cell view types.
+    func makeBinding<ItemModelType: MultiViewTypeItemModel, SectionModelType: SectionModel>(
+        cellModelMaker: Property<Binding<ItemModelType, SectionModelType>.ListViewStateMaker>,
+        multiCellViewMaker: (ItemModelType.ItemViewType)
+            -> Property<Binding<ItemModelType, SectionModelType>.UIViewItemMaker>,
+        sectionHeaderMaker: Property<TableViewSupplementaryViewMaker<ItemModelType, SectionModelType>>,
+        sectionFooterMaker: Property<TableViewSupplementaryViewMaker<ItemModelType, SectionModelType>>
+    ) -> Resource.ListBinding<ItemModelType, SectionModelType, UITableViewCell, UITableView> {
+        typealias Binding = Resource.ListBinding<
+            ItemModelType,
+            SectionModelType,
+            UITableViewCell,
+            UITableView
+        >
+
+        let allCellMakers: [Property<(Binding.UIViewItemMaker, ItemModelType.ItemViewType)>] =
+            ItemModelType.ItemViewType.allCases.map { type in
+                multiCellViewMaker(type).map { ($0, type) }
+            }
+
+        let combinedCellViewMaker = Property<Binding.UIViewItemMaker>
+            .combineLatest(allCellMakers, emptySentinel: [])
+            .map { itemMakers -> Binding.UIViewItemMaker in
+
+                let getItemMaker = { (type: ItemModelType.ItemViewType) -> Binding.UIViewItemMaker in
+                    itemMakers.first(where: { $0.1 == type })!.0
+                }
+
+                return Binding.UIViewItemMaker(
+                    makeView: { item, tableView, indexPath in
+                        getItemMaker(item.itemViewType).makeView(item, tableView, indexPath)
+                    },
+                    configureView: { item, itemView, tableView, indexPath in
+                        getItemMaker(item.itemViewType)
+                            .configureView(item, itemView, tableView, indexPath)
+                    },
+                    registerAtContainerView: { tableView in
+                        itemMakers.forEach { $0.0.registerAtContainerView(tableView) }
+                    }
+                )
+            }
+
+        return makeBinding(
+            cellModelMaker: cellModelMaker,
+            cellViewMaker: combinedCellViewMaker,
+            sectionHeaderMaker: sectionHeaderMaker,
+            sectionFooterMaker: sectionFooterMaker
         )
     }
 
