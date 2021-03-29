@@ -39,41 +39,6 @@ public protocol MultiViewTypeItemModel: ItemModel {
 }
 
 public extension Resource.ListBinding.UIViewItemMaker
-where ItemModelType: MultiViewTypeItemModel {
-    init(
-        makeMultItemViewMaker: @escaping (ItemModelType.ItemViewType) -> Self
-    ) {
-        var viewMakersCache: [ItemModelType.ItemViewType: Self] = [:]
-        func cachedViewMaker(_ viewType: ItemModelType.ItemViewType) -> Self {
-            if let viewMaker = viewMakersCache[viewType] {
-                return viewMaker
-            } else {
-                let viewMaker = makeMultItemViewMaker(viewType)
-                viewMakersCache[viewType] = viewMaker
-                return viewMaker
-            }
-        }
-
-        self.makeView = { itemModel, containingView, indexPath -> View in
-            return cachedViewMaker(itemModel.itemViewType)
-                .makeView(itemModel, containingView, indexPath)
-        }
-
-        self.configureView = { itemModel, View, containingView, indexPath in
-            cachedViewMaker(itemModel.itemViewType)
-                .configureView(itemModel, View, containingView, indexPath)
-        }
-
-        self.registerAtContainerView = { containingView in
-            ItemModelType.ItemViewType.allCases.forEach {
-                let viewProducer = cachedViewMaker($0)
-                viewProducer.registerAtContainerView(containingView)
-            }
-        }
-    }
-}
-
-public extension Resource.ListBinding.UIViewItemMaker
 where View == UITableViewCell, ContainerView == UITableView {
     static func tableViewCellWithClass(
         _ `class`: View.Type,

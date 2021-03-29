@@ -28,6 +28,7 @@ public extension Resource.TableViewScope.SingleSectionScope {
         Resource.TableViewScope.TableViewCellMaker<ItemModelType, SingleSection>
     where ItemModelType.Failure == Resource.FailureType
 
+    /// Creates a binding for one base cell view type within a single section.
     func makeBinding<ItemModelType: ItemModel>(
         makeBaseModelsWithResource: Property<MakeBaseModelsWithResource<ItemModelType>>,
         makeBaseTableViewCell: TableViewCellMakerType<ItemModelType>
@@ -41,6 +42,26 @@ public extension Resource.TableViewScope.SingleSectionScope {
             .makeBinding(
                 cellModelMaker: makeSingleSectionListViewState,
                 cellViewMaker: makeBaseTableViewCell.itemMaker,
+                sectionHeaderMaker: .constant(.none),
+                sectionFooterMaker: .constant(.none)
+            )
+    }
+
+    /// Creates a binding for multiple base cell view types within a single section.
+    func makeBinding<ItemModelType: MultiViewTypeItemModel>(
+        makeBaseModelsWithResource: Property<MakeBaseModelsWithResource<ItemModelType>>,
+        multiCellViewMaker: (ItemModelType.ItemViewType)
+            -> Property<BaseListBinding<ItemModelType>.UIViewItemMaker>
+    ) -> Resource.ListBinding<ItemModelType, SingleSection, UITableViewCell, UITableView>
+    where Resource.FailureType == ItemModelType.Failure {
+
+        let makeSingleSectionListViewState = BaseListBinding.ListViewStateMaker
+            .singleSectionItems(makeBaseModelsWithResource)
+
+        return tableViewScope
+            .makeBinding(
+                cellModelMaker: makeSingleSectionListViewState,
+                multiCellViewMaker: multiCellViewMaker,
                 sectionHeaderMaker: .constant(.none),
                 sectionFooterMaker: .constant(.none)
             )
@@ -92,6 +113,44 @@ public extension Resource.TableViewScope.SingleSectionScope.EnhancedScope {
             .makeBinding(
                 cellModelMaker: makeSingleSectionListViewState,
                 cellViewMaker: makeBaseTableViewCell.itemMaker,
+                sectionHeaderMaker: .constant(.none),
+                sectionFooterMaker: .constant(.none)
+            )
+        return baseListBinding.enhance(
+            errorsConfiguration: errorsConfiguration,
+            loadingViewMaker: makeLoadingTableViewCell?.itemMaker,
+            errorViewMaker: makeErrorTableViewCell?.itemMaker,
+            noResultsViewMaker: makeNoResultsTableViewCell?.itemMaker
+        )
+    }
+
+    func makeBinding<ItemModelType: MultiViewTypeItemModel>(
+        makeBaseModelsWithResource:
+            Property<MakeBaseModelsWithResource<ItemModelType>>,
+        makeMultiBaseTableViewCells: (ItemModelType.ItemViewType)
+            -> CellMaker<ItemModelType>,
+        errorsConfiguration: Property<EnhancedListViewStateErrorsConfiguration>,
+        makeLoadingTableViewCell: EnhancedCellMaker<ItemModelType>?,
+        makeErrorTableViewCell: EnhancedCellMaker<ItemModelType>?,
+        makeNoResultsTableViewCell: EnhancedCellMaker<ItemModelType>?
+    ) -> EnhancedListBinding<ItemModelType>
+    where Resource.FailureType == ItemModelType.Failure {
+
+        let makeSingleSectionListViewState = BaseListBinding.ListViewStateMaker
+            .singleSectionItems(makeBaseModelsWithResource)
+
+        typealias TargetMultiCellMaker = (ItemModelType.ItemViewType)
+            -> Property<BaseListBinding<ItemModelType>.UIViewItemMaker>
+
+        let multiCellViewMaker: TargetMultiCellMaker = { itemViewType in
+            makeMultiBaseTableViewCells(itemViewType).itemMaker
+        }
+
+        let baseListBinding: BaseListBinding = singleSectionScope
+            .tableViewScope
+            .makeBinding(
+                cellModelMaker: makeSingleSectionListViewState,
+                multiCellViewMaker: multiCellViewMaker,
                 sectionHeaderMaker: .constant(.none),
                 sectionFooterMaker: .constant(.none)
             )
