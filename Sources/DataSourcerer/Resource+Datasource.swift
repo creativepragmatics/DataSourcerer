@@ -209,6 +209,10 @@ public extension Resource.Datasource where Failure: Error {
                     return SignalProducer(value: errorState)
                 }
 
+            if let cache = cache {
+                request = request.persist(with: cache.persister)
+            }
+
             request = request.prefix(
                 value: .loading(
                     loadImpulse: loadImpulse,
@@ -227,7 +231,6 @@ public extension Resource.Datasource where Failure: Error {
 
         if let cache = cache {
             statesProducer = statesProducer
-                .persist(with: cache.persister)
                 .combineWithCachedStates(from: cache.reader)
         }
 
