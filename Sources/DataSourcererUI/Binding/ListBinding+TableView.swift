@@ -39,9 +39,6 @@ public extension Resource.ListBinding where View == UITableViewCell, ContainerVi
                 return $0
             }
 
-        let listViewState = self.datasource.state
-            .combineLatest(with: listViewStateMaker)
-            .map { state, maker in maker(state: state) }
         let currentSections = MutableProperty<[DiffableSection]>([])
 
         let rootDelegate = TableViewDelegate(

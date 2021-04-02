@@ -113,9 +113,14 @@ public extension Resource.TableViewScope {
             .combineLatest(with: sectionFooterMaker)
             .map(TableViewSupplementaryViewMakerType.combine(sectionHeader:sectionFooter:))
 
+        let listViewState = self.datasource.state
+            .combineLatest(with: cellModelMaker)
+            .map { state, maker in maker(state: state) }
+
         return .init(
             datasource: datasource,
             listViewStateMaker: cellModelMaker,
+            listViewState: listViewState,
             itemViewMaker: cellViewMaker,
             supplementaryViewMaker: supplementaryViewMaker
         )

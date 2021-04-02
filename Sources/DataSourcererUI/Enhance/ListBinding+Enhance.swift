@@ -52,6 +52,10 @@ public extension Resource.ListBinding {
                 )
             }
 
+        let enhancedListViewState = self.datasource.state
+            .combineLatest(with: enhancedListViewStateMaker)
+            .map { state, maker in maker(state: state) }
+
         guard let enhancedViewMakers = Property<[EnhancedUIViewItemMaker?]>
             .combineLatest([
                 loadingViewMaker.absorbOptional(),
@@ -74,6 +78,7 @@ public extension Resource.ListBinding {
         return EnhancedListBinding(
             datasource: datasource,
             listViewStateMaker: enhancedListViewStateMaker,
+            listViewState: enhancedListViewState,
             itemViewMaker: enhancedItemViewMaker,
             supplementaryViewMaker: supplementaryViewMaker.map { $0.enhance() }
         )

@@ -28,6 +28,7 @@ public extension Resource {
 
         public let datasource: Datasource
         public let listViewStateMaker: Property<ListViewStateMaker>
+        public let listViewState: Property<ListViewState>
         public let itemViewMaker: Property<UIViewItemMaker>
 
         public let didSelectItem = Signal<ItemSelection, Never>.pipe()
