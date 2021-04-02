@@ -76,7 +76,7 @@ public extension Resource.ListBinding.ListViewState {
         var empty: EnhancedListViewState {
             .readyToDisplay(
                 state,
-                [EnhancedSection(model: SectionModelType(), elements: [])]
+                []
             )
         }
 
