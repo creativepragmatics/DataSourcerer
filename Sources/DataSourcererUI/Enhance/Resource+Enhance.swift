@@ -1,6 +1,7 @@
 import DataSourcerer
 import DifferenceKit
 import Foundation
+import ReactiveSwift
 import UIKit
 
 public extension Resource.ListBinding.ListViewState {
@@ -11,14 +12,16 @@ public extension Resource.ListBinding.ListViewState {
         ContainerView
     >
     typealias EnhancedDiffableSection = ArraySection<SectionModelType, EnhancedItemModel<ItemModelType>>
+    typealias EnhancedSectionMaker = (Resource.State) -> EnhancedDiffableSection
+    typealias EnhancedFailureSectionMaker = (Resource.FailureType) -> EnhancedDiffableSection
 
     static func enhance(
         state: Resource.State,
         errorsConfiguration: EnhancedListViewStateErrorsConfiguration,
         makeEnhancedListViewStateFromResourceValue: EnhancedListBinding.MakeListViewStateFromResourceValue,
-        loadingSection: ((Resource.State) -> EnhancedDiffableSection)?,
-        errorSection: ((Resource.FailureType) -> EnhancedDiffableSection)?,
-        noResultsSection: ((Resource.State) -> EnhancedDiffableSection)?
+        loadingSection: Property<EnhancedSectionMaker?>,
+        errorSection: Property<EnhancedFailureSectionMaker?>,
+        noResultsSection: Property<EnhancedSectionMaker?>
     ) -> Resource.ListBinding<EnhancedItemModel<ItemModelType>,
                               SectionModelType,
                               View,
@@ -53,7 +56,7 @@ public extension Resource.ListBinding.ListViewState {
         }
 
         var loading: EnhancedListViewState? {
-            loadingSection.map {
+            loadingSection.value.map {
                 .readyToDisplay(
                     state,
                     [$0(state)]
@@ -62,7 +65,7 @@ public extension Resource.ListBinding.ListViewState {
         }
 
         var noResults: EnhancedListViewState? {
-            noResultsSection.map {
+            noResultsSection.value.map {
                 .readyToDisplay(
                     state,
                     [$0(state)]
@@ -78,7 +81,7 @@ public extension Resource.ListBinding.ListViewState {
         }
 
         let showError: ((Resource.FailureType) -> EnhancedListViewState)? =
-            errorSection.map { maker -> ((Resource.FailureType) -> EnhancedListViewState) in
+            errorSection.value.map { maker -> ((Resource.FailureType) -> EnhancedListViewState) in
                 { error in
                     .readyToDisplay(
                         state,
@@ -162,26 +165,26 @@ public extension Resource.ListBinding.ListViewState {
     }
 
     /// Convenience method
-    static func enhance(
-        state: Resource.State,
-        errorsConfiguration: EnhancedListViewStateErrorsConfiguration,
-        makeListViewStateFromResourceValue: EnhancedListBinding.MakeListViewStateFromResourceValue
-    ) -> EnhancedListBinding.ListViewState {
-        enhance(
-            state: state,
-            errorsConfiguration: errorsConfiguration,
-            makeEnhancedListViewStateFromResourceValue: makeListViewStateFromResourceValue,
-            loadingSection: { _ -> EnhancedDiffableSection in
-                .init(model: SectionModelType(), elements: [.loading])
-            },
-            errorSection: { error -> EnhancedDiffableSection in
-                .init(model: SectionModelType(), elements: [.error(error)])
-            },
-            noResultsSection: { _ -> EnhancedDiffableSection in
-                .init(model: SectionModelType(), elements: [.noResults])
-            }
-        )
-    }
+//    static func enhance(
+//        state: Resource.State,
+//        errorsConfiguration: EnhancedListViewStateErrorsConfiguration,
+//        makeListViewStateFromResourceValue: EnhancedListBinding.MakeListViewStateFromResourceValue
+//    ) -> EnhancedListBinding.ListViewState {
+//        enhance(
+//            state: state,
+//            errorsConfiguration: errorsConfiguration,
+//            makeEnhancedListViewStateFromResourceValue: makeListViewStateFromResourceValue,
+//            loadingSection: { _ -> EnhancedDiffableSection in
+//                .init(model: SectionModelType(), elements: [.loading])
+//            },
+//            errorSection: { error -> EnhancedDiffableSection in
+//                .init(model: SectionModelType(), elements: [.error(error)])
+//            },
+//            noResultsSection: { _ -> EnhancedDiffableSection in
+//                .init(model: SectionModelType(), elements: [.noResults])
+//            }
+//        )
+//    }
 }
 
 public extension Resource.ListBinding.MakeListViewStateFromResourceValue {
