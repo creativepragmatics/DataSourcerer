@@ -163,28 +163,6 @@ public extension Resource.ListBinding.ListViewState {
             }
         }
     }
-
-    /// Convenience method
-//    static func enhance(
-//        state: Resource.State,
-//        errorsConfiguration: EnhancedListViewStateErrorsConfiguration,
-//        makeListViewStateFromResourceValue: EnhancedListBinding.MakeListViewStateFromResourceValue
-//    ) -> EnhancedListBinding.ListViewState {
-//        enhance(
-//            state: state,
-//            errorsConfiguration: errorsConfiguration,
-//            makeEnhancedListViewStateFromResourceValue: makeListViewStateFromResourceValue,
-//            loadingSection: { _ -> EnhancedDiffableSection in
-//                .init(model: SectionModelType(), elements: [.loading])
-//            },
-//            errorSection: { error -> EnhancedDiffableSection in
-//                .init(model: SectionModelType(), elements: [.error(error)])
-//            },
-//            noResultsSection: { _ -> EnhancedDiffableSection in
-//                .init(model: SectionModelType(), elements: [.noResults])
-//            }
-//        )
-//    }
 }
 
 public extension Resource.ListBinding.MakeListViewStateFromResourceValue {
