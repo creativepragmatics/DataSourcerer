@@ -41,7 +41,7 @@ struct MultiViewTypeSingleSectionViewModel {
                     case .cellTypeA:
                         return .reusable(
                             UITableViewCell.self,
-                            configure: { repo, cellView, tableView, indexPath in
+                            update: { repo, cellView, tableView, indexPath in
                                 cellView.textLabel?.text = {
                                     switch repo {
                                     case let .repo(repo): return repo.name
@@ -53,7 +53,7 @@ struct MultiViewTypeSingleSectionViewModel {
                     case .cellTypeB:
                         return .reusable(
                             AlternativeTableViewCell.self,
-                            configure: { repo, cellView, tableView, indexPath in
+                            update: { repo, cellView, tableView, indexPath in
                                 (cellView as? AlternativeTableViewCell)?.label.text = {
                                     switch repo {
                                     case let .repo(repo): return repo.name
@@ -68,7 +68,7 @@ struct MultiViewTypeSingleSectionViewModel {
                 makeLoadingTableViewCell: .reusable(LoadingTableViewCell.self),
                 makeErrorTableViewCell: .reusable(
                     ErrorTableViewCell.self,
-                    configure: { itemModel, cellView, _, _ in
+                    update: { itemModel, cellView, _, _ in
                         switch itemModel {
                         case let .error(error):
                             (cellView as? ErrorTableViewCell)?.content = error.errorMessage

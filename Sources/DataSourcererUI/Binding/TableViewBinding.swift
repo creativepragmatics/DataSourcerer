@@ -21,25 +21,25 @@ public extension Resource {
 public extension Resource.TableViewScope {
     indirect enum TableViewCellMaker<ItemModelType: ItemModel, SectionModelType: SectionModel>
     where ItemModelType.Failure == Failure {
-        public typealias Configure = (
-            ItemModelType, UITableViewCell, UITableView, IndexPath
+        public typealias Update = (
+            ItemModelType, UITableViewCell, UITableView, IndexPath, _ isFirstUpdate: Bool
         ) -> Void
 
         case `dynamic`(Property<Self>)
         case nonReusable(
                 _ make: (ItemModelType, UITableView, IndexPath)
                     -> UITableViewCell,
-                configure: Configure = { _, _, _, _ in }
+                update: Update = { _, _, _, _, _ in }
              )
         case reusable(
                 _ clazz: UITableViewCell.Type,
                 reuseIdentifier: String = UUID().uuidString,
-                configure: Configure = { _, _, _, _ in }
+                update: Update = { _, _, _, _, _ in }
              )
         case nib(
                 _ nib: UINib,
                 reuseIdentifier: String = UUID().uuidString,
-                configure: Configure = { _, _, _, _ in }
+                update: Update = { _, _, _, _, _ in }
              )
 
         public var itemMaker: Property<
@@ -55,12 +55,12 @@ public extension Resource.TableViewScope {
                 return Property(
                     value: .tableViewCellWithoutReuse(create: make, configureView: configure)
                 )
-            case let .reusable(clazz, reuseIdentifier, configure):
+            case let .reusable(clazz, reuseIdentifier, update):
                 return Property(
                     value: .tableViewCellWithClass(
                         clazz,
                         reuseIdentifier: reuseIdentifier,
-                        configureView: configure
+                        updateView: update
                     )
                 )
             case let .nib(nib, reuseIdentifier, configure):
@@ -68,7 +68,7 @@ public extension Resource.TableViewScope {
                     value: .tableViewCellWithNib(
                         nib,
                         reuseIdentifier: reuseIdentifier,
-                        configureView: configure
+                        updateView: configure
                     )
                 )
             case let .dynamic(property):
@@ -158,9 +158,9 @@ public extension Resource.TableViewScope {
                     makeView: { item, tableView, indexPath in
                         getItemMaker(item.itemViewType).makeView(item, tableView, indexPath)
                     },
-                    configureView: { item, itemView, tableView, indexPath in
+                    updateView: { item, itemView, tableView, indexPath, isFirstUpdate in
                         getItemMaker(item.itemViewType)
-                            .configureView(item, itemView, tableView, indexPath)
+                            .updateView(item, itemView, tableView, indexPath, isFirstUpdate)
                     },
                     registerAtContainerView: { tableView in
                         itemMakers.forEach { $0.0.registerAtContainerView(tableView) }

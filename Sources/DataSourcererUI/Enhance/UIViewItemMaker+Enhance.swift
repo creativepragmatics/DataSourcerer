@@ -51,42 +51,45 @@ public extension Resource.ListBinding.UIViewItemMaker {
                     )
                 }
             },
-            configureView: { enhancedItem, view, containerView, indexPath in
+            updateView: { enhancedItem, view, containerView, indexPath, isFirstUpdate in
                 switch enhancedItem {
                 case let .baseItem(baseItem):
-                    return self.configureView(baseItem, view, containerView, indexPath)
+                    return self.updateView(baseItem, view, containerView, indexPath, isFirstUpdate)
                 case let .error(error):
                     guard let maker = errorViewMaker else {
                         assertionFailure("Received EnhancedItemModel.error, but no errorViewMaker")
                         return
                     }
-                    return maker.configureView(
+                    return maker.updateView(
                         .error(error),
                         view,
                         containerView,
-                        indexPath
+                        indexPath,
+                        isFirstUpdate
                     )
                 case .loading:
                     guard let maker = loadingViewMaker else {
                         assertionFailure("Received EnhancedItemModel.loading, but no loadingViewMaker")
                         return
                     }
-                    return maker.configureView(
+                    return maker.updateView(
                         .loading,
                         view,
                         containerView,
-                        indexPath
+                        indexPath,
+                        isFirstUpdate
                     )
                 case .noResults:
                     guard let maker = noResultsViewMaker else {
                         assertionFailure("Received EnhancedItemModel.noResults, but no noResultsViewMaker")
                         return
                     }
-                    return maker.configureView(
+                    return maker.updateView(
                         .noResults,
                         view,
                         containerView,
-                        indexPath
+                        indexPath,
+                        isFirstUpdate
                     )
                 }
             },

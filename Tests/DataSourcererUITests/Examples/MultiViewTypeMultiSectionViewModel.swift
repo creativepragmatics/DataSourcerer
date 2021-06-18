@@ -47,7 +47,7 @@ struct MultiViewTypeMultiSectionViewModel {
                     case .cellTypeA:
                         return .reusable(
                             UITableViewCell.self,
-                            configure: { repo, cellView, tableView, indexPath in
+                            update: { repo, cellView, tableView, indexPath in
                                 cellView.textLabel?.text = {
                                     switch repo {
                                     case let .repo(repo): return repo.name
@@ -59,7 +59,7 @@ struct MultiViewTypeMultiSectionViewModel {
                     case .cellTypeB:
                         return .reusable(
                             AlternativeTableViewCell.self,
-                            configure: { repo, cellView, tableView, indexPath in
+                            update: { repo, cellView, tableView, indexPath in
                                 (cellView as? AlternativeTableViewCell)?.label.text = {
                                     switch repo {
                                     case let .repo(repo): return repo.name
@@ -92,7 +92,7 @@ struct MultiViewTypeMultiSectionViewModel {
                 makeLoadingTableViewCell: .reusable(LoadingTableViewCell.self),
                 makeErrorTableViewCell: .reusable(
                     ErrorTableViewCell.self,
-                    configure: { itemModel, cellView, _, _ in
+                    update: { itemModel, cellView, _, _ in
                         switch itemModel {
                         case let .error(error):
                             (cellView as? ErrorTableViewCell)?.content = error.errorMessage

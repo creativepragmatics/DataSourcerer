@@ -4,29 +4,40 @@ import UIKit
 
 public extension Resource.ListBinding {
     struct UIViewItemMaker {
-        public typealias ConfigureView = (ItemModelType, View, ContainerView, IndexPath)
-            -> Void
+        public typealias UpdateView = (
+            ItemModelType,
+            View,
+            ContainerView,
+            IndexPath,
+            _ isFirstUpdate: Bool
+        ) -> Void
         public let makeView: (ItemModelType, ContainerView, IndexPath) -> View
-        public let configureView: (ItemModelType, View, ContainerView, IndexPath) -> Void
+        public let updateView: (
+            ItemModelType,
+            View,
+            ContainerView,
+            IndexPath,
+            _ isFirstUpdate: Bool
+        ) -> Void
         public let registerAtContainerView: (ContainerView) -> Void
 
         public init(
             makeView: @escaping (ItemModelType, ContainerView, IndexPath) -> View,
-            configureView: @escaping ConfigureView,
+            updateView: @escaping UpdateView,
             registerAtContainerView: @escaping (ContainerView) -> Void
         ) {
             self.makeView = makeView
-            self.configureView = configureView
+            self.updateView = updateView
             self.registerAtContainerView = registerAtContainerView
         }
 
-        public func produceAndConfigureView(
+        public func produceAndUpdateView(
             itemModel: ItemModelType,
             containingView: ContainerView,
             indexPath: IndexPath
         ) -> View {
             let view = makeView(itemModel, containingView, indexPath)
-            configureView(itemModel, view, containingView, indexPath)
+            updateView(itemModel, view, containingView, indexPath, true)
             return view
         }
     }
@@ -43,7 +54,7 @@ where View == UITableViewCell, ContainerView == UITableView {
     static func tableViewCellWithClass(
         _ `class`: View.Type,
         reuseIdentifier: String = UUID().uuidString,
-        configureView: @escaping ConfigureView = { _, _, _, _ in }
+        updateView: @escaping UpdateView = { _, _, _, _, _ in }
     ) -> Self {
         Self.init(
             makeView: { itemModel, tableView, indexPath -> UITableViewCell in
@@ -52,7 +63,7 @@ where View == UITableViewCell, ContainerView == UITableView {
                     for: indexPath
                 )
             },
-            configureView: configureView,
+            updateView: updateView,
             registerAtContainerView: { tableView in
                 tableView.register(`class`, forCellReuseIdentifier: reuseIdentifier)
             }
@@ -62,7 +73,7 @@ where View == UITableViewCell, ContainerView == UITableView {
     static func tableViewCellWithNib(
         _ nib: UINib,
         reuseIdentifier: String = UUID().uuidString,
-        configureView: @escaping ConfigureView
+        updateView: @escaping UpdateView
     ) -> Self {
         Self.init(
             makeView: { itemModel, tableView, indexPath -> UITableViewCell in
@@ -72,7 +83,7 @@ where View == UITableViewCell, ContainerView == UITableView {
                 )
                 return tableViewCell
             },
-            configureView: configureView,
+            updateView: updateView,
             registerAtContainerView: { tableView in
                 tableView.register(nib, forCellReuseIdentifier: reuseIdentifier)
             }
@@ -81,13 +92,13 @@ where View == UITableViewCell, ContainerView == UITableView {
 
     static func tableViewCellWithoutReuse(
         create: @escaping (ItemModelType, UITableView, IndexPath) -> UITableViewCell,
-        configureView: @escaping ConfigureView
+        configureView: @escaping UpdateView
     ) -> Self {
         Self.init(
             makeView: { itemModel, tableView, indexPath -> UITableViewCell in
                 return create(itemModel, tableView, indexPath)
             },
-            configureView: configureView,
+            updateView: configureView,
             registerAtContainerView: { _ in }
         )
     }

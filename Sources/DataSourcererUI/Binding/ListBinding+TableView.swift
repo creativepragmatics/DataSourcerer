@@ -151,11 +151,12 @@ public extension Resource.ListBinding where View == UITableViewCell, ContainerVi
                         return .reload
                     } else {
                         return .reconfigure { tableViewCell in
-                            itemViewMaker.configureView(
+                            itemViewMaker.updateView(
                                 item,
                                 tableViewCell,
                                 tableView,
-                                indexPath
+                                indexPath,
+                                false
                             )
                         }
                     }
@@ -287,7 +288,7 @@ private extension Resource.ListBinding {
         func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
             guard let section = self.section(at: indexPath.section) else { return UITableViewCell() }
             let itemModel = section.elements[indexPath.row]
-            return binding.itemViewMaker.value.produceAndConfigureView(
+            return binding.itemViewMaker.value.produceAndUpdateView(
                 itemModel: itemModel,
                 containingView: tableView,
                 indexPath: indexPath
