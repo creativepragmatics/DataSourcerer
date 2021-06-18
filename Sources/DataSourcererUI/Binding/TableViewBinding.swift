@@ -22,7 +22,7 @@ public extension Resource.TableViewScope {
     indirect enum TableViewCellMaker<ItemModelType: ItemModel, SectionModelType: SectionModel>
     where ItemModelType.Failure == Failure {
         public typealias Update = (
-            ItemModelType, UITableViewCell, UITableView, IndexPath, _ isFirstUpdate: Bool
+            ItemModelType, UITableViewCell, UITableView, IndexPath, _ isInitialUpdate: Bool
         ) -> Void
 
         case `dynamic`(Property<Self>)
@@ -158,9 +158,9 @@ public extension Resource.TableViewScope {
                     makeView: { item, tableView, indexPath in
                         getItemMaker(item.itemViewType).makeView(item, tableView, indexPath)
                     },
-                    updateView: { item, itemView, tableView, indexPath, isFirstUpdate in
+                    updateView: { item, itemView, tableView, indexPath, isInitialUpdate in
                         getItemMaker(item.itemViewType)
-                            .updateView(item, itemView, tableView, indexPath, isFirstUpdate)
+                            .updateView(item, itemView, tableView, indexPath, isInitialUpdate)
                     },
                     registerAtContainerView: { tableView in
                         itemMakers.forEach { $0.0.registerAtContainerView(tableView) }

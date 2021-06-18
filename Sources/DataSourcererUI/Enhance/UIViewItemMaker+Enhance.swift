@@ -51,10 +51,10 @@ public extension Resource.ListBinding.UIViewItemMaker {
                     )
                 }
             },
-            updateView: { enhancedItem, view, containerView, indexPath, isFirstUpdate in
+            updateView: { enhancedItem, view, containerView, indexPath, isInitialUpdate in
                 switch enhancedItem {
                 case let .baseItem(baseItem):
-                    return self.updateView(baseItem, view, containerView, indexPath, isFirstUpdate)
+                    return self.updateView(baseItem, view, containerView, indexPath, isInitialUpdate)
                 case let .error(error):
                     guard let maker = errorViewMaker else {
                         assertionFailure("Received EnhancedItemModel.error, but no errorViewMaker")
@@ -65,7 +65,7 @@ public extension Resource.ListBinding.UIViewItemMaker {
                         view,
                         containerView,
                         indexPath,
-                        isFirstUpdate
+                        isInitialUpdate
                     )
                 case .loading:
                     guard let maker = loadingViewMaker else {
@@ -77,7 +77,7 @@ public extension Resource.ListBinding.UIViewItemMaker {
                         view,
                         containerView,
                         indexPath,
-                        isFirstUpdate
+                        isInitialUpdate
                     )
                 case .noResults:
                     guard let maker = noResultsViewMaker else {
@@ -89,7 +89,7 @@ public extension Resource.ListBinding.UIViewItemMaker {
                         view,
                         containerView,
                         indexPath,
-                        isFirstUpdate
+                        isInitialUpdate
                     )
                 }
             },

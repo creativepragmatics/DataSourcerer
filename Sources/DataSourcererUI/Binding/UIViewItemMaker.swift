@@ -9,7 +9,7 @@ public extension Resource.ListBinding {
             View,
             ContainerView,
             IndexPath,
-            _ isFirstUpdate: Bool
+            _ isInitialUpdate: Bool
         ) -> Void
         public let makeView: (ItemModelType, ContainerView, IndexPath) -> View
         public let updateView: (
@@ -17,7 +17,7 @@ public extension Resource.ListBinding {
             View,
             ContainerView,
             IndexPath,
-            _ isFirstUpdate: Bool
+            _ isInitialUpdate: Bool
         ) -> Void
         public let registerAtContainerView: (ContainerView) -> Void
 
